@@ -1,0 +1,79 @@
+.pm-intro {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.pm-intro__stage {
+  width: min(100%, 620px);
+}
+
+/* The three lines share one slot so they replace each other in place. */
+.pm-intro__lines {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 3.6em;
+}
+
+.pm-intro__line {
+  grid-area: 1 / 1;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.375rem, 3vw, 2rem);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s var(--pm-ease), transform 0.6s var(--pm-ease);
+}
+
+.pm-intro__line.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pm-intro__line.is-past {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.pm-intro__go {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s var(--pm-ease), transform 0.5s var(--pm-ease);
+  pointer-events: none;
+}
+
+.pm-intro__go.is-on {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.pm-intro__skip {
+  position: absolute;
+  right: 0;
+  bottom: -6px;
+  border: 0;
+  background: none;
+  padding: 10px 6px;
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  color: var(--pm-ink-soft);
+  cursor: pointer;
+}
+
+.pm-intro__skip:hover {
+  color: var(--pm-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-intro__line.is-on,
+  .pm-intro__go.is-on {
+    opacity: 1;
+    transform: none;
+  }
+}

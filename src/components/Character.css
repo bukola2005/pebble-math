@@ -1,0 +1,19 @@
+.pm-character {
+  user-select: none;
+  filter: drop-shadow(0 18px 24px rgba(76, 92, 203, 0.18));
+}
+
+/* The character stands still. Motion, when it comes, belongs to the
+   objects being counted — not to the character itself. */
+.pm-character--still {
+  transform: none;
+}
+
+/* The mask would clip the drop shadow into a visible rectangle, so a
+   bust character carries no shadow of its own — the ground patch it
+   stands on does that job. */
+.pm-character--bust {
+  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 99%);
+  mask-image: linear-gradient(to bottom, #000 78%, transparent 99%);
+  filter: none;
+}

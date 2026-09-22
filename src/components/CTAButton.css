@@ -1,0 +1,71 @@
+.pm-btn {
+  --pm-btn-y: 16px;
+  --pm-btn-x: 30px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: var(--pm-btn-y) var(--pm-btn-x);
+  border: 0;
+  border-radius: var(--pm-r-pill);
+  font-size: var(--pm-small);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.22s var(--pm-ease-pop), box-shadow 0.22s var(--pm-ease),
+    background-color 0.22s var(--pm-ease);
+}
+
+.pm-btn:hover {
+  transform: translateY(-2px);
+}
+
+.pm-btn:active {
+  transform: translateY(0);
+}
+
+/* --- Primary ------------------------------------------------------
+   Orange fill with warm near-black text. White on #FE885C is 2.4:1
+   and unreadable; this pairing is 6.5:1 and still unmistakably the
+   loudest thing on the page.                                        */
+.pm-btn--primary {
+  background: var(--pm-orange);
+  color: var(--pm-ink-on-orange);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-btn--primary:hover {
+  background: var(--pm-orange-500);
+  box-shadow: 0 16px 34px rgba(242, 106, 56, 0.34);
+}
+
+/* --- Secondary ---------------------------------------------------- */
+.pm-btn--secondary {
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(var(--pm-glass-blur));
+  backdrop-filter: blur(var(--pm-glass-blur));
+  color: var(--pm-purple-700);
+  box-shadow: inset 0 0 0 1.5px var(--pm-line-purple), var(--pm-shadow-sm);
+}
+
+.pm-btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 0 1.5px rgba(124, 140, 242, 0.42),
+    var(--pm-shadow-md);
+}
+
+.pm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 12px of padding keeps the navbar button at a 44px tap target. */
+.pm-btn--sm {
+  --pm-btn-y: 12px;
+  --pm-btn-x: 22px;
+  font-size: var(--pm-micro);
+}

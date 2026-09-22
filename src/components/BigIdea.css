@@ -1,0 +1,44 @@
+.pm-idea {
+  overflow: clip;
+  text-align: center;
+}
+
+.pm-idea__glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    42% 58% at 50% 46%,
+    rgba(153, 166, 249, 0.2) 0%,
+    rgba(153, 166, 249, 0) 70%
+  );
+  pointer-events: none;
+}
+
+.pm-idea__inner {
+  position: relative;
+}
+
+.pm-idea__title {
+  max-width: 22ch;
+  margin-inline: auto;
+  font-family: var(--pm-font-display);
+  font-size: clamp(2.125rem, 4.6vw, 3.75rem);
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+  text-wrap: balance;
+}
+
+.pm-idea__accent {
+  color: var(--pm-purple-700);
+}
+
+.pm-idea__copy {
+  max-width: 44rem;
+  margin: 28px auto 0;
+  font-size: var(--pm-lead);
+  line-height: 1.7;
+  color: var(--pm-ink-muted);
+  text-wrap: pretty;
+}

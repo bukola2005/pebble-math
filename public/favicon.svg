@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pebble Math">
+  <rect width="32" height="32" rx="8" fill="#99A6F9" />
+  <circle cx="16" cy="18.5" r="8.5" fill="#FE885C" />
+  <path d="M16.6 10.4c1.9-3.6 6.2-4.3 7.6-3.2.7 1.8-2.5 5.1-6.8 4.2z" fill="#4C5CCB" />
+  <ellipse cx="12.8" cy="15.4" rx="2.5" ry="1.7" fill="#FFFFFF" opacity="0.55" transform="rotate(-28 12.8 15.4)" />
+</svg>

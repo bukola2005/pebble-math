@@ -1,0 +1,8 @@
+.pm-glass {
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(var(--pm-glass-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--pm-glass-blur)) saturate(1.4);
+  border: 1px solid var(--pm-glass-border);
+  border-radius: var(--pm-r-md);
+  box-shadow: var(--pm-shadow-md);
+}

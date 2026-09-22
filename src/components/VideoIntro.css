@@ -1,0 +1,67 @@
+.pm-video {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+
+.pm-video__frame {
+  position: relative;
+  width: 100%;
+  /* The box is reserved from the video's own ratio, so nothing jumps
+     while it loads. */
+  aspect-ratio: 16 / 9;
+  border-radius: var(--pm-r-lg);
+  overflow: hidden;
+  background: var(--pm-purple-100);
+  box-shadow: var(--pm-shadow-lg);
+}
+
+.pm-video__el {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.pm-video__play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 0;
+  background: rgba(30, 30, 50, 0.24);
+  color: var(--pm-white);
+  cursor: pointer;
+}
+
+.pm-video__play svg {
+  width: 40px;
+  height: 40px;
+  padding: 18px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: var(--pm-orange);
+  color: var(--pm-ink-on-orange);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-video__bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pm-video__sound {
+  padding: 12px 6px;
+  border: 0;
+  background: none;
+  font-size: var(--pm-small);
+  font-weight: 700;
+  color: var(--pm-ink-muted);
+  cursor: pointer;
+}
+
+.pm-video__sound:hover {
+  color: var(--pm-ink);
+}

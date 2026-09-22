@@ -1,0 +1,55 @@
+.pm-heading__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pm-purple-700);
+}
+
+/* A short orange rule before the eyebrow. */
+.pm-heading__eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--pm-orange);
+}
+
+.pm-heading__title {
+  font-family: var(--pm-font-display);
+  font-size: var(--pm-h2);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+  text-wrap: balance;
+}
+
+.pm-heading__lead {
+  margin-top: 18px;
+  max-width: 34rem;
+  font-size: var(--pm-lead);
+  line-height: 1.65;
+  color: var(--pm-ink-muted);
+}
+
+.pm-heading--center {
+  text-align: center;
+}
+
+.pm-heading--center .pm-heading__eyebrow {
+  justify-content: center;
+}
+
+.pm-heading--center .pm-heading__lead {
+  margin-inline: auto;
+}
+
+.pm-heading--lg .pm-heading__title {
+  font-size: clamp(2.25rem, 4.2vw, 3.5rem);
+  line-height: 1.06;
+}

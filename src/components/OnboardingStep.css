@@ -1,0 +1,73 @@
+.pm-step {
+  display: grid;
+  gap: 0;
+}
+
+.pm-step__count {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pm-purple-700);
+}
+
+.pm-step__title {
+  margin-top: 12px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+  text-wrap: balance;
+}
+
+.pm-step__sub {
+  margin-top: 12px;
+  max-width: 34rem;
+  font-size: var(--pm-body);
+  line-height: 1.6;
+  color: var(--pm-ink-muted);
+}
+
+.pm-step__body {
+  margin-top: clamp(24px, 3.5vw, 38px);
+}
+
+.pm-step__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: clamp(28px, 3.5vw, 40px);
+}
+
+.pm-step__back {
+  border: 0;
+  background: none;
+  padding: 10px 4px;
+  font-size: var(--pm-small);
+  font-weight: 700;
+  color: var(--pm-ink-muted);
+  cursor: pointer;
+  order: 2;
+}
+
+.pm-step__back:hover {
+  color: var(--pm-ink);
+}
+
+.pm-step__actions .pm-btn {
+  order: 1;
+}
+
+@media (max-width: 560px) {
+  .pm-step__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .pm-step__actions .pm-btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,65 @@
+/* Editorial, not three feature cards: a heading on the left and a list
+   of full sentences on the right, with plenty of air between them. */
+.pm-inside__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(28px, 6vw, 90px);
+  align-items: start;
+}
+
+.pm-inside__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-inside__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 26px 0;
+  border-top: 1px solid var(--pm-line-purple);
+}
+
+.pm-inside__item:first-child {
+  padding-top: 4px;
+  border-top: 0;
+}
+
+.pm-inside__item:last-child {
+  padding-bottom: 0;
+}
+
+.pm-inside__check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+  color: var(--pm-orange-600);
+}
+
+.pm-inside__check svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pm-inside__text {
+  font-size: clamp(1.0625rem, 1.5vw, 1.375rem);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+  color: var(--pm-ink);
+  text-wrap: pretty;
+}
+
+.pm-inside__tail {
+  color: var(--pm-purple-700);
+}
+
+@media (max-width: 900px) {
+  .pm-inside__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

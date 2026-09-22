@@ -1,0 +1,259 @@
+.pm-hero {
+  position: relative;
+  padding-top: clamp(28px, 4vw, 56px);
+  padding-bottom: clamp(48px, 5vw, 84px);
+  overflow: clip;
+}
+
+/* A wide, very soft lavender wash behind everything. */
+.pm-hero::before {
+  content: "";
+  position: absolute;
+  inset: -180px -10% auto -10%;
+  height: 780px;
+  background: radial-gradient(
+    46% 60% at 68% 32%,
+    rgba(153, 166, 249, 0.16) 0%,
+    rgba(153, 166, 249, 0) 70%
+  );
+  pointer-events: none;
+}
+
+/* The hand-off to the next section: white fades into lavender. */
+.pm-hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 180px;
+  background: linear-gradient(to bottom, rgba(246, 247, 255, 0), #f6f7ff);
+  pointer-events: none;
+}
+
+.pm-hero__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(16px, 2.6vw, 40px);
+}
+
+.pm-hero__copy {
+  max-width: 34rem;
+}
+
+/* --- eyebrow ------------------------------------------------------- */
+.pm-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px 8px 12px;
+  border-radius: var(--pm-r-pill);
+  box-shadow: var(--pm-shadow-sm);
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--pm-purple-700);
+}
+
+.pm-hero__eyebrow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pm-orange);
+}
+
+/* --- headline ------------------------------------------------------ */
+.pm-hero__title {
+  margin-top: 22px;
+  font-family: var(--pm-font-display);
+  font-size: var(--pm-display);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+  text-wrap: balance;
+}
+
+.pm-hero__accent {
+  position: relative;
+  display: inline-block;
+  color: var(--pm-orange-600);
+  white-space: nowrap;
+}
+
+.pm-hero__underline {
+  position: absolute;
+  left: -3%;
+  bottom: -0.05em;
+  width: 106%;
+  height: 0.22em;
+  overflow: visible;
+}
+
+.pm-hero__underline path {
+  stroke-dasharray: 130;
+  stroke-dashoffset: 130;
+  animation: pm-underline 0.9s var(--pm-ease) 0.45s forwards;
+}
+
+@keyframes pm-underline {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* --- lead ---------------------------------------------------------- */
+.pm-hero__lead {
+  margin-top: 22px;
+  max-width: 31rem;
+  font-size: var(--pm-lead);
+  line-height: 1.65;
+  color: var(--pm-ink-muted);
+}
+
+/* --- actions ------------------------------------------------------- */
+.pm-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+/* --- chapter line -------------------------------------------------- */
+.pm-hero__chapters {
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--pm-line);
+}
+
+.pm-hero__chapters-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pm-ink-soft);
+}
+
+.pm-hero__chapters-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-hero__chapters-list li {
+  position: relative;
+  padding-left: 16px;
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  color: var(--pm-ink-muted);
+}
+
+.pm-hero__chapters-list li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: var(--pm-purple-400);
+}
+
+.pm-hero__chapters-list li:last-child::before {
+  background: var(--pm-orange);
+}
+
+/* --- visual -------------------------------------------------------- */
+.pm-hero__visual {
+  position: relative;
+  min-width: 0;
+}
+
+/* --- tablet: the scene keeps its presence, the copy narrows -------- */
+@media (max-width: 1080px) {
+  .pm-hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  /* The copy block dissolves into the grid so the scene can sit
+     between the buttons and the chapter list. */
+  .pm-hero__copy {
+    display: contents;
+  }
+
+  .pm-hero__title {
+    max-width: 20ch;
+  }
+
+  .pm-hero__lead {
+    margin-inline: auto;
+  }
+
+  .pm-hero__actions {
+    justify-content: center;
+  }
+
+  .pm-hero__chapters {
+    order: 3;
+    display: inline-block;
+    margin-top: 34px;
+  }
+
+  .pm-hero__chapters-list {
+    justify-content: center;
+  }
+
+  .pm-hero__visual {
+    order: 2;
+    width: min(100%, 620px);
+    margin-top: 18px;
+  }
+}
+
+/* --- mobile: recomposed, not shrunk -------------------------------- */
+@media (max-width: 620px) {
+  .pm-hero {
+    padding-top: 18px;
+  }
+
+  .pm-hero__title {
+    margin-top: 16px;
+    line-height: 1.12;
+  }
+
+  .pm-hero__lead {
+    margin-top: 16px;
+    font-size: 1rem;
+  }
+
+  .pm-hero__actions {
+    margin-top: 26px;
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pm-hero__actions .pm-btn {
+    width: 100%;
+  }
+
+  /* The scene runs edge to edge, the chapter list closes the section. */
+  .pm-hero__visual {
+    margin-top: 18px;
+    width: calc(100% + var(--pm-gutter) * 0.9);
+  }
+
+  .pm-hero__chapters {
+    margin-top: 24px;
+  }
+}

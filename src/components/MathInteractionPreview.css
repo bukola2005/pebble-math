@@ -1,0 +1,175 @@
+.pm-math__panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+  gap: clamp(18px, 2.4vw, 28px);
+  margin-top: clamp(40px, 5vw, 64px);
+}
+
+.pm-math__panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 30px;
+  margin: 0;
+  padding: clamp(28px, 3.4vw, 44px);
+  border-radius: 28px;
+  background: linear-gradient(
+    168deg,
+    var(--pm-purple-50) 0%,
+    rgba(234, 237, 254, 0.75) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--pm-line-purple);
+}
+
+/* --- objects ------------------------------------------------------- */
+.pm-math__equation {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(10px, 1.6vw, 22px);
+  padding: 12px 0;
+}
+
+.pm-math__group {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
+.pm-math__apples {
+  display: flex;
+}
+
+/* Apples overlap slightly, the way things sit in a real basket. */
+.pm-math__apples > * + * {
+  margin-left: -6px;
+}
+
+.pm-math__count {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-white);
+  color: var(--pm-ink);
+  font-family: var(--pm-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  box-shadow: var(--pm-shadow-sm);
+}
+
+.pm-math__group:last-child .pm-math__count {
+  background: var(--pm-orange);
+  color: var(--pm-ink-on-orange);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-math__op {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 400;
+  color: var(--pm-purple-500);
+  transform: translateY(-14px);
+}
+
+/* --- money --------------------------------------------------------- */
+.pm-math__ledger {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.pm-math__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+}
+
+.pm-math__line dt {
+  font-size: var(--pm-small);
+  font-weight: 600;
+  color: var(--pm-ink-muted);
+}
+
+.pm-math__line dd {
+  margin: 0;
+  font-family: var(--pm-font-display);
+  font-size: 1.375rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--pm-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-math__line--spend dd {
+  color: var(--pm-orange-600);
+}
+
+.pm-math__line--total {
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 2px solid var(--pm-purple-200);
+}
+
+.pm-math__line--total dt {
+  color: var(--pm-ink);
+  font-weight: 800;
+}
+
+.pm-math__line--total dd {
+  font-size: 1.75rem;
+  color: var(--pm-purple-700);
+}
+
+.pm-math__bar {
+  display: flex;
+  gap: 4px;
+  height: 14px;
+  margin-top: 4px;
+}
+
+.pm-math__bar-left,
+.pm-math__bar-spent {
+  display: block;
+  height: 100%;
+  border-radius: var(--pm-r-pill);
+}
+
+.pm-math__bar-left {
+  flex: 7;
+  background: var(--pm-purple-400);
+}
+
+.pm-math__bar-spent {
+  flex: 3;
+  background: var(--pm-orange-200);
+}
+
+.pm-math__caption {
+  font-size: var(--pm-small);
+  line-height: 1.55;
+  color: var(--pm-ink-muted);
+  text-wrap: pretty;
+}
+
+@media (max-width: 900px) {
+  .pm-math__panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .pm-math__apples > * + * {
+    margin-left: -12px;
+  }
+
+  .pm-math__equation {
+    gap: 8px;
+  }
+}

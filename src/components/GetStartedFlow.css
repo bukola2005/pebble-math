@@ -1,0 +1,358 @@
+.pm-flow {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow-y: auto;
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      rgba(153, 166, 249, 0.22) 0%,
+      rgba(153, 166, 249, 0) 70%
+    ),
+    var(--pm-white);
+  animation: pm-flow-in 0.35s var(--pm-ease);
+}
+
+@keyframes pm-flow-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.pm-flow__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px var(--pm-gutter);
+}
+
+.pm-flow__mark {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--pm-ink);
+}
+
+.pm-flow__close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--pm-line-purple);
+  border-radius: 14px;
+  background: var(--pm-white);
+  color: var(--pm-ink);
+  cursor: pointer;
+  transition: background 0.2s var(--pm-ease);
+}
+
+.pm-flow__close:hover {
+  background: var(--pm-purple-50);
+}
+
+.pm-flow__close svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+}
+
+.pm-flow__panel {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(16px, 4vw, 48px) var(--pm-gutter) 80px;
+  outline: none;
+}
+
+/* The film gets more room than a question does. */
+.pm-flow__panel--wide {
+  max-width: 1000px;
+}
+
+/* --- role cards ----------------------------------------------------- */
+.pm-flow__roles {
+  display: grid;
+  gap: 12px;
+}
+
+/* A two-way fork sits side by side where there is room. */
+@media (min-width: 620px) {
+  .pm-flow__roles--pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pm-flow__aside {
+  padding: 16px 20px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-purple-50);
+  border: 1px solid var(--pm-line-purple);
+  font-size: var(--pm-small);
+  line-height: 1.55;
+  color: var(--pm-ink-muted);
+}
+
+.pm-flow__role {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 22px 26px;
+  border: 1.5px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  cursor: pointer;
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-flow__role:hover {
+  transform: translateY(-2px);
+  border-color: var(--pm-purple-400);
+  box-shadow: var(--pm-shadow-md);
+}
+
+.pm-flow__role-title {
+  font-family: var(--pm-font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--pm-ink);
+}
+
+.pm-flow__role-text {
+  font-size: var(--pm-small);
+  color: var(--pm-ink-muted);
+}
+
+/* --- name ----------------------------------------------------------- */
+.pm-flow__input {
+  width: 100%;
+  padding: 20px 24px;
+  border: 1.5px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  font-family: inherit;
+  font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--pm-ink);
+}
+
+.pm-flow__input::placeholder {
+  color: var(--pm-ink-soft);
+  font-weight: 500;
+}
+
+.pm-flow__input:focus {
+  outline: 3px solid var(--pm-purple-400);
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+/* --- chips ---------------------------------------------------------- */
+.pm-flow__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pm-flow__label {
+  margin: 30px 0 12px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pm-ink-soft);
+}
+
+.pm-chip {
+  min-width: 62px;
+  padding: 14px 20px;
+  border: 1.5px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-white);
+  font-family: var(--pm-font-display);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  cursor: pointer;
+  transition: transform 0.18s var(--pm-ease-pop), background 0.18s var(--pm-ease),
+    border-color 0.18s var(--pm-ease);
+}
+
+.pm-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--pm-purple-400);
+}
+
+.pm-chip.is-on {
+  background: var(--pm-orange);
+  border-color: var(--pm-orange);
+  color: var(--pm-ink-on-orange);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-chip--soft {
+  font-size: var(--pm-small);
+  font-weight: 700;
+  padding: 11px 18px;
+}
+
+.pm-chip--soft.is-on {
+  background: var(--pm-purple-400);
+  border-color: var(--pm-purple-400);
+  color: var(--pm-white);
+  box-shadow: var(--pm-shadow-sm);
+}
+
+/* --- character picker ----------------------------------------------- */
+/* Eight characters, four to a row, at any width. */
+.pm-flow__picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 16px);
+  max-width: 470px;
+}
+
+.pm-flow__avatar {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  border: 2px solid var(--pm-line-purple);
+  border-radius: 50%;
+  background: var(--pm-purple-50);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-flow__avatar img {
+  width: 92%;
+  height: auto;
+  object-fit: contain;
+}
+
+.pm-flow__avatar:hover {
+  transform: translateY(-3px);
+  border-color: var(--pm-purple-400);
+}
+
+.pm-flow__avatar.is-on {
+  border-color: var(--pm-orange);
+  background: var(--pm-orange-100);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+/* --- player card ----------------------------------------------------- */
+.pm-flow__card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 28px;
+  padding: 16px 24px 16px 16px;
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-purple-50);
+  border: 1px solid var(--pm-line-purple);
+}
+
+.pm-flow__card-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+  background: var(--pm-white);
+}
+
+.pm-flow__card--lg {
+  margin-top: 0;
+  padding: 20px 30px 20px 20px;
+}
+
+.pm-flow__card--lg .pm-flow__card-img {
+  width: 84px;
+  height: 84px;
+}
+
+.pm-flow__card-name {
+  font-family: var(--pm-font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--pm-ink);
+}
+
+.pm-flow__card-meta {
+  margin-top: 2px;
+  font-size: var(--pm-small);
+  color: var(--pm-ink-muted);
+}
+
+/* --- final screen ---------------------------------------------------- */
+.pm-flow__done {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+
+.pm-flow__done-title {
+  margin-top: 10px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+}
+
+.pm-flow__done-text {
+  max-width: 34rem;
+  font-size: var(--pm-body);
+  line-height: 1.65;
+  color: var(--pm-ink-muted);
+}
+
+.pm-flow__done-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+/* --- parents and teachers -------------------------------------------- */
+.pm-flow__notes {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-flow__notes li {
+  padding-left: 20px;
+  position: relative;
+  font-size: var(--pm-body);
+  line-height: 1.6;
+  color: var(--pm-ink-muted);
+}
+
+.pm-flow__notes li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pm-orange);
+}
+
+.pm-flow__notes strong {
+  color: var(--pm-ink);
+  font-weight: 800;
+}

@@ -1,0 +1,57 @@
+.pm-parents__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(28px, 6vw, 84px);
+  align-items: start;
+}
+
+/* The heading stays in view while the answers scroll past it. */
+.pm-parents__head {
+  position: sticky;
+  top: 118px;
+}
+
+.pm-parents__list {
+  margin: 0;
+  display: grid;
+}
+
+.pm-parents__note {
+  padding: 24px 0;
+  border-top: 1px solid var(--pm-line);
+}
+
+.pm-parents__note:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pm-parents__note:last-child {
+  padding-bottom: 0;
+}
+
+.pm-parents__q {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--pm-ink);
+}
+
+.pm-parents__a {
+  margin: 8px 0 0;
+  max-width: 44rem;
+  font-size: var(--pm-body);
+  line-height: 1.65;
+  color: var(--pm-ink-muted);
+  text-wrap: pretty;
+}
+
+@media (max-width: 900px) {
+  .pm-parents__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pm-parents__head {
+    position: static;
+  }
+}

@@ -1,0 +1,98 @@
+.pm-cta__panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  padding: clamp(36px, 5vw, 64px) clamp(28px, 4vw, 64px) 0;
+  border-radius: 34px;
+  overflow: hidden;
+  background: radial-gradient(
+      70% 120% at 82% 100%,
+      rgba(254, 136, 92, 0.18) 0%,
+      rgba(254, 136, 92, 0) 60%
+    ),
+    linear-gradient(150deg, var(--pm-purple-50) 0%, var(--pm-purple-200) 100%);
+}
+
+.pm-cta__copy {
+  padding-bottom: clamp(36px, 5vw, 64px);
+}
+
+.pm-cta__title {
+  font-family: var(--pm-font-display);
+  font-size: clamp(2rem, 3.8vw, 3.125rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+}
+
+.pm-cta__lead {
+  margin-top: 16px;
+  max-width: 30rem;
+  font-size: var(--pm-lead);
+  line-height: 1.6;
+  color: var(--pm-ink-muted);
+}
+
+.pm-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* The character stands on the panel's bottom edge, on a soft patch of
+   ground rather than floating. */
+.pm-cta__stage {
+  position: relative;
+  align-self: end;
+  padding-bottom: 18px;
+}
+
+.pm-cta__stage::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(76, 92, 203, 0.24),
+    rgba(76, 92, 203, 0)
+  );
+}
+
+.pm-cta__character {
+  position: relative;
+  width: clamp(160px, 21vw, 244px);
+  filter: drop-shadow(0 14px 22px rgba(76, 92, 203, 0.16));
+}
+
+@media (max-width: 720px) {
+  .pm-cta__panel {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+    padding-bottom: 0;
+  }
+
+  .pm-cta__copy {
+    padding-bottom: 8px;
+  }
+
+  .pm-cta__lead {
+    margin-inline: auto;
+  }
+
+  .pm-cta__actions {
+    justify-content: center;
+  }
+
+  .pm-cta__character {
+    width: 160px;
+  }
+}

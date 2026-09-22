@@ -1,0 +1,91 @@
+/* ------------------------------------------------------------------
+   Pebble Math — design tokens
+   The single source of truth for colour, type, space, depth and motion.
+   Nothing in the UI should hard-code a value that lives here.
+   ------------------------------------------------------------------ */
+
+:root {
+  /* --- Brand core (fixed) --------------------------------------- */
+  --pm-purple: #99a6f9;
+  --pm-orange: #fe885c;
+  --pm-white: #ffffff;
+
+  /* --- Purple scale (derived from #99A6F9) ---------------------- */
+  --pm-purple-50: #f6f7ff;
+  --pm-purple-100: #eef0fe;
+  --pm-purple-200: #dfe3fd;
+  --pm-purple-300: #c5ccfb;
+  --pm-purple-400: #99a6f9; /* brand */
+  --pm-purple-500: #7d8cf2;
+  --pm-purple-600: #6e7ee8;
+  --pm-purple-700: #4c5ccb; /* text-safe on white: 5.7:1 */
+
+  /* --- Orange scale (derived from #FE885C) ---------------------- */
+  --pm-orange-100: #ffeee7;
+  --pm-orange-200: #ffd9c9;
+  --pm-orange-400: #fe885c; /* brand — fills, never small text */
+  --pm-orange-500: #f5713f;
+  --pm-orange-600: #e2622f; /* large text on white: 3.5:1 */
+
+  /* --- Ink --------------------------------------------------------
+     Text on orange is warm near-black, not white: white on #FE885C is
+     2.4:1 and fails. #2E1B12 on #FE885C is 6.5:1 and reads premium.  */
+  --pm-ink: #1e1e32;
+  --pm-ink-muted: #5b5b79; /* 6.6:1 on white */
+  --pm-ink-soft: #7a7a96;
+  --pm-ink-on-orange: #2e1b12;
+
+  /* --- Surfaces / atmosphere ------------------------------------ */
+  --pm-bg: var(--pm-white);
+  --pm-line: rgba(30, 30, 50, 0.08);
+  --pm-line-purple: rgba(124, 140, 242, 0.22);
+
+  /* Glass is an accent surface, used sparingly, never page-wide. */
+  --pm-glass-bg: rgba(255, 255, 255, 0.62);
+  --pm-glass-border: rgba(255, 255, 255, 0.85);
+  --pm-glass-blur: 18px;
+
+  /* --- Depth (restrained; lavender-tinted, never grey) ---------- */
+  --pm-shadow-xs: 0 1px 2px rgba(76, 92, 203, 0.06);
+  --pm-shadow-sm: 0 4px 14px rgba(76, 92, 203, 0.08);
+  --pm-shadow-md: 0 12px 34px rgba(76, 92, 203, 0.12);
+  --pm-shadow-lg: 0 26px 70px rgba(76, 92, 203, 0.16);
+  --pm-shadow-orange: 0 10px 26px rgba(242, 106, 56, 0.28);
+
+  /* --- Radius ---------------------------------------------------- */
+  --pm-r-sm: 10px;
+  --pm-r-md: 16px;
+  --pm-r-lg: 24px;
+  --pm-r-pill: 999px;
+
+  /* --- Type ------------------------------------------------------
+     Satoshi Variable is the brand face: labels, instructions, small
+     UI text, and the whole hero. Plus Jakarta Sans is the fallback
+     for machines that don't have Satoshi loaded.
+
+     Fredoka One is the playful voice: headlines, prompts and buttons
+     from "Inside the market" downwards, and everywhere in the game
+     flow. It has one weight, so anything set in it stays at 400 —
+     never bold it, or the browser fakes the weight.                 */
+  --pm-font: "Satoshi Variable", "Satoshi", "Plus Jakarta Sans",
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pm-font-display: "Fredoka One", "Fredoka", var(--pm-font);
+
+  --pm-display: clamp(2.6rem, 5.1vw, 4.25rem);
+  --pm-h2: clamp(1.9rem, 3.2vw, 2.75rem);
+  --pm-lead: clamp(1.0625rem, 1.15vw, 1.1875rem);
+  --pm-body: 1rem;
+  --pm-small: 0.9375rem;
+  --pm-micro: 0.8125rem;
+
+  /* --- Space ----------------------------------------------------- */
+  --pm-gutter: clamp(20px, 5vw, 64px);
+  --pm-max: 1280px;
+  --pm-section: clamp(64px, 8vw, 118px);
+
+  /* --- Motion ----------------------------------------------------
+     One easing for entrances, one springy one for playful moments. */
+  --pm-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --pm-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pm-loop: 11s; /* the hero market loop */
+}

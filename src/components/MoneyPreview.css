@@ -1,0 +1,93 @@
+.pm-money__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.75fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+}
+
+.pm-money__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 34px 0 0;
+}
+
+.pm-money__stat {
+  padding: 14px 22px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-white);
+  box-shadow: var(--pm-shadow-sm);
+}
+
+.pm-money__stat dt {
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  color: var(--pm-ink-soft);
+}
+
+.pm-money__stat dd {
+  margin: 4px 0 0;
+  font-family: var(--pm-font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--pm-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The goal chip is the one a child is aiming at. */
+.pm-money__stat:last-child {
+  background: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-money__stat:last-child dt {
+  color: rgba(46, 27, 18, 0.72);
+}
+
+.pm-money__stat:last-child dd {
+  color: var(--pm-ink-on-orange);
+}
+
+/* --- the jar -------------------------------------------------------- */
+.pm-money__jar {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+.pm-money__jar-svg {
+  width: min(100%, 270px);
+  height: auto;
+  filter: drop-shadow(0 22px 40px rgba(76, 92, 203, 0.16));
+}
+
+.pm-money__jar-caption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--pm-small);
+  font-weight: 600;
+  color: var(--pm-ink-muted);
+}
+
+.pm-money__jar-goal {
+  padding: 5px 12px;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-white);
+  color: var(--pm-purple-700);
+  font-size: var(--pm-micro);
+  font-weight: 800;
+  box-shadow: var(--pm-shadow-xs);
+}
+
+@media (max-width: 900px) {
+  .pm-money__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pm-money__jar {
+    order: -1;
+  }
+}
