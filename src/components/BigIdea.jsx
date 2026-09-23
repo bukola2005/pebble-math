@@ -15,7 +15,7 @@ export default function BigIdea() {
           <span className="pm-idea__accent">Help them use numbers.</span>
         </h2>
         <p className="pm-idea__copy">
-          Every chapter — from addition through money and saving — asks a child
+          Every chapter (from addition through money and saving) asks a child
           to do the math inside a real decision, not just answer a question
           about it.
         </p>

@@ -43,30 +43,8 @@
   max-width: 34rem;
 }
 
-/* --- eyebrow ------------------------------------------------------- */
-.pm-hero__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 16px 8px 12px;
-  border-radius: var(--pm-r-pill);
-  box-shadow: var(--pm-shadow-sm);
-  font-size: var(--pm-micro);
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  color: var(--pm-purple-700);
-}
-
-.pm-hero__eyebrow-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--pm-orange);
-}
-
 /* --- headline ------------------------------------------------------ */
 .pm-hero__title {
-  margin-top: 22px;
   font-family: var(--pm-font-display);
   font-size: var(--pm-display);
   font-weight: 400;
@@ -227,7 +205,6 @@
   }
 
   .pm-hero__title {
-    margin-top: 16px;
     line-height: 1.12;
   }
 

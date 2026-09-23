@@ -36,7 +36,7 @@ export default function HowItWorks() {
           eyebrow="How it works"
           id="pm-how-title"
           title="The same four beats, every time."
-          lead="A child doesn’t start with a question. They start with something to do — and the question turns up inside it."
+          lead="A child doesn’t start with a question. They start with something to do, and the question turns up inside it."
         />
 
         <ol className="pm-how__steps">

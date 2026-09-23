@@ -16,11 +16,6 @@ export default function Hero({ onStart }) {
     <section className="pm-hero" id="top">
       <div className="pm-shell pm-hero__grid">
         <div className="pm-hero__copy">
-          <GlassPanel as="p" className="pm-hero__eyebrow">
-            <span className="pm-hero__eyebrow-dot" aria-hidden="true" />
-            One market. Five chapters.
-          </GlassPanel>
-
           <h1 className="pm-hero__title">
             A market where kids learn to{" "}
             <span className="pm-hero__accent">
@@ -45,7 +40,7 @@ export default function Hero({ onStart }) {
 
           <p className="pm-hero__lead">
             Pebble Math is a 2D game where kids pick up objects, combine
-            quantities, and spend from a real wallet — building real number
+            quantities, and spend from a real wallet. They build real number
             sense through one connected market, not a stack of worksheets.
           </p>
 

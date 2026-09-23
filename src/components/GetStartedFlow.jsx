@@ -145,7 +145,7 @@ export default function GetStartedFlow({ open, onClose }) {
                 className="pm-flow__role"
                 onClick={() => setStep("name")}
               >
-                <span className="pm-flow__role-title">No — I’m new</span>
+                <span className="pm-flow__role-title">No, I’m new</span>
                 <span className="pm-flow__role-text">
                   Make a player and start at the first stall.
                 </span>
@@ -155,7 +155,7 @@ export default function GetStartedFlow({ open, onClose }) {
                 className="pm-flow__role"
                 onClick={() => setStep("returning")}
               >
-                <span className="pm-flow__role-title">Yes — I’ve played</span>
+                <span className="pm-flow__role-title">Yes, I’ve played</span>
                 <span className="pm-flow__role-text">
                   There is no account to come back to yet.
                 </span>
@@ -168,7 +168,7 @@ export default function GetStartedFlow({ open, onClose }) {
         {step === "returning" && (
           <OnboardingStep
             title="Welcome back."
-            sub="Pebble Math has no accounts yet, so there is nothing saved to come back to — not your name, not your progress. Everything is made fresh, and it disappears when you close the tab."
+            sub="Pebble Math has no accounts yet, so there is nothing saved to come back to: not your name, not your progress. Everything is made fresh, and it disappears when you close the tab."
             onBack={() => setStep("played")}
             onNext={() => setStep("name")}
             nextLabel="Make a player"
@@ -358,7 +358,7 @@ export default function GetStartedFlow({ open, onClose }) {
             <h2 className="pm-flow__done-title">This is where the market opens.</h2>
             <p className="pm-flow__done-text">
               The first chapter is in development. Everything before this
-              screen is the real journey — the game itself is what we build
+              screen is the real journey. The game itself is what we build
               next.
             </p>
 

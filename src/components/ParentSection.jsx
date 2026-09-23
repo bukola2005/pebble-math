@@ -8,7 +8,7 @@ const NOTES = [
   },
   {
     q: "What do they learn?",
-    a: "Counting, addition, subtraction, multiplication, division, and money — as chapters of the same market, in that order.",
+    a: "Counting, addition, subtraction, multiplication, division, and money, as chapters of the same market, in that order.",
   },
   {
     q: "Why one market instead of lots of mini-games?",
@@ -20,7 +20,7 @@ const NOTES = [
   },
   {
     q: "How does money fit in?",
-    a: "Prices are in naira. A child spends from a wallet, works out the change, compares what two things cost, and saves toward something they want — the same arithmetic, with a consequence attached.",
+    a: "Prices are in naira. A child spends from a wallet, works out the change, compares what two things cost, and saves toward something they want. It is the same arithmetic, with a consequence attached.",
   },
   {
     q: "Where is Pebble Math today?",

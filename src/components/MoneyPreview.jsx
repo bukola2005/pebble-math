@@ -23,7 +23,7 @@ export default function MoneyPreview() {
             eyebrow="Money & saving"
             id="pm-money-title"
             title="Numbers become decisions."
-            lead="Children learn what happens when they spend, save, compare prices and work toward a goal — while using the mathematics behind those decisions."
+            lead="Children learn what happens when they spend, save, compare prices and work toward a goal, while using the mathematics behind those decisions."
           />
 
           <dl className="pm-money__stats">
