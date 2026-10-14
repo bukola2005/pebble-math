@@ -1,0 +1,18 @@
+.pm-gate {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      var(--pm-purple-50) 60%
+    ),
+    var(--pm-purple-50);
+}
+
+.pm-gate__text {
+  font-family: var(--pm-font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  color: var(--pm-purple-700);
+}
