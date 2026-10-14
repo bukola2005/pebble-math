@@ -1,0 +1,88 @@
+.pm-player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  padding: 16px 20px 16px 16px;
+  border: 1px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  box-shadow: var(--pm-shadow-sm);
+}
+
+.pm-player__avatar {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+  background: var(--pm-purple-50);
+}
+
+/* Takes the free space, so the Delete button sits at the right edge. */
+.pm-player__info {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.pm-player__name {
+  font-family: var(--pm-font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  overflow-wrap: anywhere;
+}
+
+.pm-player__meta {
+  margin-top: 2px;
+  font-size: var(--pm-small);
+  color: var(--pm-ink-muted);
+}
+
+/* --- the "are you sure" row, on its own line under the card ------------ */
+.pm-player__confirm {
+  flex-basis: 100%;
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--pm-line);
+}
+
+.pm-player__question {
+  font-size: var(--pm-small);
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--pm-ink);
+}
+
+.pm-player__error {
+  padding: 10px 14px;
+  border: 1px solid var(--pm-error-line);
+  border-radius: var(--pm-r-md);
+  background: var(--pm-error-bg);
+  font-size: var(--pm-small);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--pm-error);
+}
+
+.pm-player__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* The destructive answer is a secondary button in the error colour, so the
+   only orange on the page stays on the one action we want people to take. */
+.pm-btn.pm-player__danger {
+  color: var(--pm-error);
+}
+
+.pm-btn.pm-player__danger:not(:disabled) {
+  box-shadow: inset 0 0 0 1.5px var(--pm-error-line), var(--pm-shadow-sm);
+}
+
+.pm-btn.pm-player__danger:hover:not(:disabled) {
+  background: var(--pm-error-bg);
+}

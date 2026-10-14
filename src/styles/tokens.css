@@ -35,6 +35,14 @@
   --pm-ink-soft: #7a7a96;
   --pm-ink-on-orange: #2e1b12;
 
+  /* --- Feedback ---------------------------------------------------
+     Form errors only. Kept well away from the brand orange so an error
+     never looks like the primary action. 6.6:1 on white, 6.1:1 on the
+     tint.                                                            */
+  --pm-error: #b42318;
+  --pm-error-bg: #fef3f2;
+  --pm-error-line: #fda29b;
+
   /* --- Surfaces / atmosphere ------------------------------------ */
   --pm-bg: var(--pm-white);
   --pm-line: rgba(30, 30, 50, 0.08);

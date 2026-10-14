@@ -1,0 +1,123 @@
+/* Same lavender wash as the sign-in pages. */
+.pm-dash {
+  min-height: 100vh;
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      transparent 70%
+    ),
+    var(--pm-white);
+}
+
+.pm-dash__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: var(--pm-max);
+  margin: 0 auto;
+  padding: 22px var(--pm-gutter);
+}
+
+/* The wordmark stays in Satoshi; it is the brand mark, not a headline. */
+.pm-dash__mark {
+  padding-block: 8px;
+  font-size: 1.3125rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--pm-ink);
+}
+
+.pm-dash__main {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(16px, 4vw, 48px) var(--pm-gutter) 80px;
+}
+
+.pm-dash__eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pm-purple-700);
+}
+
+.pm-dash__title {
+  margin-top: 12px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: -0.005em;
+  color: var(--pm-ink);
+  text-wrap: balance;
+}
+
+.pm-dash__section {
+  margin-top: clamp(32px, 5vw, 52px);
+}
+
+/* The section heading, with the Add button at the other end. */
+.pm-dash__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.pm-dash__h2 {
+  font-family: var(--pm-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+/* The heading takes focus after a delete; the global ring would be noise
+   on a heading, and the status message already says what happened. */
+.pm-dash__h2:focus {
+  outline: none;
+}
+
+.pm-dash__muted {
+  font-size: var(--pm-small);
+  line-height: 1.6;
+  color: var(--pm-ink-muted);
+}
+
+/* Empty and error states: a soft panel, not a blank gap. */
+.pm-dash__panel {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 24px;
+  border: 1px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  box-shadow: var(--pm-shadow-sm);
+}
+
+.pm-dash__empty-title {
+  font-family: var(--pm-font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-dash__alert {
+  font-size: var(--pm-small);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--pm-error);
+}
+
+/* --- player list ----------------------------------------------------- */
+.pm-dash__players {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+

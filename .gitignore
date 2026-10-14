@@ -1,1 +1,8 @@
 node_modules
+
+# Build output
+dist
+
+# Local environment — holds the Supabase project URL and key
+.env.local
+.env.*.local

@@ -1,0 +1,175 @@
+/* Label, input and note styles for the name and class fields come from
+   AuthField.css (.pm-field*), which AuthField loads. */
+
+.pm-playerform {
+  display: grid;
+  gap: 22px;
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  box-shadow: var(--pm-shadow-md);
+}
+
+.pm-playerform__title {
+  font-family: var(--pm-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-playerform__alert {
+  padding: 12px 16px;
+  border: 1px solid var(--pm-error-line);
+  border-radius: var(--pm-r-md);
+  background: var(--pm-error-bg);
+  font-size: var(--pm-small);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--pm-error);
+}
+
+.pm-playerform__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.pm-playerform__cancel {
+  padding: 10px 4px;
+  border: 0;
+  background: none;
+  font-size: var(--pm-small);
+  font-weight: 700;
+  color: var(--pm-ink-muted);
+  cursor: pointer;
+}
+
+.pm-playerform__cancel:hover:not(:disabled) {
+  color: var(--pm-ink);
+}
+
+.pm-playerform__cancel:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .pm-playerform__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .pm-playerform__actions .pm-btn {
+    width: 100%;
+  }
+}
+
+/* --- radio groups ----------------------------------------------------- */
+.pm-choices {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pm-choices__legend {
+  padding: 0;
+  margin-bottom: 2px;
+  font-size: var(--pm-small);
+  font-weight: 700;
+  color: var(--pm-ink);
+}
+
+.pm-choices__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* The radio is visually hidden (.pm-sr-only), so the label anchors it and
+   has to be positioned or the page can jump when it takes focus. */
+.pm-choice,
+.pm-avatar {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+/* --- age band chips --------------------------------------------------- */
+.pm-choice__face {
+  display: block;
+  min-width: 64px;
+  padding: 12px 20px;
+  border: 1.5px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-white);
+  text-align: center;
+  font-family: var(--pm-font-display);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  transition: border-color 0.2s var(--pm-ease), background-color 0.2s var(--pm-ease);
+}
+
+.pm-choice:hover .pm-choice__face {
+  border-color: var(--pm-purple-400);
+}
+
+.pm-choice__input:checked + .pm-choice__face {
+  border-color: var(--pm-purple-600);
+  background: var(--pm-purple-50);
+  color: var(--pm-purple-700);
+}
+
+.pm-choice__input:focus-visible + .pm-choice__face {
+  outline: 3px solid var(--pm-purple-600);
+  outline-offset: 3px;
+}
+
+/* --- character picker: eight to a block, four to a row ---------------- */
+.pm-avatars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 16px);
+  max-width: 470px;
+}
+
+.pm-avatar__face {
+  display: grid;
+  place-items: end center;
+  aspect-ratio: 1;
+  width: 100%;
+  border: 2px solid var(--pm-line-purple);
+  border-radius: 50%;
+  background: var(--pm-purple-50);
+  overflow: hidden;
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-avatar__face img {
+  width: 92%;
+  height: auto;
+  object-fit: contain;
+}
+
+.pm-avatar:hover .pm-avatar__face {
+  transform: translateY(-3px);
+  border-color: var(--pm-purple-400);
+}
+
+/* Orange marks the chosen character, the way it does in the Get Started flow. */
+.pm-avatar__input:checked + .pm-avatar__face {
+  border-color: var(--pm-orange);
+  background: var(--pm-orange-100);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-avatar__input:focus-visible + .pm-avatar__face {
+  outline: 3px solid var(--pm-purple-600);
+  outline-offset: 3px;
+}

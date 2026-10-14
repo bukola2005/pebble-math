@@ -1,0 +1,56 @@
+.pm-field {
+  display: grid;
+  gap: 8px;
+}
+
+/* Labels, inputs and helper text are Satoshi (--pm-font), never the
+   display face. */
+.pm-field__label {
+  font-size: var(--pm-small);
+  font-weight: 700;
+  color: var(--pm-ink);
+}
+
+/* 16px text stops iOS Safari zooming the page when a field is focused. */
+.pm-field__input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1.5px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-md);
+  background: var(--pm-white);
+  font-family: var(--pm-font);
+  font-size: var(--pm-body);
+  font-weight: 500;
+  color: var(--pm-ink);
+  transition: border-color 0.2s var(--pm-ease);
+}
+
+.pm-field__input::placeholder {
+  color: var(--pm-ink-soft);
+}
+
+.pm-field__input:hover {
+  border-color: var(--pm-purple-400);
+}
+
+/* The global focus ring from base.css does the heavy lifting; the border
+   joins in so the field reads as "active" even at a glance. */
+.pm-field__input:focus-visible {
+  border-color: var(--pm-purple-600);
+  border-radius: var(--pm-r-md);
+}
+
+.pm-field__input[aria-invalid="true"] {
+  border-color: var(--pm-error);
+}
+
+.pm-field__note {
+  font-size: var(--pm-micro);
+  line-height: 1.45;
+  color: var(--pm-ink-muted);
+}
+
+.pm-field__note--error {
+  font-weight: 600;
+  color: var(--pm-error);
+}
