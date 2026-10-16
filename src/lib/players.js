@@ -8,32 +8,36 @@ import { supabase } from "./supabase";
   delete its own players, whatever the query says. These functions all return
   Supabase's `{ data, error }` and never throw.
 
-  A player holds only what the schema allows: a display name, a coarse age
-  band, an optional class level, a character id (null until the child picks
-  one on their first play) and whether that first play is done. There is
-  nothing here for a child's email, password, date of birth or any contact
-  detail, and there never should be.
+  A player holds only what the schema allows:
+    display_name     the nickname the grown-up gave them
+    age_band         a coarse band, never a date of birth
+    class_level      optional
+    monster          picked by the grown-up so they can tell children apart
+    character        the Zizi look the child picked (null until they have)
+    game_name        the in-game name the child built from two word lists
+    first_play_done  whether they have seen the opening film
+  There is nothing here for a child's email, password, date of birth or any
+  contact detail, and there never should be.
 */
 
-const COLUMNS = "id, display_name, age_band, class_level, character";
+// What the dashboard and "Who's playing?" need.
+const COLUMNS = "id, display_name, age_band, class_level, monster, character";
 
-// The list (dashboard and "Who's playing?") deliberately leaves out
-// first_play_done, so it keeps working on a database that hasn't had that
-// column added yet. Only the play session asks for it.
 export const listPlayers = () =>
   supabase.from("players").select(COLUMNS).order("created_at");
 
+// The play session also needs to know how far the child has got.
 export const getPlayer = (id) =>
   supabase
     .from("players")
-    .select(`${COLUMNS}, first_play_done`)
+    .select(`${COLUMNS}, game_name, first_play_done`)
     .eq("id", id)
     .maybeSingle();
 
 // profile_id has no default in the schema, so the account's id is sent
 // explicitly. The insert policy rejects any id that isn't the caller's own.
-// No character: the child picks their own on their first play.
-export const addPlayer = ({ profileId, displayName, ageBand, classLevel }) =>
+// No Zizi look and no game name: the child chooses those when they play.
+export const addPlayer = ({ profileId, displayName, ageBand, classLevel, monster }) =>
   supabase
     .from("players")
     .insert({
@@ -41,6 +45,7 @@ export const addPlayer = ({ profileId, displayName, ageBand, classLevel }) =>
       display_name: displayName,
       age_band: ageBand,
       class_level: classLevel || null,
+      monster,
     })
     .select(COLUMNS)
     .single();
@@ -61,8 +66,15 @@ async function changeOne(query, failureCode) {
 export const deletePlayer = (id) =>
   changeOne(supabase.from("players").delete().eq("id", id), "not_deleted");
 
+// The column is called `character`; it holds a Zizi look id (data/zizi.js).
 export const chooseCharacter = (id, character) =>
   changeOne(supabase.from("players").update({ character }).eq("id", id), "not_saved");
+
+export const chooseGameName = (id, gameName) =>
+  changeOne(
+    supabase.from("players").update({ game_name: gameName }).eq("id", id),
+    "not_saved"
+  );
 
 export const finishFirstPlay = (id) =>
   changeOne(

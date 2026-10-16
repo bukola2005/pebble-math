@@ -4,7 +4,8 @@ Phase 1 (visual foundation + hero), Phase 2 (the landing page), Phase 4
 (adult accounts: sign up, sign in, dashboard — see [Accounts](#accounts))
 and Phase 5 (the way in: Get Started → sign-up, and a child's play session
 — see [Getting in](#getting-in)). Phase 3's local-only Get Started flow is
-retired.
+retired. The first play now follows the game handoff: loading → film →
+Zizi's look → game name; Scene 1 and the Fruit Stall come next.
 
 ## Run it
 
@@ -39,13 +40,18 @@ src/
     ResetPassword.jsx       where the reset link lands: choose a new password
     Dashboard.jsx           greeting, email, the account's players: add, delete, Play
     Play.jsx                "Who's playing?" — the child picks their own card
-    PlaySession.jsx         loading → (first play: character → film → welcome) → market
+    PlaySessionShell.jsx    /play/:id and below: fetches the player, hands it to each step
+    PlayHub.jsx             /play/:id: the loading screen, then the next step
+    PlayIntro.jsx           /play/:id/intro: the opening film
+    PlayAvatar.jsx          /play/:id/avatar: choose Zizi's look, on the storybook
+    PlayName.jsx            /play/:id/name: build a game name from two word lists
     Protected*.jsx          each page above behind its sign-in check
   context/AuthContext.jsx   AuthProvider + useAuth: session, user, loading, signUp, signIn, signOut
   lib/
     supabase.js             the one Supabase client; null if the env is missing
     authRedirect.js         what an emailed link put in the address bar, read before supabase-js clears it
     players.js              every query on the players table, and its error messages
+    playFlow.js             the order of the play steps, and what each one loads
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     validation.js           password length, email check, name limits
@@ -59,12 +65,11 @@ src/
     PageLoading.jsx         the lavender "Loading…" page
     AuthLayout.jsx          the page sign-up and sign-in share
     AuthField.jsx           label + input + hint + inline error
-    PlayerForm.jsx          add a player: name, age band, optional class
+    PlayerForm.jsx          add a player: name, age band, optional class, a monster
     PlayerCard.jsx          one player, with an inline "delete?" confirm
-    PlayerAvatar.jsx        a player's character, or a neutral circle until they pick
+    PlayerAvatar.jsx        the monster the grown-up picked, or a neutral circle
     PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
-    CharacterPicker.jsx     first play: the child picks one of the eight
-    MarketPlaceholder.jsx   "this is where the market opens"
+    MarketPlaceholder.jsx   the child's Zizi and "this is where the market opens"
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -78,22 +83,31 @@ src/
     CTASection.jsx          closing panel
     Footer.jsx
     SectionHeading.jsx      eyebrow + title + lead, used by every section
-    VideoIntro.jsx          the opening film, with skip and sound
-    IntroSequence.jsx       the short personalised welcome after the film
+    VideoIntro.jsx          the opening film: tap to begin, with sound, Skip
     Character.jsx           any character, reusable anywhere
     Apple.jsx               one apple, for demonstrations
     CTAButton.jsx           the only button (primary / secondary)
     GlassPanel.jsx          the translucent surface
-  data/characters.js        the eight characters, with intrinsic sizes
+  data/characters.js        the eight monsters, with intrinsic sizes
+  data/monsters.js          Blob the guide, and the seven a grown-up can pick
+  data/zizi.js              Zizi's six looks and her original look
+  data/gameNames.js         the two word lists game names are built from
   data/players.js           age bands and class levels a player may hold
-  data/media.js             the agreed paths for the loading art and the film
+  data/media.js             the agreed paths for the loading art, storybook and film
+docs/learning-rules.md      how the game teaches, with examples for later chapters
 tools/og-image.mjs          regenerates the social card
-public/characters/*.webp    the eight playable characters, halos cleaned up
-public/characters/zizi.svg, mother-sheet.svg
-                            story characters; their use isn't decided yet
+public/characters/*.webp    the eight monsters, halos cleaned up
+public/characters/mother-sheet.svg
+                            Zizi's mother; story artwork only, never playable
+public/zizi/*.webp          Zizi: six looks (zizi-headband, -cornrows, -afro, -puffs,
+                            -twists, -braids) and the original, zizi-default
 public/video/pre-intro.*    the opening film (webm + mp4 + poster)
-public/loading/             the loading screen art goes here (see Getting in)
-public/art/*.webp           market map (day, misty) and a blank storybook; not used yet
+public/loading/hands-apart.webp
+                            the loading screen: Zizi and her mother pulled apart
+public/stall/fruit-stall.webp
+                            the Fruit Stall, straight on; not used yet
+public/art/*.webp           market map (day, misty), not used yet; the blank
+                            storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
 public/favicon.svg          the app mark
 public/og-image.png         the social sharing card
@@ -184,37 +198,66 @@ that the game is in development.
 Grown-up   Get Started → /signup → confirm email → /signin → /dashboard
            add a child (name, age band, optional class) → Play
 
-Child      /play "Who's playing?" → tap own card → /play/:id
-           loading → first play only: pick a character → the film → welcome
-                   → the market ("this is where the market opens")
+Child      /play "Who's playing?" → tap own card → /play/:id (loading)
+           → /intro      the film (until first_play_done)
+           → /avatar     Zizi's look (until character holds one)
+           → /name       the game name (until game_name is set)
+           → back to /play/:id, which ends on "this is where the market opens"
 ```
+
+Every step is its own route and its own chunk of code, and `lib/playFlow.js`
+decides which one comes next from what the player row already holds. A
+child who stops halfway picks up at the step they left. Steps replace each
+other in the history, so Back from any of them returns to "Who's playing?".
+A visit, or a reload, always starts at the loading screen, so the steps
+can't be taken out of order and each one's pictures are in before it shows.
 
 Every Get Started button on the landing page goes to `/signup`. There is no
 student sign-up: a child can't own an account, so the grown-up creates one
 and adds the child from the dashboard.
 
+**Who is who.** Every child plays as **Zizi**, in the look they choose.
+The purple monster is **Blob**, the guide, and nobody can pick it. The other
+seven monsters are on the grown-up's side: a grown-up picks one for each
+child when adding them (`players.monster`), so the cards on the dashboard
+and on "Who's playing?" are easy to tell apart. Children added before
+monsters came back show a neutral circle with their initial.
+
 **"Who's playing?"** is built for a child: one big card per child (their
-character, or a neutral circle with their initial until they've picked
-one), nothing to type, no sign-out, no settings. The device stays signed in
-as the grown-up. A small link in the corner goes back to the dashboard.
+monster and their name), nothing to type, no sign-out, no settings. The
+device stays signed in as the grown-up. A small link in the corner goes
+back to the dashboard.
 
-**The loading screen** shows the art at `public/loading/pebble-loading.webp`
-with a bar that fills only as files actually arrive (`lib/preload.js`): on a
-first play, the eight characters, the film's poster and the film itself;
-after that, just the child's character. It stays up at least 700ms so a
-cached load doesn't flash. The film is downloaded once and played from that
-copy, so it is never fetched twice.
+**The loading screen** shows `public/loading/hands-apart.webp` full screen,
+with a slim bar low down that fills only as files actually arrive
+(`lib/preload.js`). It loads only what the next step needs: before the film,
+the film itself and its poster; before the avatar screen, the storybook and
+the seven Zizi pictures; after that, just the child's Zizi. It stays up at
+least 700ms so a cached load doesn't flash. The film is downloaded once and
+played from that copy. While a child is busy on one step, the next step's
+code and pictures are fetched in the background.
 
-**First play** (`players.first_play_done` is false): the child picks one of
-the eight characters, which is saved at once; then the film plays (muted,
-since browsers refuse to autoplay sound, with a sound toggle and a Skip a
-child can find); then a welcome by name of under three seconds; then the
-market. `first_play_done` is saved when they reach the market. Every play
-after that goes straight from loading to the market.
+**The film** (until `players.first_play_done`): a full-screen "Tap to begin",
+because a browser only plays sound after a tap; then the film with its
+sound, and a Skip button there from the first second. `first_play_done` is
+saved when it ends or is skipped. On a phone held upright the whole frame
+is shown, letterboxed, rather than cropping the story.
 
-`prefers-reduced-motion` gets the film's poster frame and a play button
-instead of autoplay, a welcome that is already finished, and a bar that
-jumps instead of gliding.
+**Zizi's look** (until `players.character` holds one of the six): the open
+storybook, with the six looks on the left page and the chosen Zizi standing
+on the right page, in her original look until one is tapped. Tapping a look
+selects it and "This is me" saves it. On a phone held upright only the left
+page is shown.
+
+**The game name** (until `players.game_name` is set): two words, one from
+each list in `data/gameNames.js`, each stepped through with big arrows, and
+a Shuffle button. It starts on a random pair. There is no text box: a child
+never types anything, so they can't put a real name in. "That's my name!"
+saves it.
+
+`prefers-reduced-motion` turns off the little pops on the avatar and name
+screens and the bar's glide (`styles/base.css`). The film never starts on
+its own in any case.
 
 The film is 22 seconds, 1280×720, encoded from the master in `source-art/`:
 
@@ -238,19 +281,23 @@ adult signs up with their own email and creates the players. A child just
 picks their profile from a list.
 
 ```
-auth.users ─ profiles ─ players
- (adult)     name, role   display name, age band, class (optional),
-                          character (null until picked), first_play_done
+auth.users ─ profiles ─ players ─ stall_progress
+ (adult)     name, role   display name, age band,     one row per stall
+                          class (optional), monster,  the child has cleared
+                          character (Zizi's look),
+                          game_name, first_play_done,
+                          scene1_done
 ```
 
-- `players` holds a display name the child chose, a **coarse age band**
-  (never a date of birth), an optional class, the character the child
-  picked on their first play, and whether that first play is done. Nothing
-  else. Do not add an email or password column to it. If a change seems to
-  need one, stop and rethink the change.
-- Row Level Security is on for both tables, and the policies are scoped to
-  `auth.uid()`: a signed-in account can only read and write its own profile
-  and its own players. Never ship a table without it.
+- `players` holds a nickname the grown-up gave, a **coarse age band**
+  (never a date of birth), an optional class, the monster the grown-up
+  picked, the Zizi look and the two-word game name the child chose, and how
+  far they've got. Nothing else. Do not add an email, password or date of
+  birth column to it. If a change seems to need one, stop and rethink the
+  change.
+- Row Level Security is on for every table, and the policies are scoped to
+  `auth.uid()`: a signed-in account can only read and write its own profile,
+  its own players and their progress. Never ship a table without it.
 - The `profiles` row is created by a database trigger when someone signs
   up. The sign-up form sends `role` and `full_name` as user metadata, and
   the trigger checks them rather than trusting them.
@@ -288,8 +335,8 @@ components it uses, or it lands back in the main bundle.
 **The dashboard.** A parent or teacher lists, adds and deletes the players
 under their account, and sees which account they're in (the email, small,
 in the header). A delete asks first, and counts as done only when the
-database confirms a row was removed; saving a character and finishing a
-first play are checked the same way. **Play** opens "Who's playing?".
+database confirms a row was removed; saving a look, a game name and the
+end of the film are checked the same way. **Play** opens "Who's playing?".
 
 **When a page fails to load** (a dropped connection, or a new version of
 the site going live while a tab is open), `RouteErrorBoundary` shows a plain
@@ -327,10 +374,24 @@ message with a reload button instead of a white screen.
 
 ## Next
 
-The addition chapter itself: the first playable scene in the market, which
-replaces `MarketPlaceholder`. Also outstanding: the loading screen art
-(`public/loading/pebble-loading.webp`, 1600×893 WebP, ≤150 KB, without any
-painted "LOADING…" or bar), and Zizi: a playable character with several
-avatar designs, each with its own pick animation, which needs
-`characters.js` to grow from one picture per character to a list of designs
-(the mother is story artwork only and never goes in that file).
+Scene 1 (the story's first scene, with Blob), then the Fruit Stall, which
+replaces `MarketPlaceholder`. The decisions already made for the stall are
+in [docs/learning-rules.md](docs/learning-rules.md#the-fruit-stall-decided-not-built).
+
+The stall's living background is six layers on one 1920×1080 canvas,
+horizon at 55% (y 594), from back to front: sky, far, palms, ground, stall,
+near. Keep all six: the stall is its own layer because it is what the child
+drags onto, at its own depth.
+
+| Layer | Placement |
+|---|---|
+| sky | fills the frame |
+| far | full width, bottom edge at y 608 |
+| palms | 430px tall, centred at 30% of the width, bottom at y 640 |
+| ground | full width, bottom at the canvas bottom |
+| stall | 700px tall, centred at 52% of the width, bottom at 99% of the height |
+| near | 138% of the width, centred, bottom 70px below the frame |
+
+Parallax runs from slowest to fastest: sky, far, palms, ground, near. The
+stall barely moves, because it is the subject. The empty sand on the right
+is for the fruit seller and Blob.

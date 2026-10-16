@@ -1,11 +1,15 @@
 import ProtectedRoute from "../components/ProtectedRoute";
-import PlaySession from "./PlaySession";
+import PlaySessionShell from "./PlaySessionShell";
 
-/** One child's play session behind its sign-in check, lazy-loaded as one module. */
+/**
+ * One child's play session behind its sign-in check, lazy-loaded as one
+ * module. The steps inside it (PlayHub, PlayIntro, PlayAvatar, PlayName)
+ * are each their own chunk, see App.jsx.
+ */
 export default function ProtectedPlaySession() {
   return (
     <ProtectedRoute>
-      <PlaySession />
+      <PlaySessionShell />
     </ProtectedRoute>
   );
 }

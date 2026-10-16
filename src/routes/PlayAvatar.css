@@ -1,0 +1,253 @@
+/* ----------------------------------------------------------------------
+   The avatar screen: the open storybook, full screen.
+
+   Everything on the book is placed in percentages of the book picture, so
+   it scales with it. The page areas were measured from
+   /art/storybook-blank.webp (1920×1072), where the paper is plain:
+     left page   x 19.2–47.5%   y 16.8–84%
+     right page  x 55.6–80.7%   y 16.3–84%
+   A different book picture needs these re-measured.
+
+   Sizes inside the book use cqw (1% of the book's width), so text and gaps
+   grow and shrink with the book rather than with the window.
+   ---------------------------------------------------------------------- */
+.pm-book-screen {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--pm-purple-200);
+}
+
+/* The book picture again, blurred, behind the book: fills the edges at any
+   screen shape without a hard band of colour. */
+.pm-book-screen__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(18px);
+  transform: scale(1.08);
+}
+
+/* --- wide screens: the whole open book ---------------------------------- */
+.pm-book {
+  position: relative;
+  container-type: inline-size;
+  width: min(100vw, calc(100vh * 1920 / 1072));
+  width: min(100vw, calc(100dvh * 1920 / 1072));
+  aspect-ratio: 1920 / 1072;
+}
+
+.pm-book__paper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.pm-book__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+
+/* Left page: the six looks, three to a row. */
+.pm-book__looks {
+  position: absolute;
+  left: 19.2%;
+  top: 16.8%;
+  width: 28.3%;
+  height: 67.2%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 1.1cqw;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Right page: the question, the chosen Zizi standing on the page, and the
+   button under her. */
+.pm-book__title {
+  position: absolute;
+  left: 55.6%;
+  top: 16.3%;
+  width: 25.1%;
+  font-family: var(--pm-font-display);
+  font-size: 2.3cqw;
+  font-weight: 400;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--pm-ink);
+}
+
+/* The single sized cell (rather than grid's default auto row) is what lets
+   the picture's height: 100% mean "the height of this box". */
+.pm-book__preview {
+  position: absolute;
+  left: 55.6%;
+  top: 24%;
+  width: 25.1%;
+  height: 42%;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+}
+
+.pm-book__preview img {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  animation: pm-look-in 0.35s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-look-in {
+  from {
+    opacity: 0;
+    transform: translateY(4%) scale(0.96);
+  }
+}
+
+/* Held to the foot of the page, so on a short screen the button (which
+   keeps its full tap size) still ends on the paper, and an error message
+   grows upwards rather than off the page. */
+.pm-book__actions {
+  position: absolute;
+  left: 55.6%;
+  bottom: 18%;
+  width: 25.1%;
+  display: grid;
+  justify-items: center;
+  gap: 0.8cqw;
+}
+
+.pm-book__error {
+  padding: 8px 14px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-error-bg);
+  font-size: var(--pm-small);
+  font-weight: 600;
+  text-align: center;
+  color: var(--pm-error);
+}
+
+/* --- one look: a big target, the whole figure visible ---------------------- */
+.pm-look {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  cursor: pointer;
+}
+
+.pm-look__face {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: end center;
+  width: 100%;
+  height: 100%;
+  border: 0.25cqw solid transparent;
+  border-radius: 1.2cqw;
+  background: color-mix(in srgb, var(--pm-white) 55%, transparent);
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    background-color 0.2s var(--pm-ease), box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-look__face img {
+  width: auto;
+  height: 94%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.pm-look:hover .pm-look__face {
+  transform: translateY(-0.3cqw);
+}
+
+/* Orange marks the chosen one, as it does across the product. */
+.pm-look__input:checked + .pm-look__face {
+  border-color: var(--pm-orange);
+  background: var(--pm-orange-100);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-look__input:focus-visible + .pm-look__face {
+  outline: 3px solid var(--pm-purple-600);
+  outline-offset: 3px;
+}
+
+/* --- phones held upright: the left page alone ----------------------------
+   The crop shows the book picture from x 14% to 50.5% and y 9% to 91%
+   (700×879 of the 1920×1072 image), which is the left page with a little
+   margin. The question goes above it and the button below it, outside the
+   page; the looks get the whole page. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-book {
+    width: min(calc(100vw - 32px), calc((100vh - 220px) * 700 / 879));
+    width: min(calc(100vw - 32px), calc((100dvh - 220px) * 700 / 879));
+    aspect-ratio: 700 / 879;
+  }
+
+  .pm-book__paper {
+    border-radius: 2cqw;
+    box-shadow: var(--pm-shadow-lg);
+  }
+
+  /* 1 / 0.365 = 273.97% wide; 1 / 0.82 = 121.95% tall;
+     shifted left by 14 / 36.5 and up by 9 / 82 of the crop. */
+  .pm-book__art {
+    left: -38.36%;
+    top: -10.98%;
+    width: 273.97%;
+    height: 121.95%;
+  }
+
+  /* The left page's plain paper within this crop:
+     x (19.2 − 14) / 36.5 = 14.2% to 91.8%, y (16.8 − 9) / 82 = 9.5% to 91.5%. */
+  .pm-book__looks {
+    left: 14.2%;
+    top: 9.5%;
+    width: 77.6%;
+    height: 82%;
+    gap: 2.6cqw;
+  }
+
+  .pm-look__face {
+    border-width: 0.6cqw;
+    border-radius: 3cqw;
+  }
+
+  .pm-look:hover .pm-look__face {
+    transform: translateY(-0.8cqw);
+  }
+
+  .pm-book__title {
+    left: 0;
+    top: auto;
+    bottom: calc(100% + 14px);
+    width: 100%;
+    font-size: clamp(1.5rem, 7.5cqw, 2.25rem);
+  }
+
+  /* The chosen look is already marked on the page; no room for a second
+     Zizi beside it. */
+  .pm-book__preview {
+    display: none;
+  }
+
+  .pm-book__actions {
+    left: 0;
+    top: calc(100% + 16px);
+    bottom: auto;
+    width: 100%;
+    gap: 10px;
+  }
+}

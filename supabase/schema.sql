@@ -1,5 +1,5 @@
 -- ======================================================================
--- Pebble Math — accounts, profiles and players
+-- Pebble Math — accounts, profiles, players and their progress
 --
 -- Paste this whole file into the Supabase SQL editor and run it once.
 -- It is safe to run again: every statement is idempotent.
@@ -27,10 +27,18 @@ create table if not exists public.profiles (
 --   display_name  what the child chose to be called (not a legal name)
 --   age_band      a coarse band, never a date of birth
 --   class_level   optional
---   character     the character the child picked on their first play, or
---                 null until they have (ids live in src/data/characters.js)
---   first_play_done  false until the child has watched the first-play
---                 introduction and reached the market
+--   monster       picked by the grown-up on the dashboard so they can tell
+--                 their children apart. Not the in-game character. Any
+--                 monster but purple, which is Blob, the guide
+--                 (src/data/monsters.js)
+--   character     the Zizi look the child picked, or null until they have
+--                 (ids live in src/data/zizi.js)
+--   game_name     the in-game name the child built by tapping two words
+--                 (src/data/gameNames.js). Never typed, so two words
+--                 only, letters and hyphens
+--   first_play_done  false until the child has watched (or skipped) the
+--                 opening film
+--   scene1_done   false until the child has played the market's first scene
 -- Band and class values are mirrored in src/data/players.js.
 -- ----------------------------------------------------------------------
 create table if not exists public.players (
@@ -41,18 +49,46 @@ create table if not exists public.players (
   class_level  text check (class_level in (
                  'primary-1', 'primary-2', 'primary-3',
                  'primary-4', 'primary-5', 'primary-6')),
+  monster      text check (monster in (
+                 'green', 'blue', 'orange', 'pink', 'yellow', 'teal', 'lavender')),
   character    text check (char_length(character) between 1 and 32),
+  game_name    text check (char_length(game_name) between 3 and 40
+                           and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$'),
   first_play_done boolean not null default false,
+  scene1_done  boolean not null default false,
   created_at   timestamptz not null default now()
 );
 
--- A players table made by an earlier version of this file has a required
--- character that defaulted to purple, and no first_play_done. These bring
--- it up to date; on a fresh table they change nothing.
+-- A players table made by an earlier version of this file is missing some
+-- of these columns, and may have a required character that defaulted to
+-- purple. These bring it up to date; on a fresh table they change nothing.
 alter table public.players
   add column if not exists first_play_done boolean not null default false;
+alter table public.players
+  add column if not exists scene1_done boolean not null default false;
+alter table public.players
+  add column if not exists monster text check (monster in (
+    'green', 'blue', 'orange', 'pink', 'yellow', 'teal', 'lavender'));
+alter table public.players
+  add column if not exists game_name text check (char_length(game_name) between 3 and 40
+                                                 and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$');
 alter table public.players alter column character drop not null;
 alter table public.players alter column character drop default;
+
+-- `character` used to hold a monster; it now holds a Zizi look. Move an old
+-- monster across to `monster`, where it still tells the grown-up which
+-- child is which (purple, Blob, isn't anyone's), then clear `character`
+-- so that child chooses a look on their next play.
+update public.players
+   set monster = character
+ where monster is null
+   and character in ('green', 'blue', 'orange', 'pink', 'yellow', 'teal', 'lavender');
+
+update public.players
+   set character = null
+ where character is not null
+   and character not in ('zizi-headband', 'zizi-cornrows', 'zizi-afro',
+                         'zizi-puffs', 'zizi-twists', 'zizi-braids');
 
 create index if not exists players_profile_id_idx on public.players (profile_id);
 
@@ -110,6 +146,39 @@ drop policy if exists "players_delete_own" on public.players;
 create policy "players_delete_own" on public.players
   for delete to authenticated
   using (profile_id = (select auth.uid()));
+
+
+-- ----------------------------------------------------------------------
+-- stall_progress: one row per market stall a child has cleared. The
+-- number of rows is how many locks on the map are open. Adding a stall
+-- is one more id in the check.
+--
+-- It has no profile_id of its own, so its policies check that the player
+-- the row is for belongs to the caller. There is no update or delete:
+-- a cleared stall stays cleared, and deleting the player removes its rows.
+-- ----------------------------------------------------------------------
+create table if not exists public.stall_progress (
+  player_id  uuid not null references public.players (id) on delete cascade,
+  stall_id   text not null check (stall_id in ('fruit-stall')),
+  cleared_at timestamptz not null default now(),
+  primary key (player_id, stall_id)
+);
+
+alter table public.stall_progress enable row level security;
+revoke all on public.stall_progress from anon;
+grant select, insert on public.stall_progress to authenticated;
+
+drop policy if exists "stall_progress_select_own" on public.stall_progress;
+create policy "stall_progress_select_own" on public.stall_progress
+  for select to authenticated
+  using (exists (select 1 from public.players p
+                 where p.id = player_id and p.profile_id = (select auth.uid())));
+
+drop policy if exists "stall_progress_insert_own" on public.stall_progress;
+create policy "stall_progress_insert_own" on public.stall_progress
+  for insert to authenticated
+  with check (exists (select 1 from public.players p
+                      where p.id = player_id and p.profile_id = (select auth.uid())));
 
 
 -- ----------------------------------------------------------------------

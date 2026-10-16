@@ -1,0 +1,141 @@
+/* Full screen, on the lavender wash, Zizi beside her new name. */
+.pm-name-screen {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 4vw, 48px) var(--pm-gutter);
+  background: radial-gradient(
+      70% 55% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      transparent 70%
+    ),
+    var(--pm-purple-50);
+}
+
+.pm-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 64px);
+  width: 100%;
+  max-width: 980px;
+}
+
+.pm-name__zizi {
+  flex: none;
+  width: auto;
+  height: min(70vh, 560px);
+}
+
+.pm-name__builder {
+  display: grid;
+  justify-items: center;
+  gap: clamp(14px, 2.4vw, 22px);
+  text-align: center;
+}
+
+.pm-name__title {
+  margin-bottom: 4px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.12;
+  color: var(--pm-ink);
+}
+
+/* --- one word between two arrows ------------------------------------------ */
+.pm-word {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: min(440px, 86vw);
+  padding: 8px;
+  border: 2px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-white);
+  box-shadow: var(--pm-shadow-md);
+}
+
+/* 60px round targets: well past the 56px floor. */
+.pm-word__arrow {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pm-purple-100);
+  color: var(--pm-purple-700);
+  cursor: pointer;
+  transition: transform 0.18s var(--pm-ease-pop), background-color 0.18s var(--pm-ease);
+}
+
+.pm-word__arrow svg {
+  width: 28px;
+  height: 28px;
+}
+
+.pm-word__arrow:hover {
+  background: var(--pm-purple-200);
+}
+
+.pm-word__arrow:active {
+  transform: scale(0.92);
+}
+
+.pm-word__text {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--pm-ink);
+  overflow-wrap: anywhere;
+  animation: pm-word-pop 0.28s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-word-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.pm-name__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.pm-name__shuffle-icon {
+  display: inline-block;
+  width: 1.35em;
+  height: 1.35em;
+  margin-right: 0.4em;
+  vertical-align: -0.3em;
+}
+
+.pm-name__error {
+  padding: 8px 14px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-error-bg);
+  font-size: var(--pm-small);
+  font-weight: 600;
+  color: var(--pm-error);
+}
+
+/* A phone held upright: Zizi above, smaller, then the name. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-name {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pm-name__zizi {
+    height: min(34vh, 320px);
+  }
+}

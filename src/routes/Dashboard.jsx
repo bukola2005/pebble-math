@@ -206,9 +206,9 @@ export default function Dashboard() {
               <p className="pm-dash__empty-title">No players yet.</p>
               <p className="pm-dash__muted">
                 No child has been added to this account. Add one with a
-                nickname and an age band; they pick their own character the
-                first time they play. Children never need an email or a
-                password.
+                nickname, an age band and a monster so you can tell them
+                apart. In the game every child plays as Zizi. Children never
+                need an email or a password.
               </p>
               <CTAButton ref={addButton} onClick={() => setAdding(true)}>
                 Add a player

@@ -1,4 +1,5 @@
-/* Carried over from the retired Get Started flow's last screen. */
+/* The end of what's built so far: the child's Zizi, and a plain word that
+   the market comes next. */
 .pm-market {
   display: grid;
   justify-items: start;
@@ -9,16 +10,17 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 20px 30px 20px 20px;
+  padding: 16px 30px 16px 20px;
   border: 1px solid var(--pm-line-purple);
   border-radius: var(--pm-r-lg);
   background: var(--pm-white);
 }
 
-.pm-market__avatar {
-  width: 84px;
-  height: 84px;
-  font-size: 2.25rem;
+/* The child's Zizi, standing in the card. */
+.pm-market__zizi {
+  flex: none;
+  width: auto;
+  height: 132px;
 }
 
 .pm-market__name {

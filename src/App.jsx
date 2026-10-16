@@ -42,7 +42,10 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedDashboard />} />
             <Route path="/play" element={<ProtectedPlay />} />
-            <Route path="/play/:playerId" element={<ProtectedPlaySession />} />
+            {/* A child's play session. Its steps (/intro, /avatar, /name)
+                are routed inside PlaySessionShell, so that not even their
+                names ship with the landing page. */}
+            <Route path="/play/:playerId/*" element={<ProtectedPlaySession />} />
           </Route>
 
           {/* Anything else goes home rather than to a blank page. */}

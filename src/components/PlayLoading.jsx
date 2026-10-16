@@ -9,9 +9,10 @@ const MIN_VISIBLE_MS = 700;
 const sum = (list) => list.reduce((total, n) => total + n, 0);
 
 /**
- * The loading screen between "Who's playing?" and the market: the Pebble
- * Math art with a bar that fills as the session's files actually arrive.
- * There is no timer behind the bar and no fake progress.
+ * The loading screen between "Who's playing?" and the game: full screen,
+ * the moment Zizi and her mum are pulled apart, with a slim bar low down
+ * that fills as the next screens' files actually arrive. There is no timer
+ * behind the bar and no fake progress.
  *
  * `tasks` is a list of `{ weight, run(report, signal) }`, or null while the
  * list isn't known yet. `run` does the real work and calls
@@ -82,7 +83,7 @@ export default function PlayLoading({ tasks, onDone }) {
           src={LOADING_ART.src}
           width={LOADING_ART.width}
           height={LOADING_ART.height}
-          alt="Pebble Math"
+          alt="Zizi and her mum being pulled apart in the purple haze of the market"
           decoding="async"
           fetchPriority="high"
           onError={() => setArtFailed(true)}
@@ -93,9 +94,11 @@ export default function PlayLoading({ tasks, onDone }) {
           recognisable. This is the failure case, not a stand-in for the art. */}
       {artFailed && <p className="pm-loading__mark">Pebble Math</p>}
 
+      {/* Low and out of the way: the picture carries the moment. The word
+          "Loading" is there for screen readers only. */}
       <div className="pm-loading__status">
-        <p className="pm-loading__label" id="pm-loading-label">
-          Loading…
+        <p className="pm-sr-only" id="pm-loading-label">
+          Loading
         </p>
         <div
           className="pm-loading__track"

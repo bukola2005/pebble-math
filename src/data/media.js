@@ -6,11 +6,26 @@
  * the box before the file arrives.
  */
 
-/** The loading screen art. Supplied by the designer; see README. */
+/**
+ * The loading screen art: Zizi and her mother being pulled apart in the
+ * hazy market. The situation tells a child what the game is about before
+ * a word is read. A frame from the film, so 1280×720 is its full size.
+ */
 export const LOADING_ART = {
-  src: "/loading/pebble-loading.webp",
-  width: 1600,
-  height: 893,
+  src: "/loading/hands-apart.webp",
+  width: 1280,
+  height: 720,
+};
+
+/**
+ * The open storybook behind the avatar screen. Where its pages sit is
+ * measured from this exact image and written in routes/PlayAvatar.css; a
+ * different book picture would need those numbers re-measured.
+ */
+export const STORYBOOK = {
+  src: "/art/storybook-blank.webp",
+  width: 1920,
+  height: 1072,
 };
 
 /**

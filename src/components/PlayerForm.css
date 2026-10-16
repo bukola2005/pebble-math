@@ -134,3 +134,53 @@
   outline: 3px solid var(--pm-purple-600);
   outline-offset: 3px;
 }
+
+/* --- monster picker: seven round faces, wrapping as space allows ------- */
+.pm-monsters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: clamp(8px, 2vw, 14px);
+  max-width: 520px;
+}
+
+.pm-monster {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.pm-monster__face {
+  display: grid;
+  place-items: end center;
+  aspect-ratio: 1;
+  width: 100%;
+  border: 2px solid var(--pm-line-purple);
+  border-radius: 50%;
+  background: var(--pm-purple-50);
+  overflow: hidden;
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-monster__face img {
+  width: 92%;
+  height: auto;
+  object-fit: contain;
+}
+
+.pm-monster:hover .pm-monster__face {
+  transform: translateY(-3px);
+  border-color: var(--pm-purple-400);
+}
+
+/* Orange marks the chosen one, as it does across the product. */
+.pm-monster__input:checked + .pm-monster__face {
+  border-color: var(--pm-orange);
+  background: var(--pm-orange-100);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-monster__input:focus-visible + .pm-monster__face {
+  outline: 3px solid var(--pm-purple-600);
+  outline-offset: 3px;
+}

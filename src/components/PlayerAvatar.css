@@ -8,7 +8,7 @@
   background: var(--pm-purple-50);
 }
 
-/* No character yet: a plain lavender circle and the name's first letter. */
+/* No monster: a plain lavender circle and the name's first letter. */
 .pm-avatar--none {
   display: grid;
   place-items: center;
