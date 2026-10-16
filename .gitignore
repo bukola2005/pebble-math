@@ -10,3 +10,6 @@ source-art/
 # Local environment — holds the Supabase project URL and key
 .env.local
 .env.*.local
+
+# Local Claude Code preview settings, different on every machine
+.claude/launch.json
