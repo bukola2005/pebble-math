@@ -7,8 +7,8 @@ const AuthContext = createContext(null);
 // only ever rendered by routes/AuthShell.jsx after it has checked that.
 
 /*
-  signUp, signIn and signOut return Supabase's own `{ data, error }` rather
-  than throwing, so each page decides what to show. They don't touch React
+  Every action below returns Supabase's own `{ data, error }` rather than
+  throwing, so each page decides what to show. They don't touch React
   state themselves: when they succeed, Supabase fires an auth event and the
   listener below updates `session`. That keeps one source of truth.
 */
@@ -33,6 +33,20 @@ const signIn = ({ email, password }) =>
 // "local" ends this browser's session only. The default, "global", would
 // also sign the same parent out of every other device they use.
 const signOut = () => supabase.auth.signOut({ scope: "local" });
+
+// Emails a link for setting a new password. Supabase answers the same way
+// whether or not the address has an account, so this can't be used to find
+// out who is signed up. The link lands on /reset-password, and that address
+// must be in the Redirect URLs list in the Supabase dashboard, or Supabase
+// sends people to the Site URL instead.
+const requestPasswordReset = (email) =>
+  supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+
+// Sets a new password for whoever is signed in. Only the reset page calls
+// it, and only after arriving from a reset link (see routes/ResetPassword.jsx).
+const updatePassword = (password) => supabase.auth.updateUser({ password });
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -72,6 +86,8 @@ export function AuthProvider({ children }) {
     signUp,
     signIn,
     signOut,
+    requestPasswordReset,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

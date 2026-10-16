@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import AuthField from "../components/AuthField";
 import CTAButton from "../components/CTAButton";
@@ -32,12 +32,37 @@ function validate({ role, fullName, email, password }) {
   return errors;
 }
 
+/*
+  Did sign-up land on an address that already has an account?
+
+  Supabase doesn't say so outright, to stop sign-up being used to find out
+  who is registered. What it does instead (internal/api/signup.go in
+  supabase/auth):
+    - Email and phone confirmation both on (this project's setting): a 200
+      with a stand-in user whose `identities` list is empty. A real new
+      account always comes back with one identity, its email.
+    - Either confirmation off: an error, user_already_exists.
+  If Supabase ever changes the shape, this simply stops matching and the
+  page falls back to "check your email", which is wrong but harmless.
+
+  An address that signed up before but never confirmed is a third case:
+  Supabase resends the confirmation, keeps the old password, and returns the
+  real user, so it can't be told apart here. The "check your email" screen
+  says what that means.
+*/
+function alreadyRegistered(data, error) {
+  if (error) return error.code === "user_already_exists" || error.code === "email_exists";
+  const identities = data?.user?.identities;
+  return Array.isArray(identities) && identities.length === 0;
+}
+
 /**
  * A parent or teacher creates the account. Children never sign up: they
  * are added as players under it later, with no email or password of their own.
  */
 export default function SignUp() {
   const { session, signUp } = useAuth();
+  const navigate = useNavigate();
   const [values, setValues] = useState({
     role: "",
     fullName: "",
@@ -49,6 +74,8 @@ export default function SignUp() {
   const [submitting, setSubmitting] = useState(false);
   // Set to the address once sign-up worked but still needs confirming.
   const [confirmingEmail, setConfirmingEmail] = useState("");
+  // Set to the address when it turns out to have an account already.
+  const [existingEmail, setExistingEmail] = useState("");
 
   // Already signed in, or just signed up with confirmation switched off:
   // there's nothing to do here. Sign-up creates the session through the
@@ -86,7 +113,9 @@ export default function SignUp() {
         role: values.role,
       });
 
-      if (error) {
+      if (alreadyRegistered(data, error)) {
+        setExistingEmail(values.email.trim());
+      } else if (error) {
         setFormError(authErrorMessage(error));
       } else if (!data.session) {
         // Supabase's "confirm email" setting is on: the account exists but
@@ -101,12 +130,49 @@ export default function SignUp() {
     }
   };
 
+  if (existingEmail) {
+    return (
+      <AuthLayout
+        title="This email already has an account."
+        footer={
+          <button
+            type="button"
+            className="pm-auth__link pm-auth__link-button"
+            onClick={() => setExistingEmail("")}
+          >
+            Use a different email
+          </button>
+        }
+      >
+        <p className="pm-auth__sub">
+          <strong>{existingEmail}</strong> is already signed up for Pebble
+          Math. Signing up again doesn’t change its password, so sign in with
+          the password you chose before.
+        </p>
+        <div className="pm-auth__choices">
+          <CTAButton
+            onClick={() => navigate("/signin", { state: { email: existingEmail } })}
+          >
+            Sign in
+          </CTAButton>
+          <Link
+            className="pm-auth__link"
+            to="/forgot-password"
+            state={{ email: existingEmail }}
+          >
+            Forgot your password?
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
+
   if (confirmingEmail) {
     return (
       <AuthLayout
         title="Check your email."
         footer={
-          <Link className="pm-auth__link" to="/signin">
+          <Link className="pm-auth__link" to="/signin" state={{ email: confirmingEmail }}>
             Back to sign in
           </Link>
         }
@@ -116,8 +182,9 @@ export default function SignUp() {
           confirm your account, then sign in.
         </p>
         <p className="pm-auth__aside">
-          Nothing after a few minutes? Check your spam folder. If you already
-          have an account with this address, you can sign in instead.
+          Nothing after a few minutes? Check your spam folder. If you signed up
+          with this email before but never opened the link, this is a new copy
+          of it, and your password is still the one you chose the first time.
         </p>
       </AuthLayout>
     );

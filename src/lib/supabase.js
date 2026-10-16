@@ -1,3 +1,6 @@
+// Must stay the first import: it reads the emailed link's details from the
+// address bar before the client below clears them.
+import "./authRedirect";
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;

@@ -1,8 +1,10 @@
 # Pebble Math — website
 
-Phase 1 (visual foundation + hero), Phase 2 (the landing page),
-Phase 3 (the Get Started flow, on local state only) and Phase 4 (adult
-accounts: sign up, sign in, dashboard — see [Accounts](#accounts)).
+Phase 1 (visual foundation + hero), Phase 2 (the landing page), Phase 4
+(adult accounts: sign up, sign in, dashboard — see [Accounts](#accounts))
+and Phase 5 (the way in: Get Started → sign-up, and a child's play session
+— see [Getting in](#getting-in)). Phase 3's local-only Get Started flow is
+retired.
 
 ## Run it
 
@@ -25,19 +27,26 @@ supabase/schema.sql         tables, RLS and the sign-up trigger — paste into S
 .env.local.example          the two variables the app needs (copy to .env.local)
 src/
   main.jsx                  BrowserRouter around the app
-  App.jsx                   the route table; the account pages are lazy-loaded
+  App.jsx                   the route table, error boundary and scroll reset;
+                            every page but the landing page is lazy-loaded
   routes/
     Home.jsx                the landing page
-    AuthShell.jsx           wraps /signup, /signin and /dashboard in AuthProvider;
+    AuthShell.jsx           wraps every account and play page in AuthProvider;
                             shows "accounts aren't available" if Supabase isn't set up
     SignUp.jsx              parent / teacher creates the account
     SignIn.jsx              sign in, then back to where they were going
-    ProtectedDashboard.jsx  the dashboard behind its sign-in check
-    Dashboard.jsx           greeting + the account's players: list, add, delete
+    ForgotPassword.jsx      emails a reset link; never says whether an address exists
+    ResetPassword.jsx       where the reset link lands: choose a new password
+    Dashboard.jsx           greeting, email, the account's players: add, delete, Play
+    Play.jsx                "Who's playing?" — the child picks their own card
+    PlaySession.jsx         loading → (first play: character → film → welcome) → market
+    Protected*.jsx          each page above behind its sign-in check
   context/AuthContext.jsx   AuthProvider + useAuth: session, user, loading, signUp, signIn, signOut
   lib/
     supabase.js             the one Supabase client; null if the env is missing
+    authRedirect.js         what an emailed link put in the address bar, read before supabase-js clears it
     players.js              every query on the players table, and its error messages
+    preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     validation.js           password length, email check, name limits
     useDocumentTitle.js     per-page browser-tab title
@@ -46,11 +55,16 @@ src/
   components/
     ProtectedRoute.jsx      loading state, then redirect to /signin with the
                             attempted location in router state
+    RouteErrorBoundary.jsx  a page that fails to load says so, with a reload
     PageLoading.jsx         the lavender "Loading…" page
     AuthLayout.jsx          the page sign-up and sign-in share
     AuthField.jsx           label + input + hint + inline error
-    PlayerForm.jsx          add a player: name, age band, class, character
+    PlayerForm.jsx          add a player: name, age band, optional class
     PlayerCard.jsx          one player, with an inline "delete?" confirm
+    PlayerAvatar.jsx        a player's character, or a neutral circle until they pick
+    PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
+    CharacterPicker.jsx     first play: the child picks one of the eight
+    MarketPlaceholder.jsx   "this is where the market opens"
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -64,19 +78,23 @@ src/
     CTASection.jsx          closing panel
     Footer.jsx
     SectionHeading.jsx      eyebrow + title + lead, used by every section
-    GetStartedFlow.jsx      the onboarding journey and all of its state
-    OnboardingStep.jsx      the shell each step shares
-    IntroSequence.jsx       the three-beat intro into the market
+    VideoIntro.jsx          the opening film, with skip and sound
+    IntroSequence.jsx       the short personalised welcome after the film
     Character.jsx           any character, reusable anywhere
     Apple.jsx               one apple, for demonstrations
     CTAButton.jsx           the only button (primary / secondary)
     GlassPanel.jsx          the translucent surface
-    VideoIntro.jsx          the opening film, with skip and sound
   data/characters.js        the eight characters, with intrinsic sizes
   data/players.js           age bands and class levels a player may hold
+  data/media.js             the agreed paths for the loading art and the film
 tools/og-image.mjs          regenerates the social card
-public/characters/*.webp    the eight characters, halos cleaned up
-public/video/intro.*        the opening film (webm + mp4 + poster)
+public/characters/*.webp    the eight playable characters, halos cleaned up
+public/characters/zizi.svg, mother-sheet.svg
+                            story characters; their use isn't decided yet
+public/video/pre-intro.*    the opening film (webm + mp4 + poster)
+public/loading/             the loading screen art goes here (see Getting in)
+public/art/*.webp           market map (day, misty) and a blank storybook; not used yet
+source-art/                 full-size masters, kept out of git and out of the build
 public/favicon.svg          the app mark
 public/og-image.png         the social sharing card
 public/robots.txt           crawling rules + sitemap pointer
@@ -87,8 +105,8 @@ Sections alternate white and `--pm-purple-50`, and every section headline
 goes through `SectionHeading` so the vertical rhythm stays the same.
 
 Each component keeps its CSS in a file next to it. No CSS framework, no
-state library. The onboarding flow uses local state only; the only thing
-that talks to a backend is the adult account (Supabase, below).
+state library. The only thing that talks to a backend is the adult
+account and the players under it (Supabase, below).
 
 ## Before you deploy
 
@@ -104,8 +122,8 @@ node tools/og-image.mjs
 Run it from a machine that can load the brand fonts, or the card's text
 falls back and looks off-brand.
 
-Two more things for the host. `/signup`, `/signin` and `/dashboard` are
-client-side routes, so the host must serve `index.html` for unknown paths
+Two more things for the host. `/signup`, `/signin`, `/dashboard` and
+`/play` are client-side routes, so the host must serve `index.html` for unknown paths
 (a rewrite to `/index.html`) or a refresh on those URLs will 404. And
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are read at build
 time, so set them in the host's build environment. A build without them still
@@ -153,42 +171,61 @@ high priority, everything below the fold lazily, and `img { height:
 auto }` in `base.css` stops those attributes from stretching anything.
 
 **Restraint.** The market loop pauses whenever the scene scrolls out of
-view, and the onboarding flow is fetched on the click that opens it
-rather than shipped with the landing page.
+view, and every page but the landing page is fetched only when someone
+opens it.
 
 **Honesty.** No testimonials, user numbers, learning statistics, awards
 or partnerships anywhere on the page. The parent section says plainly
 that the game is in development.
 
-## The Get Started flow
-
-`routes/Home.jsx` holds one piece of state — whether the flow is open —
-and every Get Started button calls it. `GetStartedFlow.jsx` holds the rest:
+## Getting in
 
 ```
-role → played before? → name → age (+ optional class) → character
-     → film → intro → the market
+Grown-up   Get Started → /signup → confirm email → /signin → /dashboard
+           add a child (name, age band, optional class) → Play
+
+Child      /play "Who's playing?" → tap own card → /play/:id
+           loading → first play only: pick a character → the film → welcome
+                   → the market ("this is where the market opens")
 ```
 
-"Yes, I've played" leads to a screen that says plainly there is no
-account to return to yet, rather than pretending to log anyone in.
+Every Get Started button on the landing page goes to `/signup`. There is no
+student sign-up: a child can't own an account, so the grown-up creates one
+and adds the child from the dashboard.
 
-Parents and teachers get their own short screen instead of the child
-steps, and can drop into the student path from there.
+**"Who's playing?"** is built for a child: one big card per child (their
+character, or a neutral circle with their initial until they've picked
+one), nothing to type, no sign-out, no settings. The device stays signed in
+as the grown-up. A small link in the corner goes back to the dashboard.
 
-Nothing is stored and nothing is sent: no account, no database, no
-network call. A child's name lives in React state until the tab closes.
-When this needs to become real, the step components stay and only
-`GetStartedFlow`'s state changes.
+**The loading screen** shows the art at `public/loading/pebble-loading.webp`
+with a bar that fills only as files actually arrive (`lib/preload.js`): on a
+first play, the eight characters, the film's poster and the film itself;
+after that, just the child's character. It stays up at least 700ms so a
+cached load doesn't flash. The film is downloaded once and played from that
+copy, so it is never fetched twice.
 
-The film plays muted (browsers refuse to autoplay sound) with a sound
-toggle and a skip. `prefers-reduced-motion` shows the poster frame and
-a play button instead of starting on its own. WebM is offered first and
-MP4 second, so Safari and older browsers still get it.
+**First play** (`players.first_play_done` is false): the child picks one of
+the eight characters, which is saved at once; then the film plays (muted,
+since browsers refuse to autoplay sound, with a sound toggle and a Skip a
+child can find); then a welcome by name of under three seconds; then the
+market. `first_play_done` is saved when they reach the market. Every play
+after that goes straight from loading to the market.
 
-The intro timing is one constant, `BEAT_MS` in `IntroSequence.jsx`.
-`MarketScene` takes `reveal` to build itself up piece by piece and
-`character` to swap in the player's choice.
+`prefers-reduced-motion` gets the film's poster frame and a play button
+instead of autoplay, a welcome that is already finished, and a bar that
+jumps instead of gliding.
+
+The film is 22 seconds, 1280×720, encoded from the master in `source-art/`:
+
+| File | Size | Encoding |
+|---|---|---|
+| `pre-intro.webm` | 1.68 MB | VP9 two-pass, 600 kbps (max 900k), Opus 48 kbps |
+| `pre-intro.mp4` | 1.86 MB | H.264 Main@3.1, CRF 31, max 900k, AAC-LC 64 kbps, `+faststart` |
+| `pre-intro-poster.webp` | 55 KB | the frame at 1.0s, quality 74 |
+
+A child downloads one of the two, never both. Keep re-encodes under 2 MB
+each: the loading screen waits for the film on a first play.
 
 ## Accounts
 
@@ -202,12 +239,13 @@ picks their profile from a list.
 
 ```
 auth.users ─ profiles ─ players
- (adult)     name, role   display name, age band,
-                          class (optional), character
+ (adult)     name, role   display name, age band, class (optional),
+                          character (null until picked), first_play_done
 ```
 
 - `players` holds a display name the child chose, a **coarse age band**
-  (never a date of birth), an optional class, and a character. Nothing
+  (never a date of birth), an optional class, the character the child
+  picked on their first play, and whether that first play is done. Nothing
   else. Do not add an email or password column to it. If a change seems to
   need one, stop and rethink the change.
 - Row Level Security is on for both tables, and the policies are scoped to
@@ -217,21 +255,45 @@ auth.users ─ profiles ─ players
   up. The sign-up form sends `role` and `full_name` as user metadata, and
   the trigger checks them rather than trusting them.
 
-Routes: `/` landing, `/signup` and `/signin` public, `/dashboard` protected.
-A signed-out visit to `/dashboard` goes to `/signin` with the attempted
-location in router state, and sign-in sends them back.
+Routes: `/` landing; `/signup`, `/signin`, `/forgot-password` and
+`/reset-password` public; `/dashboard`, `/play` and `/play/:playerId`
+protected. A signed-out visit to a protected page goes to `/signin` with the
+attempted location in router state, and sign-in sends them back.
 
-**The landing page ships no account code.** `AuthProvider` wraps only those
-three routes (`routes/AuthShell.jsx`), and the pages are `React.lazy`, so
+**Signing up with an address that already has an account** says so, with
+Sign in and Forgot-your-password links. Supabase hides this on purpose: with
+email confirmation on it answers 200 with a stand-in user whose `identities`
+list is empty (with it off, a `user_already_exists` error). `SignUp.jsx`
+checks for both. Supabase's source for this is `internal/api/signup.go` in
+supabase/auth. An address that signed up but never confirmed gets the
+confirmation email again and keeps its first password; the "check your
+email" screen says so.
+
+**Forgotten passwords.** "Forgot your password?" on sign-in →
+`/forgot-password` emails a reset link → `/reset-password` sets the new one.
+The request page reads the same whether or not the address has an account
+(Supabase answers an unknown address exactly as a real one). The reset page
+only offers the form when it was opened from a reset link
+(`lib/authRedirect.js` reads that from the address bar before supabase-js
+clears it), so a child on a device signed in as the grown-up can't change
+the grown-up's password by going to `/reset-password`.
+
+**The landing page ships no account code.** `AuthProvider` wraps only the
+account and play routes (`routes/AuthShell.jsx`), and the pages are `React.lazy`, so
 `supabase-js` is a separate chunk fetched only when someone opens one of
 them. Keep it that way: don't import anything from `lib/supabase.js`,
 `context/AuthContext.jsx` or the account pages into `Home.jsx` or the
 components it uses, or it lands back in the main bundle.
 
 **The dashboard.** A parent or teacher lists, adds and deletes the players
-under their account. A delete asks first, and counts as done only when the
-database confirms a row was removed. Picking a player to play is not built
-yet; the list is only a list.
+under their account, and sees which account they're in (the email, small,
+in the header). A delete asks first, and counts as done only when the
+database confirms a row was removed; saving a character and finishing a
+first play are checked the same way. **Play** opens "Who's playing?".
+
+**When a page fails to load** (a dropped connection, or a new version of
+the site going live while a tab is open), `RouteErrorBoundary` shows a plain
+message with a reload button instead of a white screen.
 
 ### Setting up Supabase
 
@@ -249,18 +311,26 @@ yet; the list is only a list.
    minimum password length to **8**. The form checks 8, but the default
    here is shorter, and only the server setting stops someone calling the
    API directly. Leave the other providers off.
-5. Authentication → URL Configuration: set **Site URL** to the address the
-   app runs on (`http://localhost:5173` in development) and add
-   `http://localhost:5173/**` and the production address to **Redirect
-   URLs**. Without this the link in the confirmation email goes to the wrong
-   place.
+5. Authentication → URL Configuration:
+   - **Site URL**: the address the app runs on. `http://localhost:5173`
+     while developing; your real domain (e.g. `https://pebblemath.com`) once
+     it is live.
+   - **Redirect URLs**: add `http://localhost:5173/**` and, when you have it,
+     `https://pebblemath.com/**`. The confirmation link returns to
+     `/dashboard` and the reset link to `/reset-password`; `/**` covers both.
+     An address that isn't on this list is ignored and Supabase sends people
+     to the Site URL instead, which for a reset link means landing on the
+     home page with nothing happening.
 6. "Confirm email" is on by default, and should stay on in production. While
    developing you can switch it off to skip the email step. The sign-up page
    handles both.
 
 ## Next
 
-The addition chapter itself: the first playable scene in the market.
-Before it: letting a child pick their player (the Get Started flow still
-makes a throwaway local one, and its age step still asks for a single year
-where players use bands) and password reset, which doesn't exist yet.
+The addition chapter itself: the first playable scene in the market, which
+replaces `MarketPlaceholder`. Also outstanding: the loading screen art
+(`public/loading/pebble-loading.webp`, 1600×893 WebP, ≤150 KB, without any
+painted "LOADING…" or bar), and Zizi: a playable character with several
+avatar designs, each with its own pick animation, which needs
+`characters.js` to grow from one picture per character to a list of designs
+(the mother is story artwork only and never goes in that file).

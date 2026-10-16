@@ -10,14 +10,11 @@
   box-shadow: var(--pm-shadow-sm);
 }
 
+/* Shape and fill come from PlayerAvatar.css; this sets the size. */
 .pm-player__avatar {
-  flex: none;
   width: 64px;
   height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: top center;
-  background: var(--pm-purple-50);
+  font-size: 1.75rem;
 }
 
 /* Takes the free space, so the Delete button sits at the right edge. */

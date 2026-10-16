@@ -93,6 +93,37 @@
   color: var(--pm-ink);
 }
 
+/* "Forgot your password?" under the password field: small, pulled up close
+   to the field it belongs to, with padding for a comfortable tap target. */
+.pm-auth__aside-link {
+  margin-top: -10px;
+  font-size: var(--pm-small);
+}
+
+.pm-auth__aside-link .pm-auth__link {
+  display: inline-block;
+  padding-block: 6px;
+}
+
+/* A button that does something on this page, dressed as a text link. */
+.pm-auth__link-button {
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Two choices side by side: the main one as a button, the other a link. */
+.pm-auth__choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  margin-top: 24px;
+}
+
 .pm-auth__footer {
   margin-top: 22px;
   text-align: center;

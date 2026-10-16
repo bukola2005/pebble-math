@@ -1,0 +1,21 @@
+.pm-avatar {
+  display: block;
+  flex: none;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+  background: var(--pm-purple-50);
+}
+
+/* No character yet: a plain lavender circle and the name's first letter. */
+.pm-avatar--none {
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--pm-purple-300);
+  background: var(--pm-purple-100);
+  font-family: var(--pm-font-display);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--pm-purple-700);
+}

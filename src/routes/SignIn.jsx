@@ -21,7 +21,12 @@ function validate({ email, password }) {
 export default function SignIn() {
   const { session, signIn } = useAuth();
   const location = useLocation();
-  const [values, setValues] = useState({ email: "", password: "" });
+  // Arriving from "already has an account" or a reset email, the address
+  // comes along in router state so it doesn't need typing twice.
+  const [values, setValues] = useState({
+    email: location.state?.email ?? "",
+    password: "",
+  });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -115,6 +120,16 @@ export default function SignIn() {
           onChange={change("password")}
           error={errors.password}
         />
+
+        <p className="pm-auth__aside-link">
+          <Link
+            className="pm-auth__link"
+            to="/forgot-password"
+            state={{ email: values.email.trim() }}
+          >
+            Forgot your password?
+          </Link>
+        </p>
 
         {formError && (
           <p className="pm-auth__alert" role="alert">

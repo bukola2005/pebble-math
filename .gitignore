@@ -3,6 +3,10 @@ node_modules
 # Build output
 dist
 
+# Full-size masters of artwork and video. Too big to commit; the web-sized
+# copies live in public/.
+source-art/
+
 # Local environment — holds the Supabase project URL and key
 .env.local
 .env.*.local

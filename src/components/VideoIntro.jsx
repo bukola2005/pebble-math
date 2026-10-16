@@ -1,22 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import CTAButton from "./CTAButton";
+import { INTRO_FILM } from "../data/media";
 import "./VideoIntro.css";
 
-/* WebM first for the browsers that take it, MP4 for Safari and
-   anything older. Same 10 seconds either way. */
-const WEBM = "/video/intro.webm";
-const MP4 = "/video/intro.mp4";
-const POSTER = "/video/intro-poster.webp";
-
 /**
- * The opening film: the market, the logo and the characters arriving.
- * It plays once, on the way into the game.
+ * The opening film, on a child's first play: the girl and her mother in the
+ * market, the purple mist, and the Pebble characters arriving. 22 seconds.
  *
- * Browsers only autoplay video that is muted, so it starts silent with
- * a sound toggle. Anyone can skip, and anyone who has asked for less
- * motion gets the still frame and a play button instead.
+ * `src` is the copy the loading screen already downloaded (a blob: URL), so
+ * it plays straight from memory. Without one, the browser picks WebM or MP4
+ * from INTRO_FILM itself.
+ *
+ * Browsers only autoplay video that is muted, so it starts silent with a
+ * sound toggle. Anyone can skip at any point, and anyone who has asked for
+ * less motion gets the still frame and a play button instead. If the film
+ * can't be played at all, it moves on rather than leaving a child stuck.
  */
-export default function VideoIntro({ onDone }) {
+export default function VideoIntro({ onDone, src }) {
   const video = useRef(null);
   const [sound, setSound] = useState(false);
 
@@ -45,27 +45,40 @@ export default function VideoIntro({ onDone }) {
     setSound(!el.muted);
   };
 
+  const lastSource = INTRO_FILM.sources.length - 1;
+
   return (
     <div className="pm-video">
       <div className="pm-video__frame">
         <video
           ref={video}
           className="pm-video__el"
-          poster={POSTER}
-          width="1280"
-          height="720"
+          src={src}
+          poster={INTRO_FILM.poster}
+          width={INTRO_FILM.width}
+          height={INTRO_FILM.height}
           muted
           playsInline
           preload="auto"
           onEnded={onDone}
+          // Fires for a broken `src`.
+          onError={onDone}
         >
-          <source src={WEBM} type="video/webm" />
-          <source src={MP4} type="video/mp4" />
+          {!src &&
+            INTRO_FILM.sources.map((source, i) => (
+              <source
+                key={source.src}
+                src={source.src}
+                type={source.type}
+                // Only once every source has failed is there nothing to play.
+                onError={i === lastSource ? onDone : undefined}
+              />
+            ))}
         </video>
 
         {waiting && (
           <button type="button" className="pm-video__play" onClick={play}>
-            <span className="pm-sr-only">Play the Pebble Math intro</span>
+            <span className="pm-sr-only">Play the Pebble Math film</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
             </svg>
@@ -77,7 +90,8 @@ export default function VideoIntro({ onDone }) {
         <button type="button" className="pm-video__sound" onClick={toggleSound}>
           {sound ? "Turn sound off" : "Turn sound on"}
         </button>
-        <CTAButton variant="secondary" size="sm" onClick={onDone}>
+        {/* Full size, not the small button: this one is for a child to find. */}
+        <CTAButton variant="secondary" onClick={onDone}>
           Skip intro
         </CTAButton>
       </div>

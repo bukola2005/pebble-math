@@ -1,0 +1,51 @@
+/* Every step of a play session sits on the same lavender wash. */
+.pm-session {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: clamp(24px, 5vw, 56px) var(--pm-gutter);
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      transparent 70%
+    ),
+    var(--pm-purple-50);
+}
+
+/* Takes focus when each step begins (see PlaySession); the step itself is
+   the signal, so no ring around the whole page. */
+.pm-session__stage {
+  width: 100%;
+  max-width: 680px;
+  outline: none;
+}
+
+/* The film gets more room than a question does. */
+.pm-session__stage--video {
+  max-width: 1000px;
+}
+
+.pm-session__message {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.pm-session__title {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-session__text {
+  font-size: var(--pm-body);
+  color: var(--pm-ink-muted);
+}
+
+.pm-session__dev {
+  max-width: 36rem;
+  font-size: var(--pm-micro);
+  color: var(--pm-ink-muted);
+}

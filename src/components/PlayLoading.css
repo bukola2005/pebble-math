@@ -1,0 +1,82 @@
+/* The art fills the screen edge to edge. Behind it, while it loads, the
+   same lavender wash as the rest of the product. */
+.pm-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      var(--pm-purple-50) 70%
+    ),
+    var(--pm-purple-50);
+}
+
+/* `cover` keeps the art's proportions at any screen shape; the logo sits in
+   the middle of the picture, so it survives the crop on a phone held
+   upright. The width/height attributes give the box its ratio up front. */
+.pm-loading__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pm-loading__mark {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--pm-ink);
+}
+
+/* "Loading…" and the bar, on a small glass panel so they stay readable
+   over any part of the art. */
+.pm-loading__status {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(40px, 11vh, 112px);
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(440px, calc(100% - 2 * var(--pm-gutter)));
+  padding: 16px 22px 20px;
+  border: 1px solid var(--pm-glass-border);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(var(--pm-glass-blur));
+  backdrop-filter: blur(var(--pm-glass-blur));
+  box-shadow: var(--pm-shadow-md);
+}
+
+.pm-loading__label {
+  font-family: var(--pm-font-display);
+  font-size: 1.375rem;
+  font-weight: 400;
+  color: var(--pm-purple-700);
+}
+
+.pm-loading__track {
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-white);
+  box-shadow: inset 0 0 0 2px var(--pm-purple-300);
+}
+
+/* Scaled rather than resized, so the browser doesn't re-lay-out the page on
+   every step. base.css turns the transition off for reduced motion, and the
+   bar then jumps straight to each new value. */
+.pm-loading__fill {
+  height: 100%;
+  background: var(--pm-purple-600);
+  transform-origin: left center;
+  transition: transform 0.35s var(--pm-ease);
+}

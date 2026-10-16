@@ -1,0 +1,122 @@
+/* Full screen, the same lavender wash as the rest of the product. */
+.pm-play {
+  position: relative;
+  min-height: 100vh;
+  padding: 22px var(--pm-gutter) 64px;
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      transparent 70%
+    ),
+    var(--pm-purple-50);
+}
+
+/* For the grown-up only: small and quiet in the corner, so a child's eye
+   goes to the cards. It still meets text contrast (6.6:1) and has a full
+   44px tap target, so it is easy to use when you mean to. */
+.pm-play__grownups {
+  position: absolute;
+  top: 16px;
+  right: var(--pm-gutter);
+  padding: 13px 4px;
+  font-size: var(--pm-micro);
+  font-weight: 600;
+  color: var(--pm-ink-muted);
+}
+
+.pm-play__grownups:hover {
+  color: var(--pm-ink);
+  text-decoration: underline;
+}
+
+.pm-play__main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding-top: clamp(56px, 10vh, 112px);
+  text-align: center;
+}
+
+.pm-play__title {
+  font-family: var(--pm-font-display);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--pm-ink);
+}
+
+.pm-play__note {
+  font-size: var(--pm-body);
+  color: var(--pm-ink-muted);
+}
+
+.pm-play__panel {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  margin-top: clamp(28px, 5vw, 44px);
+}
+
+.pm-play__link {
+  font-weight: 700;
+  color: var(--pm-purple-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* --- the cards --------------------------------------------------------
+   Big on purpose: each card is a target well over 56px in both directions,
+   at any screen width. */
+.pm-play__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 210px));
+  justify-content: center;
+  gap: clamp(14px, 3vw, 28px);
+  margin: clamp(32px, 6vw, 56px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-pick {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  height: 100%;
+  padding: 22px 16px 20px;
+  border: 2px solid var(--pm-line-purple);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  box-shadow: var(--pm-shadow-md);
+  cursor: pointer;
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-pick:hover {
+  transform: translateY(-4px);
+  border-color: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-pick:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* The focus ring follows the card's rounded corners. */
+.pm-pick:focus-visible {
+  border-radius: var(--pm-r-lg);
+}
+
+.pm-pick__avatar {
+  width: clamp(96px, 22vw, 136px);
+  height: clamp(96px, 22vw, 136px);
+  font-size: clamp(2.5rem, 7vw, 3.5rem);
+}
+
+.pm-pick__name {
+  font-family: var(--pm-font-display);
+  font-size: 1.375rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--pm-ink);
+  overflow-wrap: anywhere;
+}

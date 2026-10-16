@@ -10,7 +10,7 @@
   width: min(100%, 620px);
 }
 
-/* The three lines share one slot so they replace each other in place. */
+/* Room for the welcome is reserved before it fades in, so nothing jumps. */
 .pm-intro__lines {
   position: relative;
   display: grid;
@@ -35,11 +35,6 @@
   transform: translateY(0);
 }
 
-.pm-intro__line.is-past {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
 .pm-intro__go {
   opacity: 0;
   transform: translateY(8px);
@@ -51,23 +46,6 @@
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-}
-
-.pm-intro__skip {
-  position: absolute;
-  right: 0;
-  bottom: -6px;
-  border: 0;
-  background: none;
-  padding: 10px 6px;
-  font-size: var(--pm-micro);
-  font-weight: 700;
-  color: var(--pm-ink-soft);
-  cursor: pointer;
-}
-
-.pm-intro__skip:hover {
-  color: var(--pm-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {

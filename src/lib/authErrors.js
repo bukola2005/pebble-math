@@ -23,6 +23,11 @@ export function authErrorMessage(error) {
       return "An account with this email already exists. Try signing in instead.";
     case "weak_password":
       return "That password isn’t strong enough. Try a longer one.";
+    case "same_password":
+      return "That’s the password you already have. Choose a different one.";
+    case "session_not_found":
+    case "otp_expired":
+      return "This reset link has expired. Ask for a new one.";
     case "email_address_invalid":
       return "That email address doesn’t look right.";
     case "over_email_send_rate_limit":

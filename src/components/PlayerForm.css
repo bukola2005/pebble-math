@@ -18,6 +18,12 @@
   color: var(--pm-ink);
 }
 
+.pm-playerform__note {
+  font-size: var(--pm-small);
+  line-height: 1.55;
+  color: var(--pm-ink-muted);
+}
+
 .pm-playerform__alert {
   padding: 12px 16px;
   border: 1px solid var(--pm-error-line);
@@ -92,8 +98,7 @@
 
 /* The radio is visually hidden (.pm-sr-only), so the label anchors it and
    has to be positioned or the page can jump when it takes focus. */
-.pm-choice,
-.pm-avatar {
+.pm-choice {
   position: relative;
   display: block;
   cursor: pointer;
@@ -126,50 +131,6 @@
 }
 
 .pm-choice__input:focus-visible + .pm-choice__face {
-  outline: 3px solid var(--pm-purple-600);
-  outline-offset: 3px;
-}
-
-/* --- character picker: eight to a block, four to a row ---------------- */
-.pm-avatars {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(8px, 2vw, 16px);
-  max-width: 470px;
-}
-
-.pm-avatar__face {
-  display: grid;
-  place-items: end center;
-  aspect-ratio: 1;
-  width: 100%;
-  border: 2px solid var(--pm-line-purple);
-  border-radius: 50%;
-  background: var(--pm-purple-50);
-  overflow: hidden;
-  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
-    box-shadow 0.2s var(--pm-ease);
-}
-
-.pm-avatar__face img {
-  width: 92%;
-  height: auto;
-  object-fit: contain;
-}
-
-.pm-avatar:hover .pm-avatar__face {
-  transform: translateY(-3px);
-  border-color: var(--pm-purple-400);
-}
-
-/* Orange marks the chosen character, the way it does in the Get Started flow. */
-.pm-avatar__input:checked + .pm-avatar__face {
-  border-color: var(--pm-orange);
-  background: var(--pm-orange-100);
-  box-shadow: var(--pm-shadow-orange);
-}
-
-.pm-avatar__input:focus-visible + .pm-avatar__face {
   outline: 3px solid var(--pm-purple-600);
   outline-offset: 3px;
 }

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import AuthField from "./AuthField";
 import CTAButton from "./CTAButton";
-import { CHARACTERS } from "../data/characters";
 import { AGE_BANDS, CLASS_LEVELS } from "../data/players";
 import { addPlayer, playerErrorMessage } from "../lib/players";
 import { PLAYER_NAME_MAX_LENGTH } from "../lib/validation";
@@ -23,15 +22,15 @@ function validate({ displayName, ageBand }) {
  * Adds a child as a player under the signed-in account.
  *
  * It asks for exactly what a player holds and no more: a display name, an
- * age band, an optional class, and a character. Never an email, a password,
- * a date of birth or any contact detail.
+ * age band and an optional class. Never an email, a password, a date of
+ * birth or any contact detail. The character is not asked for here: the
+ * child picks their own the first time they play.
  */
 export default function PlayerForm({ userId, onAdded, onCancel }) {
   const [values, setValues] = useState({
     displayName: "",
     ageBand: "",
     classLevel: "",
-    character: CHARACTERS[0].id,
   });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -70,7 +69,6 @@ export default function PlayerForm({ userId, onAdded, onCancel }) {
         displayName: values.displayName.trim(),
         ageBand: values.ageBand,
         classLevel: values.classLevel,
-        character: values.character,
       });
       if (error) setFormError(playerErrorMessage(error));
       else onAdded(data);
@@ -160,36 +158,9 @@ export default function PlayerForm({ userId, onAdded, onCancel }) {
         </select>
       </div>
 
-      {/* The same eight characters the Get Started flow offers. */}
-      <fieldset className="pm-choices">
-        <legend className="pm-choices__legend">Character</legend>
-        <div className="pm-avatars">
-          {CHARACTERS.map((option) => (
-            <label key={option.id} className="pm-avatar">
-              <input
-                className="pm-avatar__input pm-sr-only"
-                type="radio"
-                name="character"
-                value={option.id}
-                checked={values.character === option.id}
-                onChange={change("character")}
-              />
-              <span className="pm-avatar__face">
-                <img
-                  src={option.src}
-                  alt=""
-                  aria-hidden="true"
-                  width={option.w}
-                  height={option.h}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </span>
-              <span className="pm-sr-only">{option.label} character</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <p className="pm-playerform__note">
+        They’ll choose their own character the first time they play.
+      </p>
 
       {formError && (
         <p className="pm-playerform__alert" role="alert">
