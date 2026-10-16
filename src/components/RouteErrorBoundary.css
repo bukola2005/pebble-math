@@ -1,0 +1,59 @@
+/* Same lavender wash as the account pages, so a failure still looks like
+   Pebble Math. Only tokens: this ships with the landing page. */
+.pm-crash {
+  min-height: 100vh;
+  padding: 22px var(--pm-gutter) 80px;
+  background: radial-gradient(
+      70% 50% at 50% 0%,
+      var(--pm-purple-200) 0%,
+      transparent 70%
+    ),
+    var(--pm-white);
+}
+
+/* The wordmark stays in Satoshi; it is the brand mark, not a headline. */
+.pm-crash__mark {
+  display: inline-block;
+  padding-block: 8px;
+  font-size: 1.3125rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--pm-ink);
+}
+
+.pm-crash__main {
+  max-width: 34rem;
+  margin: clamp(48px, 12vh, 120px) auto 0;
+}
+
+.pm-crash__title {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.16;
+  color: var(--pm-ink);
+}
+
+.pm-crash__text {
+  margin-top: 12px;
+  font-size: var(--pm-body);
+  line-height: 1.6;
+  color: var(--pm-ink-muted);
+}
+
+.pm-crash__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.pm-crash__home {
+  padding: 10px 4px;
+  font-size: var(--pm-small);
+  font-weight: 700;
+  color: var(--pm-purple-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -3,35 +3,37 @@ import MarketScene from "./MarketScene";
 import CTAButton from "./CTAButton";
 import "./IntroSequence.css";
 
-/* One beat per line. Change this single number to slow the intro down
-   or speed it up — nothing else depends on the timing. */
-const BEAT_MS = 2200;
+/* The child has just watched a 22-second film, so this is short: the
+   market builds itself up with their character in it (the scene's own
+   build-up runs to about 2.9s), the welcome arrives just after it starts,
+   and the way in appears once their character has walked onto the stall.
+   Change these two numbers to retime it; nothing else depends on them. */
+const WELCOME_AT_MS = 600;
+const READY_AT_MS = 2600;
 
-const LINES = [
-  "Welcome to Pebble Math.",
-  "Ready to see what numbers can do?",
-  "Let’s go.",
-];
-
+/**
+ * The personalised welcome, on a child's first play only, straight after
+ * the opening film. Its one job is to greet the child by name.
+ */
 export default function IntroSequence({ name, character, onDone }) {
   const reduceMotion =
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-  // With reduced motion the intro is already over: the last line shows.
-  const [beat, setBeat] = useState(reduceMotion ? LINES.length - 1 : -1);
+  // 0: the scene is building. 1: the welcome is up. 2: they can go in.
+  // With reduced motion the intro is already over.
+  const [step, setStep] = useState(reduceMotion ? 2 : 0);
 
   useEffect(() => {
     if (reduceMotion) return undefined;
-
-    const timers = LINES.map((_, i) =>
-      setTimeout(() => setBeat(i), 900 + i * BEAT_MS)
-    );
+    const timers = [
+      setTimeout(() => setStep(1), WELCOME_AT_MS),
+      setTimeout(() => setStep(2), READY_AT_MS),
+    ];
     return () => timers.forEach(clearTimeout);
   }, [reduceMotion]);
 
-  const greeting = beat === 0 && name ? `Welcome to Pebble Math, ${name}.` : null;
-  const lastBeat = beat >= LINES.length - 1;
+  const welcome = name ? `Welcome to Pebble Math, ${name}.` : "Welcome to Pebble Math.";
 
   return (
     <div className="pm-intro">
@@ -40,27 +42,13 @@ export default function IntroSequence({ name, character, onDone }) {
       </div>
 
       <div className="pm-intro__lines" aria-live="polite">
-        {LINES.map((line, i) => (
-          <p
-            key={line}
-            className={`pm-intro__line${beat === i ? " is-on" : ""}${
-              beat > i ? " is-past" : ""
-            }`}
-          >
-            {i === 0 ? greeting ?? line : line}
-          </p>
-        ))}
+        <p className={`pm-intro__line${step >= 1 ? " is-on" : ""}`}>{welcome}</p>
       </div>
 
-      <div className={`pm-intro__go${lastBeat ? " is-on" : ""}`}>
+      {/* inert until it shows, so it can't be tabbed to while invisible. */}
+      <div className={`pm-intro__go${step >= 2 ? " is-on" : ""}`} inert={step < 2}>
         <CTAButton onClick={onDone}>Enter the market</CTAButton>
       </div>
-
-      {!lastBeat && (
-        <button type="button" className="pm-intro__skip" onClick={onDone}>
-          Skip intro
-        </button>
-      )}
     </div>
   );
 }

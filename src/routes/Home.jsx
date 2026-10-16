@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/tokens.css";
 import "../styles/base.css";
 import Navbar from "../components/Navbar";
@@ -13,14 +13,11 @@ import ParentSection from "../components/ParentSection";
 import CTASection from "../components/CTASection";
 import Footer from "../components/Footer";
 
-/* The onboarding flow is a few hundred lines and eight character
-   images that most visitors never open, so it is fetched on the click
-   that needs it rather than shipped with the landing page. */
-const GetStartedFlow = lazy(() => import("../components/GetStartedFlow"));
-
 export default function Home() {
-  const [starting, setStarting] = useState(false);
-  const start = () => setStarting(true);
+  const navigate = useNavigate();
+  // Every Get Started button on the page leads to sign-up: the account is
+  // the grown-up's, and children are added from the dashboard.
+  const start = () => navigate("/signup");
 
   return (
     <>
@@ -40,12 +37,6 @@ export default function Home() {
         <CTASection onStart={start} />
       </main>
       <Footer />
-
-      {starting && (
-        <Suspense fallback={null}>
-          <GetStartedFlow open onClose={() => setStarting(false)} />
-        </Suspense>
-      )}
     </>
   );
 }

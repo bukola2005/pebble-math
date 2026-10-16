@@ -1,0 +1,82 @@
+.pm-picker {
+  display: grid;
+  justify-items: center;
+  gap: clamp(22px, 4vw, 34px);
+  text-align: center;
+}
+
+.pm-picker__title {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.875rem, 4.6vw, 2.75rem);
+  font-weight: 400;
+  line-height: 1.12;
+  color: var(--pm-ink);
+}
+
+/* Eight characters, four to a row at any width. Even on a 320px phone each
+   one is a target of about 62px, past the 56px floor; on a 375px phone, 76px. */
+.pm-picker__options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(10px, 2.6vw, 22px);
+  width: min(100%, 600px);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* The radio is visually hidden (.pm-sr-only), so the label anchors it and
+   has to be positioned or the page can jump when it takes focus. */
+.pm-picker__option {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.pm-picker__face {
+  display: grid;
+  place-items: end center;
+  aspect-ratio: 1;
+  width: 100%;
+  border: 3px solid var(--pm-line-purple);
+  border-radius: 50%;
+  background: var(--pm-white);
+  overflow: hidden;
+  transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-picker__face img {
+  width: 92%;
+  height: auto;
+  object-fit: contain;
+}
+
+.pm-picker__option:hover .pm-picker__face {
+  transform: translateY(-4px);
+  border-color: var(--pm-purple-400);
+}
+
+/* Orange marks the chosen one, as it does across the product. */
+.pm-picker__input:checked + .pm-picker__face {
+  transform: scale(1.06);
+  border-color: var(--pm-orange);
+  background: var(--pm-orange-100);
+  box-shadow: var(--pm-shadow-orange);
+}
+
+.pm-picker__input:focus-visible + .pm-picker__face {
+  outline: 3px solid var(--pm-purple-600);
+  outline-offset: 4px;
+}
+
+.pm-picker__error {
+  padding: 12px 18px;
+  border: 1px solid var(--pm-error-line);
+  border-radius: var(--pm-r-md);
+  background: var(--pm-error-bg);
+  font-size: var(--pm-body);
+  font-weight: 600;
+  color: var(--pm-error);
+}

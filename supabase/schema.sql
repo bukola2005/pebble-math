@@ -27,8 +27,10 @@ create table if not exists public.profiles (
 --   display_name  what the child chose to be called (not a legal name)
 --   age_band      a coarse band, never a date of birth
 --   class_level   optional
---   character     which character they picked (ids live in
---                 src/data/characters.js)
+--   character     the character the child picked on their first play, or
+--                 null until they have (ids live in src/data/characters.js)
+--   first_play_done  false until the child has watched the first-play
+--                 introduction and reached the market
 -- Band and class values are mirrored in src/data/players.js.
 -- ----------------------------------------------------------------------
 create table if not exists public.players (
@@ -39,9 +41,18 @@ create table if not exists public.players (
   class_level  text check (class_level in (
                  'primary-1', 'primary-2', 'primary-3',
                  'primary-4', 'primary-5', 'primary-6')),
-  character    text not null default 'purple' check (char_length(character) between 1 and 32),
+  character    text check (char_length(character) between 1 and 32),
+  first_play_done boolean not null default false,
   created_at   timestamptz not null default now()
 );
+
+-- A players table made by an earlier version of this file has a required
+-- character that defaulted to purple, and no first_play_done. These bring
+-- it up to date; on a fresh table they change nothing.
+alter table public.players
+  add column if not exists first_play_done boolean not null default false;
+alter table public.players alter column character drop not null;
+alter table public.players alter column character drop default;
 
 create index if not exists players_profile_id_idx on public.players (profile_id);
 

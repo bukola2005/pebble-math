@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CTAButton from "../components/CTAButton";
 import PlayerCard from "../components/PlayerCard";
 import PlayerForm from "../components/PlayerForm";
@@ -13,12 +13,13 @@ const ROLE_LABELS = { parent: "Parent", teacher: "Teacher" };
 
 /**
  * The signed-in adult's home: a greeting, and the players (children) under
- * their account, with a way to add and delete them.
- *
- * Players are only listed here. Choosing one to play is not built yet.
+ * their account, with a way to add and delete them. "Play" hands the device
+ * to a child: it opens "Who's playing?" at /play, still signed in as the
+ * grown-up.
  */
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
   // status: "loading" | "ready" | "error"
   const [data, setData] = useState({ status: "loading", profile: null, players: [] });
@@ -118,7 +119,7 @@ export default function Dashboard() {
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
   const roleLabel = ROLE_LABELS[profile?.role];
 
-  const showAddInHeader = status === "ready" && players.length > 0 && !adding;
+  const showActions = status === "ready" && players.length > 0 && !adding;
   const showEmptyState = status === "ready" && players.length === 0 && !adding;
 
   return (
@@ -127,14 +128,22 @@ export default function Dashboard() {
         <Link to="/" className="pm-dash__mark">
           Pebble Math
         </Link>
-        <CTAButton
-          variant="secondary"
-          size="sm"
-          onClick={handleSignOut}
-          disabled={signingOut}
-        >
-          {signingOut ? "Signing out…" : "Sign out"}
-        </CTAButton>
+        <div className="pm-dash__account">
+          {/* Which account this is, for anyone who has more than one (a
+              home account and a school one, say). Orientation, nothing more. */}
+          <p className="pm-dash__email" title={user.email}>
+            <span className="pm-sr-only">Signed in as </span>
+            {user.email}
+          </p>
+          <CTAButton
+            variant="secondary"
+            size="sm"
+            onClick={handleSignOut}
+            disabled={signingOut}
+          >
+            {signingOut ? "Signing out…" : "Sign out"}
+          </CTAButton>
+        </div>
       </header>
 
       <main id="main" className="pm-dash__main">
@@ -153,10 +162,20 @@ export default function Dashboard() {
             >
               Players
             </h2>
-            {showAddInHeader && (
-              <CTAButton ref={addButton} size="sm" onClick={() => setAdding(true)}>
-                Add a player
-              </CTAButton>
+            {showActions && (
+              <div className="pm-dash__actions">
+                <CTAButton
+                  ref={addButton}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setAdding(true)}
+                >
+                  Add a player
+                </CTAButton>
+                <CTAButton size="sm" onClick={() => navigate("/play")}>
+                  Play
+                </CTAButton>
+              </div>
             )}
           </div>
 
@@ -187,8 +206,9 @@ export default function Dashboard() {
               <p className="pm-dash__empty-title">No players yet.</p>
               <p className="pm-dash__muted">
                 No child has been added to this account. Add one with a
-                nickname, an age band and a character. Children never need
-                an email or a password.
+                nickname and an age band; they pick their own character the
+                first time they play. Children never need an email or a
+                password.
               </p>
               <CTAButton ref={addButton} onClick={() => setAdding(true)}>
                 Add a player

@@ -1,13 +1,14 @@
 import { useEffect, useId, useRef, useState } from "react";
 import CTAButton from "./CTAButton";
-import { getCharacter } from "../data/characters";
+import PlayerAvatar from "./PlayerAvatar";
 import { getAgeBandLabel, getClassLevelLabel } from "../data/players";
 import { deletePlayer, playerErrorMessage } from "../lib/players";
 import "./PlayerCard.css";
 
 /**
- * One player on the dashboard: character, display name, age band, and class
- * level if there is one. Deleting asks first, in the card itself.
+ * One player on the dashboard: character (or a neutral circle until they
+ * pick one), display name, age band, and class level if there is one.
+ * Deleting asks first, in the card itself.
  *
  * `onDeleted` is called only once the database confirms the row is gone.
  */
@@ -20,7 +21,6 @@ export default function PlayerCard({ player, onDeleted }) {
   const wasConfirming = useRef(false);
   const questionId = useId();
 
-  const character = getCharacter(player.character);
   const meta = [
     getAgeBandLabel(player.age_band),
     getClassLevelLabel(player.class_level),
@@ -57,16 +57,7 @@ export default function PlayerCard({ player, onDeleted }) {
 
   return (
     <li className="pm-player">
-      <img
-        className="pm-player__avatar"
-        src={character.src}
-        alt=""
-        aria-hidden="true"
-        width={character.w}
-        height={character.h}
-        loading="lazy"
-        decoding="async"
-      />
+      <PlayerAvatar player={player} className="pm-player__avatar" />
 
       <div className="pm-player__info">
         <p className="pm-player__name">{player.display_name}</p>
