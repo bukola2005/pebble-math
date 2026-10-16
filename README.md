@@ -4,8 +4,8 @@ Phase 1 (visual foundation + hero), Phase 2 (the landing page), Phase 4
 (adult accounts: sign up, sign in, dashboard — see [Accounts](#accounts))
 and Phase 5 (the way in: Get Started → sign-up, and a child's play session
 — see [Getting in](#getting-in)). Phase 3's local-only Get Started flow is
-retired. The first play now follows the game handoff: loading → film →
-Zizi's look → game name; Scene 1 and the Fruit Stall come next.
+retired. The first play follows the game handoff: loading → film → Zizi's
+look → game name → Scene 1 → the Fruit Stall (round one).
 
 ## Run it
 
@@ -45,6 +45,8 @@ src/
     PlayIntro.jsx           /play/:id/intro: the opening film
     PlayAvatar.jsx          /play/:id/avatar: choose Zizi's look, on the storybook
     PlayName.jsx            /play/:id/name: build a game name from two word lists
+    PlayStory.jsx           /play/:id/story: Scene 1, the dim market, with Blob
+    PlayStall.jsx           /play/:id/stall/fruit: the basket, the tutorial, round one
     Protected*.jsx          each page above behind its sign-in check
   context/AuthContext.jsx   AuthProvider + useAuth: session, user, loading, signUp, signIn, signOut
   lib/
@@ -52,6 +54,7 @@ src/
     authRedirect.js         what an emailed link put in the address bar, read before supabase-js clears it
     players.js              every query on the players table, and its error messages
     playFlow.js             the order of the play steps, and what each one loads
+    speech.js               reads lines aloud (speechSynthesis), with the mute switch
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     validation.js           password length, email check, name limits
@@ -69,7 +72,12 @@ src/
     PlayerCard.jsx          one player, with an inline "delete?" confirm
     PlayerAvatar.jsx        the monster the grown-up picked, or a neutral circle
     PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
-    MarketPlaceholder.jsx   the child's Zizi and "this is where the market opens"
+    DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
+    StallBackdrop.jsx       the stall's six painted layers, or the dim market
+    PlayHud.jsx             the play screens' corners: a way out, game name, mute
+    BasketGame.jsx          the oranges and the basket: tap to count, drag to move
+    CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
+    BasketAward.jsx         the card that gives the child their basket
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -92,6 +100,10 @@ src/
   data/monsters.js          Blob the guide, and the seven a grown-up can pick
   data/zizi.js              Zizi's six looks and her original look
   data/gameNames.js         the two word lists game names are built from
+  data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall
+  data/fruitStall.js        how many oranges the seller asks for, by age band
+  data/market.js            the market's art: the six layers, basket, orange, crate
+  styles/game.css           the game screens' own tokens (garden green, paper)
   data/players.js           age bands and class levels a player may hold
   data/media.js             the agreed paths for the loading art, storybook and film
 docs/learning-rules.md      how the game teaches, with examples for later chapters
@@ -104,8 +116,9 @@ public/zizi/*.webp          Zizi: six looks (zizi-headband, -cornrows, -afro, -p
 public/video/pre-intro.*    the opening film (webm + mp4 + poster)
 public/loading/hands-apart.webp
                             the loading screen: Zizi and her mother pulled apart
-public/stall/fruit-stall.webp
-                            the Fruit Stall, straight on; not used yet
+public/stall/*.webp         the Fruit Stall's six layers (sky, far, palms, ground,
+                            fruit-stall, near) and the basket, orange and crate
+public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogue box
 public/art/*.webp           market map (day, misty), not used yet; the blank
                             storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
@@ -202,7 +215,9 @@ Child      /play "Who's playing?" → tap own card → /play/:id (loading)
            → /intro      the film (until first_play_done)
            → /avatar     Zizi's look (until character holds one)
            → /name       the game name (until game_name is set)
-           → back to /play/:id, which ends on "this is where the market opens"
+           → /story      Scene 1 (until scene1_done)
+           → /stall/fruit  the Fruit Stall, which is where every later
+                           visit starts until the map exists
 ```
 
 Every step is its own route and its own chunk of code, and `lib/playFlow.js`
@@ -255,9 +270,45 @@ a Shuffle button. It starts on a random pair. There is no text box: a child
 never types anything, so they can't put a real name in. "That's my name!"
 saves it.
 
-`prefers-reduced-motion` turns off the little pops on the avatar and name
-screens and the bar's glide (`styles/base.css`). The film never starts on
-its own in any case.
+**Scene 1** (until `players.scene1_done`): the dim market, as written in the
+handoff. The child's Zizi hides behind toppled crates while purple haze
+drifts past, and Blob finds her. Her lines are labelled with the child's
+game name, never "Zizi". "Let's go" saves `scene1_done` and goes straight to
+the Fruit Stall.
+
+**The Fruit Stall, round one.** A child who has just played Scene 1 is given
+their basket (one card), then a four-beat tutorial: everything dims except
+one thing, an arrow bobs at it, and Blob explains it in a thought bubble.
+Tap anywhere to move on. The last beat lets them try a drag. A child who
+comes back later goes straight to the stall. The seller then asks for some
+oranges (2–5 under 7, 3–10 at 7–8, 5–10 at 9 and over) and the child drags
+them in; the basket counts each drop. There are always three more oranges
+than asked for, so the child has to stop at the right number. Blob says
+"You did it! Look, the first lock is open!" and "Play again" starts a fresh
+round one. Nothing about the stall is saved yet.
+
+Tapping an orange counts it: a number badge, 1, 2, 3, in the order tapped.
+Tapping a counted orange clears it and the rest renumber. That's the
+child's scratchpad and changes nothing. Dragging is what moves an orange.
+An orange let go anywhere but over the basket springs back. One in the
+basket can't be picked up again, so nothing is counted twice. Both work
+with a finger, a mouse or a pen (pointer events). With a keyboard, Enter
+counts the focused orange and B puts it in the basket.
+
+**Every line is in `data/dialogue.js`**, to edit without touching code, and
+is read aloud with the browser's own voice (`lib/speech.js`) until real
+recordings exist. The speaker button in the top corner mutes it, and that
+is remembered on the device. Nigerian English is used where the browser
+has it (Edge does), then British, then any English. Chrome stays silent
+until the child has tapped something on the page, which every normal path
+through the game does.
+
+**The game name** appears in the top corner of the play screens and as Zizi's
+label in the dialogue box, and nowhere else.
+
+`prefers-reduced-motion` turns off the little pops, the bar's glide, the
+haze drifting, the bobbing arrow and the tutorial's moving demonstration
+(`styles/base.css`). The film never starts on its own in any case.
 
 The film is 22 seconds, 1280×720, encoded from the master in `source-art/`:
 
@@ -374,9 +425,10 @@ message with a reload button instead of a white screen.
 
 ## Next
 
-Scene 1 (the story's first scene, with Blob), then the Fruit Stall, which
-replaces `MarketPlaceholder`. The decisions already made for the stall are
-in [docs/learning-rules.md](docs/learning-rules.md#the-fruit-stall-decided-not-built).
+Rounds two to five at the Fruit Stall (the "how many more?" question, then
+make-ten), the reward when a stall is cleared, the lock opening and the
+map. Later: a way for the grown-up to edit a child they've already added
+(their monster, name, age band), which the dashboard doesn't have yet.
 
 The stall's living background is six layers on one 1920×1080 canvas,
 horizon at 55% (y 594), from back to front: sky, far, palms, ground, stall,
@@ -394,4 +446,6 @@ drags onto, at its own depth.
 
 Parallax runs from slowest to fastest: sky, far, palms, ground, near. The
 stall barely moves, because it is the subject. The empty sand on the right
-is for the fruit seller and Blob.
+is for the fruit seller and Blob. The layers are in place as a still
+picture (`components/StallBackdrop.css`); the parallax and the living
+effects aren't built yet.

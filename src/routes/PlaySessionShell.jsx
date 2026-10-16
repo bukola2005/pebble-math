@@ -5,6 +5,7 @@ import PlayLoading from "../components/PlayLoading";
 import { getPlayer } from "../lib/players";
 import { nextStep } from "../lib/playFlow";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
+import "../styles/game.css";
 import "./PlaySessionShell.css";
 
 /* The steps, one chunk each. lib/playFlow.js imports the same files to
@@ -13,6 +14,8 @@ const PlayHub = lazy(() => import("./PlayHub"));
 const PlayIntro = lazy(() => import("./PlayIntro"));
 const PlayAvatar = lazy(() => import("./PlayAvatar"));
 const PlayName = lazy(() => import("./PlayName"));
+const PlayStory = lazy(() => import("./PlayStory"));
+const PlayStall = lazy(() => import("./PlayStall"));
 
 /**
  * Everything at /play/:playerId and below: fetches the child's player row
@@ -23,12 +26,16 @@ const PlayName = lazy(() => import("./PlayName"));
  *   goNext(p)    record what a step just saved, then go to the next step
  *   filmUrl      the film, if the loading screen already downloaded it
  *   keepFilm(u)  for the loading screen to hand that copy over
+ *   newcomer     true when this visit began before Scene 1 was played:
+ *                the stall then gives them the basket and the tutorial.
+ *                A child who comes back later goes straight to the stall.
  *
  * Row Level Security means another account's player simply isn't found, and
  * the child goes back to "Who's playing?".
  *
  * The steps are routed here rather than in App.jsx: /play/:playerId itself
- * is the loading screen (PlayHub), then /intro, /avatar and /name.
+ * is the loading screen (PlayHub), then /intro, /avatar, /name, /story and
+ * /stall/fruit.
  */
 export default function PlaySessionShell() {
   const { playerId } = useParams();
@@ -37,6 +44,7 @@ export default function PlaySessionShell() {
   const [failure, setFailure] = useState(null);
   const [missing, setMissing] = useState(false);
   const [filmUrl, setFilmUrl] = useState(null);
+  const [newcomer, setNewcomer] = useState(false);
   const filmUrlRef = useRef(null);
 
   useDocumentTitle("Play");
@@ -50,6 +58,7 @@ export default function PlaySessionShell() {
         else if (!data) setMissing(true);
         else {
           setPlayer(data);
+          setNewcomer(!data.scene1_done);
           // Every visit starts at the loading screen, even a reload in the
           // middle of a step, so the step's pictures are in before it shows
           // and the steps can't be taken out of order.
@@ -90,8 +99,8 @@ export default function PlaySessionShell() {
   );
 
   const context = useMemo(
-    () => ({ player, goNext, filmUrl, keepFilm }),
-    [player, goNext, filmUrl, keepFilm]
+    () => ({ player, goNext, filmUrl, keepFilm, newcomer }),
+    [player, goNext, filmUrl, keepFilm, newcomer]
   );
 
   if (missing) return <Navigate to="/play" replace />;
@@ -127,6 +136,8 @@ export default function PlaySessionShell() {
           <Route path="intro" element={<PlayIntro />} />
           <Route path="avatar" element={<PlayAvatar />} />
           <Route path="name" element={<PlayName />} />
+          <Route path="story" element={<PlayStory />} />
+          <Route path="stall/fruit" element={<PlayStall />} />
           {/* Anything else under a player goes through the loading screen. */}
           <Route path="*" element={<Navigate to={`/play/${player.id}`} replace />} />
         </Route>

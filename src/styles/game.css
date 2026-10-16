@@ -1,0 +1,23 @@
+/* ------------------------------------------------------------------
+   Tokens for the game screens only: the garden frame, the paper inside
+   it, and the dim of the tutorial. Loaded with the play session, so the
+   landing page never downloads them. Brand colours stay in tokens.css.
+   ------------------------------------------------------------------ */
+
+:root {
+  /* Taken from the near layer's leaves. */
+  --pm-garden-leaf: #8aa865;
+  --pm-garden-deep: #4e6a3a;
+  --pm-garden-light: #c9dba2;
+
+  /* The dialogue paper: warm cream, like the storybook pages. */
+  --pm-paper: #fff8ec;
+  --pm-paper-edge: #f6e3c4;
+
+  /* Everything that isn't being pointed at, during the tutorial. */
+  --pm-dim: rgba(22, 16, 44, 0.66);
+
+  /* Game text sizes, readable at arm's length on a phone. */
+  --pm-game-line: clamp(1.4rem, 0.95rem + 1.6vw, 2rem);
+  --pm-game-label: clamp(1rem, 0.85rem + 0.5vw, 1.25rem);
+}

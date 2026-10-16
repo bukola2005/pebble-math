@@ -1,0 +1,83 @@
+/* Small and in the corners: the game is the rest of the screen. */
+.pm-hud {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.pm-hud > *,
+.pm-hud__right > * {
+  pointer-events: auto;
+}
+
+.pm-hud__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-hud__button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1.5px var(--pm-glass-border), var(--pm-shadow-sm);
+  color: var(--pm-purple-700);
+  cursor: pointer;
+}
+
+.pm-hud__button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pm-hud__button:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
+}
+
+.pm-hud__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Room for the longest name between the two corner buttons. */
+  max-width: calc(100vw - 140px);
+  height: 48px;
+  padding: 0 16px 0 4px;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1.5px var(--pm-glass-border), var(--pm-shadow-sm);
+  font-family: var(--pm-font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-hud__name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-hud__name img {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--pm-purple-100);
+  object-fit: cover;
+  object-position: 50% 4%;
+}

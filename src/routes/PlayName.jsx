@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import CTAButton from "../components/CTAButton";
 import { getZiziLook } from "../data/zizi";
 import { FIRST_WORDS, SECOND_WORDS, joinName, randomIndex } from "../data/gameNames";
 import { chooseGameName } from "../lib/players";
+import { prefetchStep } from "../lib/playFlow";
 import "./PlayName.css";
 
 /**
@@ -21,6 +22,11 @@ export default function PlayName() {
   const [second, setSecond] = useState(() => randomIndex(SECOND_WORDS));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // While they choose, fetch Scene 1.
+  useEffect(() => {
+    prefetchStep("story", player);
+  }, [player]);
 
   const name = joinName(FIRST_WORDS[first], SECOND_WORDS[second]);
   const zizi = getZiziLook(player.character);

@@ -16,6 +16,7 @@ import { supabase } from "./supabase";
     character        the Zizi look the child picked (null until they have)
     game_name        the in-game name the child built from two word lists
     first_play_done  whether they have seen the opening film
+    scene1_done      whether they have played Scene 1
   There is nothing here for a child's email, password, date of birth or any
   contact detail, and there never should be.
 */
@@ -30,7 +31,7 @@ export const listPlayers = () =>
 export const getPlayer = (id) =>
   supabase
     .from("players")
-    .select(`${COLUMNS}, game_name, first_play_done`)
+    .select(`${COLUMNS}, game_name, first_play_done, scene1_done`)
     .eq("id", id)
     .maybeSingle();
 
@@ -75,6 +76,9 @@ export const chooseGameName = (id, gameName) =>
     supabase.from("players").update({ game_name: gameName }).eq("id", id),
     "not_saved"
   );
+
+export const finishScene1 = (id) =>
+  changeOne(supabase.from("players").update({ scene1_done: true }).eq("id", id), "not_saved");
 
 export const finishFirstPlay = (id) =>
   changeOne(

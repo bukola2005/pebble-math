@@ -1,0 +1,192 @@
+/* The tutorial: one bright hole in a dimmed screen, an arrow, and Blob's
+   thought bubble. Tapping anywhere moves on. */
+.pm-coach {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* In the drag beat, touches go through to the oranges and the basket. */
+.pm-coach.is-interactive {
+  pointer-events: none;
+  cursor: auto;
+}
+
+.pm-coach.is-interactive .pm-coach__bubble {
+  pointer-events: auto;
+}
+
+/* The hole: everything outside it is dimmed by its huge shadow. */
+.pm-coach__hole {
+  position: fixed;
+  box-shadow: 0 0 0 200vmax var(--pm-dim);
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 0;
+  pointer-events: none;
+  transition:
+    left 0.3s var(--pm-ease),
+    top 0.3s var(--pm-ease),
+    width 0.3s var(--pm-ease),
+    height 0.3s var(--pm-ease);
+}
+
+.pm-coach__arrow {
+  position: fixed;
+  width: 56px;
+  height: 64px;
+  filter: drop-shadow(0 6px 8px rgba(20, 14, 40, 0.4));
+  pointer-events: none;
+  animation: pm-coach-bob 1.1s var(--pm-ease) infinite alternate;
+}
+
+.pm-coach__arrow--up {
+  rotate: 180deg;
+}
+
+@keyframes pm-coach-bob {
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+/* --- the drag beat: a ghost orange shows the trip ---------------------------- */
+.pm-coach__ghost {
+  position: fixed;
+  pointer-events: none;
+  animation: pm-coach-carry 2.4s var(--pm-ease) infinite;
+}
+
+.pm-coach__ghost img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.75;
+}
+
+.pm-coach__arrow--ghost {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 44px;
+  height: 50px;
+  rotate: 160deg;
+  animation: none;
+}
+
+@keyframes pm-coach-carry {
+  0%,
+  12% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  22% {
+    transform: translate(0, -6px) scale(1.12);
+    opacity: 1;
+  }
+  72% {
+    transform: translate(var(--dx), var(--dy)) scale(1.12);
+    opacity: 1;
+  }
+  86%,
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* --- Blob's thought bubble ------------------------------------------------------ */
+.pm-coach__bubble {
+  position: fixed;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: min(380px, calc(100vw - 24px));
+  padding: 14px 14px 14px 12px;
+  border-radius: 36px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 4px var(--pm-white),
+    0 18px 40px rgba(20, 14, 40, 0.35);
+  cursor: pointer;
+  animation: pm-bubble-in 0.3s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-bubble-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+/* The little puffs that make it a thought, not speech. */
+.pm-coach__puff {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--pm-paper);
+  box-shadow: 0 0 0 3px var(--pm-white);
+}
+
+.pm-coach__puff--1 {
+  width: 20px;
+  height: 20px;
+  left: 18px;
+  bottom: -14px;
+}
+
+.pm-coach__puff--2 {
+  width: 11px;
+  height: 11px;
+  left: 6px;
+  bottom: -28px;
+}
+
+.pm-coach__blob {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  object-position: 50% 12%;
+  border-radius: 50%;
+  background: var(--pm-purple-100);
+}
+
+.pm-coach__text {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.25rem, 0.95rem + 1vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--pm-ink);
+}
+
+.pm-coach__next {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+  color: var(--pm-ink-on-orange);
+  cursor: pointer;
+}
+
+.pm-coach__next svg {
+  width: 26px;
+  height: 26px;
+}
+
+.pm-coach__next:focus-visible {
+  outline: 4px solid var(--pm-purple-700);
+  outline-offset: 3px;
+}
+
+/* Without motion: the arrow holds still, and the ghost rests at the
+   start of the trip with the arrow on it, pointing the way. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-coach__ghost {
+    animation: none;
+  }
+}

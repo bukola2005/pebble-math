@@ -1,0 +1,265 @@
+/* ----------------------------------------------------------------------
+   The play area sits over the painted scene, in screen space, so the
+   oranges stay a good size for a finger on any screen: on the ground in
+   front of the stall at the left, the basket to their right, and the sand
+   on the far right left free for the seller and Blob.
+   ---------------------------------------------------------------------- */
+.pm-game {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* While the tutorial points at the stall, the oranges fade back so the
+   stall is the only bright thing, even where they sit in front of it. */
+.pm-game.is-dim .pm-orange,
+.pm-game.is-dim .pm-game__crate {
+  opacity: 0.16;
+}
+
+.pm-orange,
+.pm-game__crate {
+  transition: opacity 0.3s var(--pm-ease);
+}
+
+/* Left of the stall, so the stall itself stays clear. */
+.pm-game__pile {
+  position: absolute;
+  left: 2%;
+  bottom: 4%;
+  width: 29%;
+  height: 54%;
+}
+
+.pm-game__crate {
+  position: absolute;
+  left: -3%;
+  top: -10%;
+  width: 30%;
+  height: auto;
+  transform: rotate(-17deg);
+  filter: drop-shadow(0 8px 8px rgba(70, 40, 20, 0.3));
+  pointer-events: none;
+}
+
+/* --- one orange -------------------------------------------------------------- */
+.pm-orange {
+  position: absolute;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  pointer-events: auto;
+  /* The orange, not the page, moves under a finger. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-orange__body {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform: rotate(var(--tilt, 0deg));
+  transition:
+    transform 0.16s var(--pm-ease),
+    box-shadow 0.16s var(--pm-ease);
+}
+
+.pm-orange__body img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 3px rgba(70, 35, 10, 0.35));
+}
+
+/* A white ring says "this one" under a mouse, or the keyboard. */
+@media (hover: hover) {
+  .pm-orange:hover .pm-orange__body {
+    box-shadow:
+      0 0 0 4px var(--pm-white),
+      0 0 0 6px rgba(30, 20, 50, 0.16);
+  }
+}
+
+.pm-orange:focus-visible {
+  outline: none;
+}
+
+.pm-orange:focus-visible .pm-orange__body {
+  box-shadow:
+    0 0 0 4px var(--pm-white),
+    0 0 0 8px var(--pm-purple-700);
+}
+
+/* Picked up: it grows a little and lifts, with a softer, lower shadow. */
+.pm-orange.is-dragging {
+  z-index: 40;
+  cursor: grabbing;
+}
+
+.pm-orange.is-dragging .pm-orange__body {
+  transform: translateY(calc(var(--lift, 0px) * -1)) scale(1.18);
+  box-shadow: none;
+}
+
+.pm-orange.is-dragging .pm-orange__body img {
+  filter: drop-shadow(0 16px 10px rgba(70, 35, 10, 0.3));
+}
+
+/* Let go somewhere else: it springs back to its place. */
+.pm-orange.is-returning {
+  z-index: 30;
+  transition: transform 0.4s var(--pm-ease-pop);
+}
+
+.pm-orange__badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: 16px;
+  background: var(--pm-purple-700);
+  box-shadow: 0 0 0 3px var(--pm-white), var(--pm-shadow-sm);
+  font-family: var(--pm-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 32px;
+  text-align: center;
+  color: var(--pm-white);
+  pointer-events: none;
+  animation: pm-pop-in 0.3s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* --- the basket ---------------------------------------------------------------- */
+/* At the foot of the stall, in the middle. */
+.pm-basket {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  bottom: 4%;
+  width: min(25vw, 40vh, 340px);
+  aspect-ratio: 480 / 433;
+  pointer-events: none;
+  transition:
+    scale 0.2s var(--pm-ease-pop),
+    opacity 0.3s var(--pm-ease);
+}
+
+.pm-basket.is-hidden {
+  opacity: 0;
+  scale: 0.6;
+}
+
+.pm-basket__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 10px 10px rgba(70, 40, 20, 0.28));
+}
+
+/* The front wall, from the front edge of the rim down, drawn over the
+   oranges so they sit inside. Traced from /stall/basket.webp. */
+.pm-basket__front {
+  filter: none;
+  clip-path: polygon(
+    0% 46%, 6% 49%, 12% 53%, 20% 56.5%, 30% 59%, 40% 60.5%, 50% 61%,
+    60% 60.5%, 70% 59%, 80% 56.5%, 88% 53%, 94% 49%, 100% 46%,
+    100% 100%, 0% 100%
+  );
+}
+
+/* An orange about to be dropped: the basket leans in to catch it. */
+.pm-basket.is-ready {
+  scale: 1.07;
+}
+
+.pm-basket.is-ready .pm-basket__art:first-child {
+  filter: drop-shadow(0 0 3px var(--pm-white)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.9));
+}
+
+.pm-basket__orange {
+  position: absolute;
+  width: 20%;
+  aspect-ratio: 168 / 182;
+}
+
+.pm-basket__orange img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 2px rgba(70, 35, 10, 0.3));
+}
+
+/* The basket's own count, above it, popping with every orange. */
+.pm-basket__count {
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  translate: -50% 0;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 19%, 68px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--pm-white);
+  box-shadow:
+    0 0 0 4px var(--pm-orange),
+    var(--pm-shadow-md);
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.5rem, 4.5vmin, 2.25rem);
+  font-weight: 400;
+  color: var(--pm-ink);
+  animation: pm-pop-in 0.35s var(--pm-ease-pop) both;
+}
+
+/* --- a short phone on its side: give the oranges more height ------------------- */
+@media (max-height: 480px) and (min-aspect-ratio: 1 / 1) {
+  .pm-game__pile {
+    bottom: 3%;
+    width: 31%;
+    height: 64%;
+  }
+
+  .pm-basket {
+    bottom: 3%;
+  }
+}
+
+/* --- a phone held upright: oranges across the middle, basket below -------------- */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-game__pile {
+    left: 3%;
+    right: 3%;
+    width: auto;
+    bottom: 30%;
+    height: 38%;
+  }
+
+  .pm-game__crate {
+    width: 26%;
+    top: -18%;
+  }
+
+  .pm-basket {
+    bottom: 4%;
+    width: min(52vw, 23vh, 300px);
+  }
+}

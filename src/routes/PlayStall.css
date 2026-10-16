@@ -1,0 +1,125 @@
+.pm-stall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #f1d7c0;
+  /* No double-tap zoom or pull-to-refresh while playing. */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+.pm-stall__stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* What the seller asked for, kept in view: the number, that many
+   oranges, and the words. */
+.pm-stall__goal {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  max-width: calc(100vw - 260px);
+  padding: 8px 18px 8px 8px;
+  border-radius: 26px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 3px var(--pm-garden-leaf),
+    var(--pm-shadow-md);
+  animation: pm-goal-in 0.4s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-goal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+.pm-stall__goal-number {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--pm-orange);
+  font-family: var(--pm-font-display);
+  font-size: 1.9rem;
+  font-weight: 400;
+  color: var(--pm-ink-on-orange);
+}
+
+.pm-stall__goal-oranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.pm-stall__goal-oranges img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.pm-stall__goal-words {
+  font-family: var(--pm-font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+/* Blob pops up on the sand at the right to cheer. */
+.pm-stall__blob {
+  position: absolute;
+  right: 6%;
+  bottom: 30%;
+  z-index: 3;
+  height: min(36vh, 340px);
+  aspect-ratio: 736 / 900;
+  animation: pm-blob-cheer 0.6s var(--pm-ease-pop) both;
+}
+
+.pm-stall__blob img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@keyframes pm-blob-cheer {
+  from {
+    opacity: 0;
+    transform: translateY(40%) scale(0.6);
+  }
+  60% {
+    transform: translateY(-6%) scale(1.04);
+  }
+}
+
+.pm-stall__dialogue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 6;
+}
+
+/* A phone held upright: the goal sits under the corner buttons. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-stall__goal {
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+    max-width: calc(100vw - 24px);
+  }
+
+  .pm-stall__blob {
+    right: 4%;
+    bottom: 42%;
+    height: 22vh;
+  }
+}

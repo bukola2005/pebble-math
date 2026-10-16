@@ -1,0 +1,175 @@
+/* The garden dialogue box. Sized for a phone held at arm's length: big
+   type, two short lines at most, and a Next button a thumb can't miss. */
+.pm-dialogue {
+  position: relative;
+  width: min(880px, calc(100vw - 32px));
+  margin-inline: auto;
+}
+
+.pm-dialogue__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.pm-dialogue__panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 20px;
+  min-height: 132px;
+  padding: 18px 20px 18px 18px;
+  border-radius: 30px;
+  background: radial-gradient(130% 150% at 0% 0%, var(--pm-paper) 0%, var(--pm-paper) 55%, var(--pm-paper-edge) 100%);
+  box-shadow: 0 22px 50px rgba(20, 14, 40, 0.34);
+}
+
+/* The painted border: a thick leaf-green band with a light inner edge,
+   roughened by the SVG filter so it reads as brushwork, not a rule. */
+.pm-dialogue__frame {
+  position: absolute;
+  inset: -6px;
+  border: 7px solid var(--pm-garden-leaf);
+  border-radius: 36px;
+  box-shadow:
+    inset 0 0 0 3px var(--pm-garden-light),
+    0 0 0 2px var(--pm-garden-deep);
+  filter: url(#pm-painted-edge);
+  pointer-events: none;
+}
+
+/* The leaves sit behind the panel and peek out at two corners. */
+.pm-dialogue__leaves {
+  position: absolute;
+  z-index: 0;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pm-dialogue__leaves--fan {
+  top: clamp(-96px, -9vw, -54px);
+  right: clamp(-56px, -4vw, -22px);
+  width: clamp(104px, 14vw, 168px);
+  transform: rotate(10deg);
+}
+
+.pm-dialogue__leaves--flowers {
+  bottom: clamp(-48px, -4vw, -26px);
+  left: clamp(-60px, -5vw, -24px);
+  width: clamp(112px, 15vw, 176px);
+}
+
+.pm-dialogue__portrait {
+  position: relative;
+  display: block;
+  width: clamp(64px, 9vw, 96px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid var(--pm-white);
+  border-radius: 50%;
+  background: var(--pm-purple-100);
+  box-shadow: 0 0 0 2px var(--pm-garden-leaf), var(--pm-shadow-sm);
+}
+
+/* Heads and shoulders: the figures are tall, so show their top. */
+.pm-dialogue__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 4%;
+}
+
+.pm-dialogue__portrait--blob img {
+  object-position: 50% 12%;
+}
+
+.pm-dialogue__portrait--seller {
+  background: var(--pm-orange-100);
+}
+
+.pm-dialogue__portrait--seller img {
+  padding: 14%;
+}
+
+.pm-dialogue__speaker {
+  font-family: var(--pm-font-display);
+  font-size: var(--pm-game-label);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--pm-purple-700);
+}
+
+.pm-dialogue__line {
+  margin-top: 4px;
+  font-family: var(--pm-font-display);
+  font-size: var(--pm-game-line);
+  font-weight: 400;
+  line-height: 1.22;
+  color: var(--pm-ink);
+  animation: pm-line-in 0.28s var(--pm-ease) both;
+}
+
+@keyframes pm-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Big and orange: the one thing to press. */
+.pm-dialogue__next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 72px;
+  min-height: 72px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.25rem, 1rem + 0.8vw, 1.6rem);
+  font-weight: 400;
+  color: var(--pm-ink-on-orange);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.2s var(--pm-ease-pop), background-color 0.2s var(--pm-ease);
+}
+
+.pm-dialogue__next svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.pm-dialogue__next:hover {
+  background: var(--pm-orange-500);
+  transform: translateY(-2px);
+}
+
+.pm-dialogue__next:active {
+  transform: scale(0.96);
+}
+
+.pm-dialogue__next:focus-visible {
+  outline: 4px solid var(--pm-purple-700);
+  outline-offset: 4px;
+}
+
+/* Narrow screens: the button goes under the words, full width. */
+@media (max-width: 560px) {
+  .pm-dialogue__panel {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .pm-dialogue__next {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 64px;
+  }
+}

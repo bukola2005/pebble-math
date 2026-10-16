@@ -1,0 +1,154 @@
+/* ----------------------------------------------------------------------
+   The stall scene. Every layer is placed in percentages of a 1920×1080
+   stage, from the owner's composite (horizon at 55%, y 594):
+     sky     fills the stage
+     far     full width, bottom edge at y 608
+     palms   430px tall, centred at 30% of the width, bottom at y 640
+     ground  full width, from the horizon to the bottom
+     stall   700px tall, centred at 52%, bottom at 99% of the height
+     near    138% of the width, centred, bottom 70px below the stage
+   The stage covers the screen and sits on its bottom edge, so a tall
+   phone loses sky, never ground.
+   ---------------------------------------------------------------------- */
+.pm-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #f1d7c0;
+  pointer-events: none;
+}
+
+.pm-world {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: max(100vw, calc(100vh * 16 / 9));
+  width: max(100vw, calc(100dvh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  transform: translateX(-50%);
+}
+
+.pm-layer {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+}
+
+.pm-layer--sky {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pm-layer--far {
+  left: 0;
+  bottom: 43.704%;
+  width: 100%;
+  height: auto;
+}
+
+.pm-layer--palms {
+  left: 30%;
+  bottom: 40.741%;
+  width: auto;
+  height: 39.815%;
+  transform: translateX(-50%);
+}
+
+/* The sand's top edge fades into the haze of the horizon. */
+.pm-layer--ground {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 45%;
+  object-fit: cover;
+  object-position: 50% 0%;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 3%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 3%);
+}
+
+.pm-layer--stall {
+  left: 52%;
+  bottom: 1%;
+  width: auto;
+  height: 64.815%;
+  transform: translateX(-50%);
+}
+
+.pm-layer--near {
+  left: 50%;
+  bottom: -6.481%;
+  width: 138%;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+/* --- the dim market, for Scene 1 ----------------------------------------- */
+.pm-backdrop--dim .pm-world {
+  filter: brightness(0.58) saturate(0.7) hue-rotate(-8deg);
+}
+
+.pm-backdrop--dim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(84, 60, 150, 0.42), rgba(52, 34, 96, 0.3));
+  mix-blend-mode: multiply;
+}
+
+.pm-haze {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Three slow banks of purple haze drifting across. */
+.pm-haze span {
+  position: absolute;
+  width: 70vmax;
+  height: 34vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(176, 150, 245, 0.5), rgba(176, 150, 245, 0));
+  animation: pm-haze-drift 26s linear infinite;
+}
+
+.pm-haze span:nth-child(1) {
+  top: 8%;
+  left: -40%;
+}
+
+.pm-haze span:nth-child(2) {
+  top: 42%;
+  left: -60%;
+  animation-duration: 34s;
+  animation-delay: -12s;
+}
+
+.pm-haze span:nth-child(3) {
+  top: 64%;
+  left: -50%;
+  animation-duration: 30s;
+  animation-delay: -21s;
+}
+
+@keyframes pm-haze-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(190vw);
+  }
+}
+
+/* Without motion the haze rests where it is, still visible. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-haze span {
+    animation: none;
+    left: 10%;
+  }
+
+  .pm-haze span:nth-child(2) {
+    left: 40%;
+  }
+}
