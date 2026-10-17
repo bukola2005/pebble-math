@@ -50,11 +50,10 @@
 }
 
 /* Scaled rather than resized, so the browser doesn't re-lay-out the page on
-   every step. base.css turns the transition off for reduced motion, and the
-   bar then jumps straight to each new value. */
+   every frame. PlayLoading.jsx glides it, frame by frame; with reduced
+   motion it steps straight to each new value instead. */
 .pm-loading__fill {
   height: 100%;
   background: var(--pm-orange);
   transform-origin: left center;
-  transition: transform 0.35s var(--pm-ease);
 }

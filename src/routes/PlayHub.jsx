@@ -19,5 +19,8 @@ export default function PlayHub() {
     navigate(`/play/${player.id}/${step}`, { replace: true });
   }, [step, player.id, navigate]);
 
-  return <PlayLoading tasks={tasks} onDone={afterLoading} />;
+  // On a first play (the film is next) the picture is up for about two
+  // seconds at least: it is the first thing the child sees. After that,
+  // one second is enough.
+  return <PlayLoading tasks={tasks} onDone={afterLoading} minimum={step === "intro" ? 2000 : 1000} />;
 }

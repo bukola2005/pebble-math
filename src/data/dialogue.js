@@ -73,13 +73,27 @@ export const FRUIT_STALL = {
   howManyMore: { speaker: "blob", text: "How many MORE to fill the basket?" },
   // A wrong number. Never "wrong".
   countAgain: "Count again…",
-  // A full basket, as a crate of ten, and what is left on the stall.
-  tenAnd: { speaker: "blob", text: "Ten and {left}. {total}." },
+  // A full basket, as a crate of ten, and what is left over, on a cloth
+  // beside it. Said one step at a time, and each step lights up what it
+  // names: the crate, then the leftovers, then both. `show` is what the
+  // box says by then; `say` is what is read aloud at that step.
+  tenAnd: [
+    { show: "Ten…", say: "Ten…" },
+    { show: "Ten… and {left}.", say: "and {left}." },
+    { show: "Ten and {left}. {total}.", say: "{total}." },
+  ],
   // Round 5: the basket never fills. Blob doesn't explain.
   whatHappened: { speaker: "blob", text: "Hmm. What happened there?" },
 
   next: "Next",
-  again: "Play again",
+
+  // After round 5: as far as the market goes for now, until the reward
+  // and the map are built.
+  endForNow: {
+    title: "That's as far as the market goes for now.",
+    text: "More of the market is on its way.",
+    button: "Who's playing?",
+  },
 
   // For when a whole stall is cleared and its lock opens (not built yet).
   lockOpen: { speaker: "blob", text: "You did it! Look, the first lock is open!" },

@@ -154,6 +154,36 @@ const CRATE_SLOTS = Array.from({ length: 10 }, (_, i) => {
   return { x: 40 + u * 52 + v * -32, y: 52 + u * -25 + v * -21 };
 }).sort((a, b) => a.y - b.y);
 
+/*
+  After a full basket: the crate moves aside and what's left over goes on
+  a cloth beside it, apart from the stall, so the leftovers can only mean
+  one thing. Laid out to fit the screen, crate first.
+*/
+const ASIDE_GAP = 16;
+
+function setAside(geo, count, orangeSize) {
+  const b = geo.basket;
+  const vw = window.innerWidth;
+  const room = vw - 24;
+  const cols = Math.min(count, 3);
+  const rows = Math.ceil(count / cols);
+  const size = Math.round(Math.min(orangeSize, b.width * 0.26, (room * 0.45 - 28) / (cols * 1.05)));
+  const tray = { width: cols * size * 1.05 + 28, height: (rows - 1) * size * 0.9 + size + 26 };
+  const crateWidth = Math.min(b.width * 1.1, room - ASIDE_GAP - tray.width);
+  const whole = crateWidth + ASIDE_GAP + tray.width;
+  const left = Math.max(12, Math.min(b.left + b.width / 2 - whole / 2, vw - 12 - whole));
+  const bottom = b.top + b.height;
+  tray.left = left + crateWidth + ASIDE_GAP;
+  tray.top = bottom - tray.height;
+  const spot = (i) => {
+    const row = Math.floor(i / cols);
+    const inRow = Math.min(cols, count - row * cols);
+    const start = tray.left + (tray.width - inRow * size * 1.05) / 2;
+    return { x: start + (i % cols) * size * 1.05, y: tray.top + 12 + row * size * 0.9 };
+  };
+  return { crate: { left, top: bottom - crateWidth * (CRATE.h / CRATE.w), width: crateWidth }, tray, size, spot };
+}
+
 /** Plays an element's move from where it was (`from`) to where it is now. */
 function flyIn(el, from, duration) {
   if (!from || !el || reducedMotion()) return;
@@ -182,6 +212,9 @@ export default function BasketGame({
   gapsUpTo = 0,
   gapsPulse = false,
   closed = false,
+  trayed = false,
+  spotlight = null,
+  total = 0,
   demoKey = 0,
   onTap,
   onDrop,
@@ -368,6 +401,8 @@ export default function BasketGame({
   if (!layout) return <div className="pm-game" />;
 
   const onTable = oranges.filter((id) => !inBasket.includes(id));
+  const asideAt = new Map(onTable.map((id, i) => [id, i]));
+  const aside = trayed && onTable.length ? setAside(geo, onTable.length, layout.size) : null;
   // Rows further back first, so the front row is drawn over them.
   onTable.sort((a, b) => layout.spots[b].row - layout.spots[a].row);
 
@@ -377,22 +412,41 @@ export default function BasketGame({
   const b = geo.basket;
 
   return (
-    <div className={`pm-game${dim ? " is-dim" : ""}`}>
+    <div className={`pm-game${dim ? " is-dim" : ""}${spotlight ? ` pm-game--spot-${spotlight}` : ""}`}>
       <p id="pm-orange-help" className="pm-sr-only">
         Press Enter to count it. Press B to put it in the basket.
       </p>
 
+      {/* Everything but what Blob is naming goes dim. */}
+      {spotlight && <div className="pm-game__dim" aria-hidden="true" />}
+
+      {/* The cloth the leftovers go on, with how many there are. */}
+      {aside && (
+        <div
+          className="pm-tray"
+          style={{ left: aside.tray.left, top: aside.tray.top, width: aside.tray.width, height: aside.tray.height }}
+          aria-hidden="true"
+        >
+          <span className="pm-tray__tag">{onTable.length}</span>
+        </div>
+      )}
+
       {onTable.map((id) => {
         const spot = layout.spots[id];
         const badge = counted.indexOf(id) + 1;
+        const at = aside ? aside.spot(asideAt.get(id)) : null;
         return (
           <button
             key={id}
             ref={keep(tableEls, id)}
             type="button"
-            className="pm-orange"
+            className={`pm-orange${aside ? " is-set-aside" : ""}`}
             data-id={id}
-            style={{ left: spot.x, top: spot.y, width: layout.size, height: layout.size }}
+            style={
+              at
+                ? { left: at.x, top: at.y, width: aside.size, height: aside.size }
+                : { left: spot.x, top: spot.y, width: layout.size, height: layout.size }
+            }
             aria-label={badge ? `Orange, counted ${badge}` : "Orange"}
             aria-describedby="pm-orange-help"
             onPointerDown={(event) => start(event, id)}
@@ -475,11 +529,15 @@ export default function BasketGame({
       {closed && (
         <div
           className="pm-crate"
-          style={{
-            left: b.left + b.width / 2 - b.width * 0.55,
-            top: b.top + b.height - b.width * 1.1 * (CRATE.h / CRATE.w),
-            width: b.width * 1.1,
-          }}
+          style={
+            aside
+              ? aside.crate
+              : {
+                  left: b.left + b.width / 2 - b.width * 0.55,
+                  top: b.top + b.height - b.width * 1.1 * (CRATE.h / CRATE.w),
+                  width: b.width * 1.1,
+                }
+          }
           role="img"
           aria-label="A crate of ten oranges"
         >
@@ -497,6 +555,17 @@ export default function BasketGame({
             10
           </span>
         </div>
+      )}
+
+      {/* Both together, and how many that makes, above the gap between them. */}
+      {aside && spotlight === "both" && (
+        <span
+          className="pm-game__total"
+          style={{ left: aside.tray.left - ASIDE_GAP / 2, top: aside.tray.top - 40 }}
+          aria-hidden="true"
+        >
+          {total}
+        </span>
       )}
 
       {/* Blob's slow demonstration: a ghost orange makes the trip once. */}

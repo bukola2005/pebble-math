@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import BasketAward from "../components/BasketAward";
 import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
@@ -11,6 +11,7 @@ import { FRUIT_STALL, HINTS, NUMBER_WORDS, SPEAKERS, TUTORIAL, capitalise, fillL
 import { BASKET_HOLDS, ROUND_COUNT, setUpRound } from "../data/fruitStall";
 import { ORANGE } from "../data/market";
 import { getZiziLook } from "../data/zizi";
+import { speak, useReadAloud } from "../lib/speech";
 import { recordRound } from "../lib/stallLog";
 import "./PlayStall.css";
 
@@ -34,9 +35,12 @@ const STALL_ID = "fruit-stall";
               gets "Count again…"
     play      drag oranges in
     closing   the full basket closes into a crate of ten
-    summary   Blob: "Ten and three. Thirteen."
+    summary   the leftovers move onto a cloth beside the crate, and Blob
+              says "Ten… and three. Thirteen." one step at a time, each
+              step lighting up what it names
     puzzled   (round 5) the stall is empty and the basket isn't full.
               Blob: "Hmm. What happened there?", and nothing more.
+    end       a small card: as far as the market goes for now
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
@@ -55,7 +59,10 @@ export default function PlayStall() {
   const [hintShown, setHintShown] = useState(false);
   const [demoKey, setDemoKey] = useState(0);
   const [wrongTaps, setWrongTaps] = useState(0);
+  const [trayed, setTrayed] = useState(false);
+  const [summaryStep, setSummaryStep] = useState(0);
   const [stall, setStall] = useState(null); // the stall picture, once it's in the page
+  const navigate = useNavigate();
   const gameRef = useRef(null);
   const tally = useRef({ hints: 0, wrong: 0 });
   const timers = useRef([]);
@@ -110,8 +117,13 @@ export default function PlayStall() {
     setRound(next);
     setInBasket(next.prefilled);
     clearRoundState();
+    setTrayed(false);
+    setSummaryStep(0);
     setPhase(index === 0 ? "ask" : next.ask ? "question" : "play");
   };
+
+  // After a round: on to the next, or, after the last, the end for now.
+  const afterRound = () => (round.index + 1 < ROUND_COUNT ? startRound(round.index + 1) : setPhase("end"));
 
   const advanceTutorial = (point) => {
     // "Tap one to count it": a tap on the highlighted orange counts it.
@@ -199,26 +211,70 @@ export default function PlayStall() {
     return () => window.clearTimeout(id);
   }, [phase, inBasket.length, onTable, round, player.id]);
 
-  // The crate closes, then Blob says what is there.
+  // The crate closes; the leftovers move to their cloth; then Blob says
+  // what is there.
   useEffect(() => {
     if (phase !== "closing") return undefined;
-    const id = window.setTimeout(() => setPhase("summary"), 1600);
-    return () => window.clearTimeout(id);
+    const aside = window.setTimeout(() => setTrayed(true), 900);
+    const say = window.setTimeout(() => {
+      setSummaryStep(1);
+      setPhase("summary");
+    }, 1900);
+    return () => {
+      window.clearTimeout(aside);
+      window.clearTimeout(say);
+    };
   }, [phase]);
+
+  // "Ten… and three. Thirteen.", one step at a time, each step paced by
+  // the voice: the next one comes about a second later, or just after the
+  // words if they take longer. With nothing to hear (muted, or no voice),
+  // the child taps their way through instead.
+  useEffect(() => {
+    if (phase !== "summary" || summaryStep < 1) return undefined;
+    const steps = FRUIT_STALL.tenAnd;
+    const words = fillLine(steps[summaryStep - 1].say, values);
+    const last = summaryStep >= steps.length;
+    let gone = false;
+    let moved = false;
+    const timers = [];
+    const startedAt = performance.now();
+    const moveOn = () => {
+      if (gone || moved || last) return;
+      moved = true;
+      const wait = Math.max(250, 1000 - (performance.now() - startedAt));
+      timers.push(window.setTimeout(() => !gone && setSummaryStep((n) => n + 1), wait));
+    };
+    // In case a voice never says it has finished.
+    if (speak(words, SPEAKERS.blob.voice, { onEnd: moveOn })) timers.push(window.setTimeout(moveOn, 4000));
+    return () => {
+      gone = true;
+      timers.forEach(window.clearTimeout);
+    };
+    // `values` belongs to the round, which doesn't change during it.
+  }, [phase, summaryStep]);
 
   // --- what is on screen ---------------------------------------------------------------
   const playing = phase === "question" || phase === "play";
   const showGaps = playing && (round.outlines || hintStep >= 2);
+  const summaryLine =
+    phase === "summary" && summaryStep > 0
+      ? { speaker: "blob", text: FRUIT_STALL.tenAnd[summaryStep - 1].show }
+      : null;
   const blobSays =
     phase === "question"
       ? FRUIT_STALL.howManyMore
       : phase === "won"
         ? FRUIT_STALL.practiceWon
         : phase === "summary"
-          ? FRUIT_STALL.tenAnd
+          ? summaryLine
           : phase === "puzzled"
             ? FRUIT_STALL.whatHappened
             : null;
+  const spotlight =
+    phase === "summary" ? [null, "crate", "tray", "both"][Math.min(summaryStep, 3)] : null;
+  const nextStep = () =>
+    phase === "summary" && summaryStep < FRUIT_STALL.tenAnd.length ? setSummaryStep((n) => n + 1) : afterRound();
 
   return (
     <div
@@ -226,6 +282,15 @@ export default function PlayStall() {
       onClick={(event) => {
         // In the "try it" beat, a tap anywhere but an orange moves on too.
         if (trying && !event.target.closest(".pm-orange, .pm-hud, .pm-coach__bubble")) advanceTutorial(null);
+        // While Blob says what is there, a tap anywhere moves to the next
+        // step: that's how a child with the sound off goes through it.
+        if (
+          phase === "summary" &&
+          summaryStep < FRUIT_STALL.tenAnd.length &&
+          !event.target.closest(".pm-orange, .pm-hud, .pm-dialogue")
+        ) {
+          setSummaryStep((n) => n + 1);
+        }
       }}
     >
       <StallBackdrop close stallRef={setStall} />
@@ -249,6 +314,9 @@ export default function PlayStall() {
           gapsUpTo={showGaps ? round.target : 0}
           gapsPulse={hintStep >= 2}
           closed={phase === "closing" || (phase === "summary" && !round.practice)}
+          trayed={trayed}
+          spotlight={spotlight}
+          total={BASKET_HOLDS + onTable}
           demoKey={demoKey}
           onTap={tap}
           onDrop={drop}
@@ -295,8 +363,9 @@ export default function PlayStall() {
               onChoose={choose}
               note={phase === "question" && wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
               noteKey={wrongTaps}
-              buttonLabel={phase === "puzzled" ? FRUIT_STALL.again : FRUIT_STALL.next}
-              onNext={() => startRound((round.index + 1) % ROUND_COUNT)}
+              silent={phase === "summary"}
+              buttonLabel={FRUIT_STALL.next}
+              onNext={nextStep}
             />
           )}
         </div>
@@ -309,6 +378,8 @@ export default function PlayStall() {
           />
         )}
       </main>
+
+      {phase === "end" && <EndForNow onDone={() => navigate("/play")} />}
 
       {phase === "award" && (
         <BasketAward
@@ -329,6 +400,32 @@ export default function PlayStall() {
           onAdvance={advanceTutorial}
         />
       )}
+    </div>
+  );
+}
+
+/** After round 5: a small, quiet card. The reward round replaces it later. */
+function EndForNow({ onDone }) {
+  const buttonRef = useRef(null);
+  const { title, text, button } = FRUIT_STALL.endForNow;
+
+  useReadAloud(`${title} ${text}`, "narrator");
+
+  useEffect(() => {
+    buttonRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  return (
+    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-end-title">
+      <div className="pm-stall__end-card">
+        <h2 id="pm-end-title" className="pm-stall__end-title">
+          {title}
+        </h2>
+        <p className="pm-stall__end-text">{text}</p>
+        <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
+          {button}
+        </button>
+      </div>
     </div>
   );
 }

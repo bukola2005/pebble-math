@@ -86,9 +86,14 @@ if (canSpeak) {
   });
 }
 
-/** Says `text` in `speaker`'s voice, cutting off whatever was being said. */
-export function speak(text, speaker = "narrator") {
-  if (!canSpeak || muted || !text) return;
+/**
+ * Says `text` in `speaker`'s voice, cutting off whatever was being said.
+ * `onEnd` runs when the line has been said (or the browser gave up on it).
+ * Returns false when nothing will be said at all (muted, or no speech), so
+ * a caller pacing things to the voice knows to wait for a tap instead.
+ */
+export function speak(text, speaker = "narrator", { onEnd } = {}) {
+  if (!canSpeak || muted || !text) return false;
   stopSpeaking();
   // Chrome can drop a line queued in the same moment as cancel().
   pending = window.setTimeout(() => {
@@ -101,8 +106,13 @@ export function speak(text, speaker = "narrator") {
     const style = STYLE[speaker] ?? STYLE.narrator;
     utterance.pitch = style.pitch;
     utterance.rate = style.rate;
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+    }
     window.speechSynthesis.speak(utterance);
   }, 60);
+  return true;
 }
 
 export function stopSpeaking() {

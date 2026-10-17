@@ -250,9 +250,13 @@ back to the dashboard.
 with a slim bar low down that fills only as files actually arrive
 (`lib/preload.js`). It loads only what the next step needs: before the film,
 the film itself and its poster; before the avatar screen, the storybook and
-the seven Zizi pictures; after that, just the child's Zizi. It stays up at
-least 700ms so a cached load doesn't flash. The film is downloaded once and
-played from that copy. While a child is busy on one step, the next step's
+the seven Zizi pictures; after that, just the child's Zizi. It is a story
+beat as much as a wait, so it stays up for about two seconds on a first
+play and one second after that. That is a floor, never a delay added on
+top: the bar can't show more than has really loaded, it is only kept from
+racing across faster than the floor, and it glides between values. On a
+slow connection the screen ends a fraction of a second after the last file
+arrives. The film is downloaded once and played from that copy. While a child is busy on one step, the next step's
 code and pictures are fetched in the background.
 
 **The film** (until `players.first_play_done`): a full-screen "Tap to begin",
@@ -298,10 +302,17 @@ at the right number.
 [docs/learning-rules.md](docs/learning-rules.md) for why). The basket
 starts part full; in rounds 2 and 3 Blob first asks "How many MORE to fill
 the basket?" with three numbers to tap, and a wrong one gets "Count
-again…". When the basket fills it closes into a crate of ten, and Blob
-says what is there: "Ten and three. Thirteen." Round 5 never fills the
-basket, and Blob says only "Hmm. What happened there?" "Play again" goes
-back to round 1.
+again…". When the basket fills it closes into a crate of ten, and what is
+left on the stall moves onto a woven cloth beside it, so the leftovers
+can't be mistaken for the stall's stock. Then Blob says what is there one
+step at a time, and the light follows the words: "Ten…" (the crate lifts
+and glows, everything else dims), "…and three." (the leftovers light up,
+with a 3 on their cloth), "Thirteen." (both, and a 13 between them). Each
+step waits for the voice, about a second apart; with the sound off, the
+child taps through them. Round 5 never fills the basket, and Blob says only
+"Hmm. What happened there?" After it, a small card says this is as far as
+the market goes for now, with a way back to "Who's playing?". The reward
+round will replace that card.
 
 *Blob's hint button*, bottom left: each tap gives the next step (a
 question, then the empty spaces outlined, then the move shown slowly
@@ -450,8 +461,11 @@ message with a reload button instead of a white screen.
 ## Next
 
 Saving the Fruit Stall (`stall_progress`, and the per-round record of hints
-in `lib/stallLog.js`), the reward when a stall is cleared, the lock opening
-and the map. Later: a way for the grown-up to edit a child they've already
+in `lib/stallLog.js`), the reward when a stall is cleared (with Blob's
+"Look, the first lock is open!", already in `data/dialogue.js`), the lock
+opening and the map. The fruit seller's art is on its way: the figure goes
+behind the stall on the right, where the sand is empty, and the portrait
+replaces the orange that stands in for them in the dialogue box. Later: a way for the grown-up to edit a child they've already
 added (their monster, name, age band), which the dashboard doesn't have yet.
 
 The stall's living background is six layers on one 1920×1080 canvas,

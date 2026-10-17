@@ -354,3 +354,166 @@
     background: rgba(255, 255, 255, 0.45);
   }
 }
+
+/* --- after a full basket: ten, and what's left over ----------------------------- */
+
+/* The crate slides aside to make room for the cloth. */
+.pm-crate {
+  transition:
+    left 0.7s var(--pm-ease),
+    top 0.7s var(--pm-ease),
+    width 0.7s var(--pm-ease),
+    translate 0.35s var(--pm-ease);
+}
+
+/* The leftovers leave the stall for the cloth. */
+.pm-orange.is-set-aside {
+  z-index: 3;
+  transition:
+    left 0.7s var(--pm-ease),
+    top 0.7s var(--pm-ease),
+    width 0.7s var(--pm-ease),
+    height 0.7s var(--pm-ease);
+}
+
+/* A woven cloth on the ground, in the basket's colours: clearly a place
+   for something set apart, not the stall's stock. */
+.pm-tray {
+  position: absolute;
+  z-index: 2;
+  border-radius: 46% / 40%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0 14px,
+      rgba(255, 255, 255, 0.28) 14px 17px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      #e9784f 0 9px,
+      #f2b45f 9px 18px,
+      #9d8ae0 18px 27px,
+      #f2b45f 27px 36px
+    );
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.35),
+    0 10px 14px rgba(70, 40, 20, 0.28);
+  animation: pm-tray-in 0.45s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-tray-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+/* How many are on the cloth: only once Blob says it. */
+.pm-tray__tag {
+  position: absolute;
+  right: -8px;
+  top: -14px;
+  display: none;
+  place-items: center;
+  min-width: 34px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 3px var(--pm-purple-700),
+    0 4px 8px rgba(70, 40, 20, 0.35);
+  font-family: var(--pm-font-display);
+  font-size: 1.25rem;
+  color: var(--pm-ink);
+  animation: pm-pop-in 0.35s var(--pm-ease-pop) both;
+}
+
+.pm-game--spot-tray .pm-tray__tag,
+.pm-game--spot-both .pm-tray__tag {
+  display: grid;
+}
+
+/* --- the spotlight that follows Blob's words ----------------------------------- */
+.pm-game__dim {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: rgba(22, 16, 44, 0.55);
+  pointer-events: none;
+  animation: pm-dim-in 0.4s var(--pm-ease) both;
+}
+
+@keyframes pm-dim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* "Ten…": the crate lifts and glows, its 10 grows. */
+.pm-game--spot-crate .pm-crate,
+.pm-game--spot-tray .pm-crate,
+.pm-game--spot-both .pm-crate {
+  z-index: 6;
+}
+
+.pm-game--spot-crate .pm-crate,
+.pm-game--spot-both .pm-crate {
+  translate: 0 -6%;
+}
+
+.pm-game--spot-crate .pm-crate__art,
+.pm-game--spot-both .pm-crate__art {
+  filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 18px rgba(255, 220, 130, 0.9));
+}
+
+.pm-game--spot-crate .pm-crate__tag {
+  scale: 1.5;
+}
+
+.pm-crate__tag {
+  transition: scale 0.35s var(--pm-ease-pop);
+}
+
+/* "…and three.": the crate stays lit, but softer. */
+.pm-game--spot-tray .pm-crate__art {
+  filter: drop-shadow(0 0 8px rgba(255, 220, 130, 0.55));
+}
+
+/* …and the leftovers lift and glow, on their cloth. */
+.pm-game--spot-tray .pm-tray,
+.pm-game--spot-both .pm-tray,
+.pm-game--spot-tray .pm-orange.is-set-aside,
+.pm-game--spot-both .pm-orange.is-set-aside {
+  z-index: 6;
+}
+
+.pm-game--spot-tray .pm-orange.is-set-aside .pm-orange__body,
+.pm-game--spot-both .pm-orange.is-set-aside .pm-orange__body {
+  transform: translateY(-10%);
+}
+
+.pm-game--spot-tray .pm-orange.is-set-aside .pm-orange__body img,
+.pm-game--spot-both .pm-orange.is-set-aside .pm-orange__body img {
+  filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 12px rgba(255, 220, 130, 0.9));
+}
+
+/* "Thirteen.": both lit, and the number between them. */
+.pm-game__total {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  min-width: 64px;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--pm-orange);
+  box-shadow:
+    0 0 0 4px var(--pm-white),
+    var(--pm-shadow-orange);
+  font-family: var(--pm-font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--pm-ink-on-orange);
+  animation: pm-pop-in 0.4s var(--pm-ease-pop) both;
+}

@@ -15,6 +15,7 @@ import "./DialogueBox.css";
  *   onNext        the button, or Enter / Space, since it takes the focus
  *   choices       numbers to tap instead of Next, for a question
  *   onChoose(n)   a number was tapped
+ *   silent        don't read the line aloud: the caller does, its own way
  *   note          a second, short line under the first ("Count again…");
  *                 `noteKey` changes each time it should be said again
  *
@@ -32,6 +33,7 @@ export default function DialogueBox({
   onChoose,
   note = null,
   noteKey = 0,
+  silent = false,
 }) {
   const speaker = SPEAKERS[line.speaker] ?? { label: "", voice: "narrator" };
   const label = fillLine(speaker.label, values);
@@ -41,7 +43,7 @@ export default function DialogueBox({
 
   const [shaking, setShaking] = useState(null);
 
-  useReadAloud(text, speaker.voice);
+  useReadAloud(silent ? null : text, speaker.voice);
 
   // The note is said each time it is given, even when it hasn't changed.
   useEffect(() => {
