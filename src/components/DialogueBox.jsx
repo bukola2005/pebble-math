@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DIALOGUE_LEAVES } from "../data/market";
 import { SPEAKERS, fillLine } from "../data/dialogue";
-import { useReadAloud } from "../lib/speech";
+import { speak, useReadAloud } from "../lib/speech";
 import "./DialogueBox.css";
 
 /**
@@ -13,24 +13,53 @@ import "./DialogueBox.css";
  *   ziziPortrait  the child's Zizi look (data/zizi.js), for her lines
  *   buttonLabel   "Next" unless the line ends something ("Let's go")
  *   onNext        the button, or Enter / Space, since it takes the focus
+ *   choices       numbers to tap instead of Next, for a question
+ *   onChoose(n)   a number was tapped
+ *   note          a second, short line under the first ("Count again…");
+ *                 `noteKey` changes each time it should be said again
  *
  * The line is read aloud as it appears. The frame is a painted garden:
  * CSS for the border, an SVG filter to roughen its edge like a brush
  * stroke, and two leaf sprigs cut from the stall's near layer.
  */
-export default function DialogueBox({ line, values, ziziPortrait, buttonLabel = "Next", onNext }) {
+export default function DialogueBox({
+  line,
+  values,
+  ziziPortrait,
+  buttonLabel = "Next",
+  onNext,
+  choices = null,
+  onChoose,
+  note = null,
+  noteKey = 0,
+}) {
   const speaker = SPEAKERS[line.speaker] ?? { label: "", voice: "narrator" };
   const label = fillLine(speaker.label, values);
   const text = fillLine(line.text, values);
   const portrait = line.speaker === "zizi" ? ziziPortrait?.src : speaker.portrait;
   const buttonRef = useRef(null);
 
+  const [shaking, setShaking] = useState(null);
+
   useReadAloud(text, speaker.voice);
 
-  // Each new line puts the focus back on the button, so Enter keeps going.
+  // The note is said each time it is given, even when it hasn't changed.
+  useEffect(() => {
+    if (note) speak(note, speaker.voice);
+  }, [note, noteKey]);
+
+  // Each new line puts the focus back on the button (or the first
+  // number), so Enter keeps going.
   useEffect(() => {
     buttonRef.current?.focus({ preventScroll: true });
   }, [text]);
+
+  const choose = (value) => {
+    setShaking(null);
+    // A wrong number gets a small shake; the parent says "Count again…".
+    window.requestAnimationFrame(() => setShaking(value));
+    onChoose(value);
+  };
 
   return (
     <section className="pm-dialogue" aria-label={`${label} says`}>
@@ -83,21 +112,43 @@ export default function DialogueBox({ line, values, ziziPortrait, buttonLabel = 
           <p key={text} className="pm-dialogue__line" aria-live="polite">
             {text}
           </p>
+          {note && (
+            <p key={noteKey} className="pm-dialogue__note" aria-live="polite">
+              {note}
+            </p>
+          )}
         </div>
 
-        <button ref={buttonRef} type="button" className="pm-dialogue__next" onClick={onNext}>
-          <span>{buttonLabel}</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M5 12h13M13 6l6 6-6 6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        {choices ? (
+          <div className="pm-dialogue__choices" role="group" aria-label="Choose a number">
+            {choices.map((value, i) => (
+              <button
+                key={value}
+                ref={i === 0 ? buttonRef : undefined}
+                type="button"
+                className={`pm-dialogue__choice${shaking === value && note ? " is-shaking" : ""}`}
+                onClick={() => choose(value)}
+                onAnimationEnd={() => setShaking(null)}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button ref={buttonRef} type="button" className="pm-dialogue__next" onClick={onNext}>
+            <span>{buttonLabel}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 12h13M13 6l6 6-6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
       </div>
     </section>
   );

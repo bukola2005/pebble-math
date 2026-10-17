@@ -93,7 +93,9 @@ export function speak(text, speaker = "narrator") {
   // Chrome can drop a line queued in the same moment as cancel().
   pending = window.setTimeout(() => {
     voice ??= pickVoice();
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Words in capitals ("How many MORE…") are for the eye; some voices
+    // would spell them out letter by letter.
+    const utterance = new SpeechSynthesisUtterance(text.replace(/\b[A-Z]{2,}\b/g, (word) => word.toLowerCase()));
     if (voice) utterance.voice = voice;
     utterance.lang = voice?.lang ?? "en-GB";
     const style = STYLE[speaker] ?? STYLE.narrator;

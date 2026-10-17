@@ -1,30 +1,38 @@
-import { useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { BASKET, CRATE, ORANGE } from "../data/market";
 import "./BasketGame.css";
 
 /*
-  The Fruit Stall's play area: oranges scattered on the ground, and the
-  child's basket.
+  The Fruit Stall's play area: oranges on the stall's table, and the
+  child's basket on the ground just in front of it, so every drag is a
+  short one, down off the table and in.
 
   Two separate things a child can do with an orange:
     tap   counts it. A number badge appears (1, 2, 3...); tapping a
           counted orange clears it and the rest renumber. A scratchpad for
           the child: it changes nothing in the game.
     drag  moves it. Dropped on the basket it goes in, and the basket's own
-          count goes up. Dropped anywhere else it springs back home. An
-          orange in the basket can't be picked up again, so nothing is
-          ever counted twice.
+          count, on a tag on its rim, goes up. Dropped anywhere else it
+          springs back. An orange in the basket can't be picked up again,
+          so nothing is ever counted twice.
 
   Both work by touch, mouse and pen (pointer events). With a keyboard:
   Enter counts the focused orange, B puts it in the basket.
 
-  The parent owns the state (which oranges are counted, which are in the
-  basket); this component owns how it feels.
+  Everything is placed from where the stall picture is on screen, so the
+  oranges sit on its table at any screen size. The parent owns the state
+  (which oranges are counted, which are in the basket); this component
+  owns how it feels.
 */
+
+// The stall picture (/stall/fruit-stall.webp, 866×787), as fractions of
+// its box: the table top's usable width, the line the front row of
+// oranges rests on, and the bottom of the table's front edge.
+const TABLE = { left: 0.07, right: 0.93, rest: 0.655, face: 0.705 };
 
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-// A tiny seeded random, so a round's scatter stays put across re-renders
+// A tiny seeded random, so a round's layout stays put across re-renders
 // and when the screen turns.
 function seeded(seed) {
   let t = seed >>> 0;
@@ -36,47 +44,82 @@ function seeded(seed) {
   };
 }
 
-/**
- * Lays the oranges out in the box: the biggest grid of cells that fits
- * them with a few cells to spare, a random cell for each orange, nudged
- * off-centre and tilted, so they look tipped out rather than lined up.
- */
-function scatter(ids, seed, width, height) {
-  const n = ids.length;
-  const grid = (cells) => {
-    let best = null;
-    for (let rows = 1; rows <= cells; rows++) {
-      const cols = Math.ceil(cells / rows);
-      const cell = Math.min(width / cols, height / rows);
-      if (!best || cell > best.cell) best = { rows, cols, cell };
-    }
-    return best;
+/** Where the table, the basket and the stall are on screen right now. */
+function measure(stall) {
+  const s = stall.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const geo = {
+    stallH: s.height,
+    cx: s.left + s.width / 2,
+    left: Math.max(s.left + s.width * TABLE.left, 12),
+    right: Math.min(s.left + s.width * TABLE.right, vw - 12),
+    rest: s.top + s.height * TABLE.rest,
+    face: s.top + s.height * TABLE.face,
   };
-  let { rows, cols, cell } = grid(n + Math.ceil(n / 4));
-  if (cell < 58) ({ rows, cols, cell } = grid(n)); // no room to spare
+  // The basket stands on the ground in front of the table, as big as the
+  // space below the table allows, with only its handles rising in front
+  // of the table's edge (the basket ignores taps, so an orange behind a
+  // handle can still be picked up).
+  const bottom = vh - 8;
+  const h = Math.max(110, Math.min(s.height * 0.48, (bottom - geo.face) / 0.72));
+  const w = (h * BASKET.w) / BASKET.h;
+  geo.basket = { left: Math.min(Math.max(geo.cx - w / 2, 8), vw - w - 8), top: bottom - h, width: w, height: h };
+  return geo;
+}
 
-  const rand = seeded(seed);
-  const cells = Array.from({ length: rows * cols }, (_, i) => i);
-  for (let i = cells.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [cells[i], cells[j]] = [cells[j], cells[i]];
+/**
+ * The oranges on the table: rows along it, the front row fullest, each
+ * row further back sitting a little higher and set between the gaps of
+ * the one in front, like a heap.
+ *
+ * As few rows as will keep each orange at least 64px (a comfortable
+ * target for a small finger), and never more than three; if no layout
+ * reaches 64px, the one with the biggest oranges.
+ */
+const GOOD_SIZE = 64;
+
+function arrange(ids, seed, geo) {
+  const n = ids.length;
+  const width = geo.right - geo.left;
+  const biggest = Math.min(geo.stallH * 0.16, 104);
+  // How many fit in `rows` rows of up to `across`, every other row one
+  // shorter so it sits in the gaps of the row in front.
+  const fits = (across, rows) => across * Math.ceil(rows / 2) + Math.max(across - 1, 1) * Math.floor(rows / 2);
+  let choice = null;
+  for (let rows = 1; rows <= 3; rows++) {
+    let across = 1;
+    while (fits(across, rows) < n) across++;
+    const size = Math.min((width / across) * 0.92, biggest);
+    if (!choice || (choice.size < GOOD_SIZE && size > choice.size)) choice = { across, size };
+  }
+  const perRow = choice.across;
+  const size = Math.round(Math.max(48, choice.size));
+  const spacing = width / perRow;
+
+  const counts = [];
+  for (let left = n, row = 0; left > 0; row++) {
+    const room = row % 2 && perRow > 1 ? perRow - 1 : perRow;
+    counts.push(Math.min(room, left));
+    left -= room;
   }
 
-  const cw = width / cols;
-  const ch = height / rows;
-  const size = Math.round(Math.max(48, Math.min(104, Math.min(cw, ch) * 0.84)));
-  const slackX = Math.max(0, cw - size) / 2;
-  const slackY = Math.max(0, ch - size) / 2;
+  const rand = seeded(seed);
+  const order = [...ids];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
 
   const spots = {};
-  ids.forEach((id, i) => {
-    const col = cells[i] % cols;
-    const row = Math.floor(cells[i] / cols);
-    spots[id] = {
-      x: (col + 0.5) * cw + (rand() * 2 - 1) * slackX * 0.85 - size / 2,
-      y: (row + 0.5) * ch + (rand() * 2 - 1) * slackY * 0.85 - size / 2,
-      tilt: Math.round((rand() * 2 - 1) * 16),
-    };
+  let next = 0;
+  counts.forEach((count, row) => {
+    const start = geo.left + (width - count * spacing) / 2 + spacing / 2;
+    for (let k = 0; k < count; k++) {
+      const x = start + k * spacing + (rand() * 2 - 1) * size * 0.06;
+      const bottom = geo.rest - row * size * 0.52 + (rand() * 2 - 1) * size * 0.04;
+      spots[order[next++]] = { x: x - size / 2, y: bottom - size, row, tilt: Math.round((rand() * 2 - 1) * 14) };
+    }
   });
   return { size, spots };
 }
@@ -87,17 +130,29 @@ function scatter(ids, seed, width, height) {
   the front handle. Drawn back to front.
 */
 const SLOTS = [
-  { x: 25, y: 53, layer: 3 },
-  { x: 37, y: 54, layer: 3 },
-  { x: 49, y: 54, layer: 3 },
-  { x: 61, y: 53, layer: 3 },
-  { x: 20, y: 43, layer: 2 },
-  { x: 32, y: 44, layer: 2 },
-  { x: 44, y: 44, layer: 2 },
-  { x: 56, y: 43, layer: 2 },
-  { x: 30, y: 34, layer: 1 },
-  { x: 44, y: 34, layer: 1 },
+  { x: 24, y: 52, layer: 3 },
+  { x: 37, y: 53, layer: 3 },
+  { x: 50, y: 53, layer: 3 },
+  { x: 63, y: 52, layer: 3 },
+  { x: 19, y: 41, layer: 2 },
+  { x: 32, y: 42, layer: 2 },
+  { x: 45, y: 42, layer: 2 },
+  { x: 58, y: 41, layer: 2 },
+  { x: 30, y: 30, layer: 1 },
+  { x: 45, y: 30, layer: 1 },
 ];
+
+/*
+  A crate of ten: the oranges in two rows of five, like a ten frame, set
+  along the crate's open top (it is drawn at an angle). Corners of the
+  opening, in % of /stall/crate.webp: front (40, 52), right (92, 27),
+  left (8, 31).
+*/
+const CRATE_SLOTS = Array.from({ length: 10 }, (_, i) => {
+  const u = ((i % 5) + 0.5) / 5;
+  const v = (Math.floor(i / 5) + 0.5) / 2;
+  return { x: 40 + u * 52 + v * -32, y: 52 + u * -25 + v * -21 };
+}).sort((a, b) => a.y - b.y);
 
 /** Plays an element's move from where it was (`from`) to where it is now. */
 function flyIn(el, from, duration) {
@@ -108,66 +163,71 @@ function flyIn(el, from, duration) {
   const dy = from.top + from.height / 2 - (to.top + to.height / 2);
   const scale = from.width / to.width;
   el.animate(
-    [
-      { transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
-      { transform: "translate(0, 0) scale(1)" },
-    ],
+    [{ transform: `translate(${dx}px, ${dy}px) scale(${scale})` }, { transform: "translate(0, 0) scale(1)" }],
     { duration, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" }
   );
 }
 
 export default function BasketGame({
   ref,
+  stall,
   seed,
   oranges,
   inBasket,
   counted,
-  enabled,
+  canDrag,
+  canTap = true,
   basketHidden = false,
   dim = false,
+  gapsUpTo = 0,
+  gapsPulse = false,
+  closed = false,
+  demoKey = 0,
   onTap,
   onDrop,
   onLeave,
 }) {
-  const pileRef = useRef(null);
   const basketRef = useRef(null);
-  const [box, setBox] = useState(null);
+  const [geo, setGeo] = useState(null);
+  const [demo, setDemo] = useState(null);
   const drag = useRef(null);
   const suppressClick = useRef(false);
   const flights = useRef(new Map()); // id → the rect it is flying from
-  const pileEls = useRef(new Map());
+  const tableEls = useRef(new Map());
   const basketEls = useRef(new Map());
 
-  // The pile's size decides the scatter; keep it current as the screen turns.
+  // Follow the stall picture as the screen changes.
   useLayoutEffect(() => {
-    const el = pileRef.current;
-    const measure = () => {
-      const { width, height } = el.getBoundingClientRect();
-      setBox((old) => (old && old.width === width && old.height === height ? old : { width, height }));
+    if (!stall) return undefined;
+    const update = () => setGeo(measure(stall));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(stall);
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
     };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  }, [stall]);
 
-  const layout = box && box.width > 0 ? scatter(oranges, seed, box.width, box.height) : null;
+  const layout = geo ? arrange(oranges, seed, geo) : null;
+
+  const nearestOrange = () => {
+    const b = basketRef.current?.getBoundingClientRect();
+    let best = null;
+    let bestDistance = Infinity;
+    for (const el of tableEls.current.values()) {
+      const r = el.getBoundingClientRect();
+      const d = b ? Math.hypot(r.left + r.width / 2 - (b.left + b.width / 2), r.top - b.top) : 0;
+      if (d < bestDistance) [best, bestDistance] = [el, d];
+    }
+    return best;
+  };
 
   useImperativeHandle(ref, () => ({
     basket: () => basketRef.current,
-    // The orange nearest the basket: the shortest first drag.
-    nearestOrange: () => {
-      const b = basketRef.current?.getBoundingClientRect();
-      let best = null;
-      let bestDistance = Infinity;
-      for (const el of pileEls.current.values()) {
-        const r = el.getBoundingClientRect();
-        const d = b ? Math.hypot(r.left - b.left, r.top - b.top) : 0;
-        if (d < bestDistance) [best, bestDistance] = [el, d];
-      }
-      return best;
-    },
-    // Sends an orange from the basket back to its place on the ground.
+    nearestOrange,
+    // Sends an orange from the basket back to its place on the table.
     flyBack: (id) => {
       const el = basketEls.current.get(id);
       if (el) flights.current.set(id, el.getBoundingClientRect());
@@ -175,10 +235,34 @@ export default function BasketGame({
     },
   }));
 
+  // Blob's third hint: one orange's trip to the basket, slowly, once.
+  useEffect(() => {
+    if (!demoKey || !geo) return;
+    const from = nearestOrange()?.getBoundingClientRect();
+    const slot = SLOTS[Math.min(inBasket.length, SLOTS.length - 1)];
+    if (!from) return;
+    const b = geo.basket;
+    const toX = b.left + (b.width * slot.x) / 100;
+    const toY = b.top + (b.height * slot.y) / 100;
+    setDemo({
+      key: demoKey,
+      left: from.left,
+      top: from.top,
+      size: from.width,
+      dx: toX - (from.left + from.width / 2),
+      dy: toY - (from.top + from.height / 2),
+    });
+    // Gone once it has played (a timer rather than animationend, so it
+    // also goes when motion is reduced and nothing animates).
+    const id = window.setTimeout(() => setDemo(null), 2900);
+    return () => window.clearTimeout(id);
+    // Only a new hint tap starts it again.
+  }, [demoKey]);
+
   // --- dragging ---------------------------------------------------------------
   const start = (event, id) => {
     suppressClick.current = false;
-    if (!enabled || drag.current) return; // one orange at a time
+    if (!canDrag || drag.current) return; // one orange at a time
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const el = event.currentTarget;
     el.setPointerCapture?.(event.pointerId);
@@ -213,12 +297,13 @@ export default function BasketGame({
       d.lift = d.touch ? home.height * 0.5 : 0;
       d.el.style.setProperty("--lift", `${d.lift}px`);
       d.el.classList.add("is-dragging");
-      // Generous: anywhere over the basket or just above its mouth counts.
+      // Generous: anywhere over the basket, a little beside it, or just
+      // above its mouth counts.
       const b = basketRef.current.getBoundingClientRect();
       d.zone = {
         left: b.left - b.width * 0.2,
         right: b.right + b.width * 0.2,
-        top: b.top - b.height * 0.55,
+        top: b.top - b.height * 0.35,
         bottom: b.bottom + b.height * 0.1,
       };
     }
@@ -259,37 +344,37 @@ export default function BasketGame({
   };
 
   const dropByKey = (id, el) => {
-    if (!enabled) return;
+    if (!canDrag) return;
     flights.current.set(id, el.getBoundingClientRect());
     if (!onDrop(id)) flights.current.delete(id);
   };
 
-  // --- landing, both ways --------------------------------------------------------
-  const setPileEl = (id) => (el) => {
-    if (el) pileEls.current.set(id, el);
-    else pileEls.current.delete(id);
-  };
-  const setBasketEl = (id) => (el) => {
-    if (el) basketEls.current.set(id, el);
-    else basketEls.current.delete(id);
+  // --- landing, both ways ---------------------------------------------------------
+  const keep = (map, id) => (el) => {
+    if (el) map.current.set(id, el);
+    else map.current.delete(id);
   };
 
   // Anything that just changed place flies from where it was.
   useLayoutEffect(() => {
     for (const [id, from] of flights.current) {
-      const el = basketEls.current.get(id) ?? pileEls.current.get(id);
+      const el = basketEls.current.get(id) ?? tableEls.current.get(id);
       if (!el) continue;
       flyIn(el, from, 300);
       flights.current.delete(id);
     }
   });
 
-  const onGround = layout ? oranges.filter((id) => !inBasket.includes(id)) : [];
-  // Lower on the screen means nearer, so drawn later.
-  onGround.sort((a, b) => layout.spots[a].y - layout.spots[b].y);
+  if (!layout) return <div className="pm-game" />;
+
+  const onTable = oranges.filter((id) => !inBasket.includes(id));
+  // Rows further back first, so the front row is drawn over them.
+  onTable.sort((a, b) => layout.spots[b].row - layout.spots[a].row);
 
   const inSlots = inBasket.slice(0, SLOTS.length).map((id, i) => ({ id, ...SLOTS[i] }));
   inSlots.sort((a, b) => a.layer - b.layer);
+  const gaps = SLOTS.slice(inBasket.length, Math.min(gapsUpTo, SLOTS.length));
+  const b = geo.basket;
 
   return (
     <div className={`pm-game${dim ? " is-dim" : ""}`}>
@@ -297,78 +382,63 @@ export default function BasketGame({
         Press Enter to count it. Press B to put it in the basket.
       </p>
 
-      <div className="pm-game__pile" ref={pileRef}>
-        <img
-          className="pm-game__crate"
-          src={CRATE.src}
-          width={CRATE.w}
-          height={CRATE.h}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-        />
-
-        {onGround.map((id) => {
-          const spot = layout.spots[id];
-          const badge = counted.indexOf(id) + 1;
-          return (
-            <button
-              key={id}
-              ref={setPileEl(id)}
-              type="button"
-              className="pm-orange"
-              data-id={id}
-              style={{ left: spot.x, top: spot.y, width: layout.size, height: layout.size }}
-              aria-label={badge ? `Orange, counted ${badge}` : "Orange"}
-              aria-describedby="pm-orange-help"
-              onPointerDown={(event) => start(event, id)}
-              onPointerMove={move}
-              onPointerUp={(event) => end(event)}
-              onPointerCancel={(event) => end(event, true)}
-              onLostPointerCapture={(event) => end(event, true)}
-              onClick={() => {
-                if (suppressClick.current) {
-                  suppressClick.current = false;
-                  return;
-                }
-                onTap(id);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "b" || event.key === "B") {
-                  event.preventDefault();
-                  dropByKey(id, event.currentTarget);
-                }
-              }}
-            >
-              <span className="pm-orange__body" style={{ "--tilt": `${spot.tilt}deg` }}>
-                <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+      {onTable.map((id) => {
+        const spot = layout.spots[id];
+        const badge = counted.indexOf(id) + 1;
+        return (
+          <button
+            key={id}
+            ref={keep(tableEls, id)}
+            type="button"
+            className="pm-orange"
+            data-id={id}
+            style={{ left: spot.x, top: spot.y, width: layout.size, height: layout.size }}
+            aria-label={badge ? `Orange, counted ${badge}` : "Orange"}
+            aria-describedby="pm-orange-help"
+            onPointerDown={(event) => start(event, id)}
+            onPointerMove={move}
+            onPointerUp={(event) => end(event)}
+            onPointerCancel={(event) => end(event, true)}
+            onLostPointerCapture={(event) => end(event, true)}
+            onClick={() => {
+              if (suppressClick.current) {
+                suppressClick.current = false;
+                return;
+              }
+              if (canTap) onTap(id);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "b" || event.key === "B") {
+                event.preventDefault();
+                dropByKey(id, event.currentTarget);
+              }
+            }}
+          >
+            <span className="pm-orange__body" style={{ "--tilt": `${spot.tilt}deg` }}>
+              <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+            </span>
+            {badge > 0 && (
+              <span key={badge} className="pm-orange__badge" aria-hidden="true">
+                {badge}
               </span>
-              {badge > 0 && (
-                <span key={badge} className="pm-orange__badge" aria-hidden="true">
-                  {badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+            )}
+          </button>
+        );
+      })}
 
       {/* Hidden until the child is given it; then it arrives with a pop. */}
-      <div className={`pm-basket${basketHidden ? " is-hidden" : ""}`} ref={basketRef}>
-        <img
-          className="pm-basket__art"
-          src={BASKET.src}
-          width={BASKET.w}
-          height={BASKET.h}
-          alt=""
-          draggable={false}
-        />
+      <div
+        className={`pm-basket${basketHidden ? " is-hidden" : ""}${closed ? " is-closed" : ""}`}
+        ref={basketRef}
+        style={{ left: b.left, top: b.top, width: b.width, height: b.height }}
+      >
+        <img className="pm-basket__art" src={BASKET.src} width={BASKET.w} height={BASKET.h} alt="" draggable={false} />
         {inSlots.map((slot) => (
           <span
             key={slot.id}
-            ref={setBasketEl(slot.id)}
+            ref={keep(basketEls, slot.id)}
             className="pm-basket__orange"
-            style={{ left: `${slot.x - 10}%`, top: `${slot.y - 12}%` }}
+            style={{ left: `${slot.x - 11}%`, top: `${slot.y - 13}%` }}
           >
             <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
           </span>
@@ -383,13 +453,63 @@ export default function BasketGame({
           aria-hidden="true"
           draggable={false}
         />
-        <span key={inBasket.length} className="pm-basket__count" aria-hidden="true">
+        {/* The empty spaces still to fill, as outlines. */}
+        {gaps.map((slot, i) => (
+          <span
+            key={`gap-${inBasket.length + i}`}
+            className={`pm-basket__gap${gapsPulse ? " is-pulsing" : ""}`}
+            style={{ left: `${slot.x - 11}%`, top: `${slot.y - 12}%` }}
+            aria-hidden="true"
+          />
+        ))}
+        {/* The basket's own count, on a tag tied to its rim. */}
+        <span key={inBasket.length} className="pm-basket__tag" aria-hidden="true">
           {inBasket.length}
         </span>
         <p className="pm-sr-only" aria-live="polite">
           {inBasket.length === 1 ? "1 orange in the basket" : `${inBasket.length} oranges in the basket`}
         </p>
       </div>
+
+      {/* A full basket closes into a crate of ten, which stays. */}
+      {closed && (
+        <div
+          className="pm-crate"
+          style={{
+            left: b.left + b.width / 2 - b.width * 0.55,
+            top: b.top + b.height - b.width * 1.1 * (CRATE.h / CRATE.w),
+            width: b.width * 1.1,
+          }}
+          role="img"
+          aria-label="A crate of ten oranges"
+        >
+          <img className="pm-crate__art" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
+          {CRATE_SLOTS.map((slot, i) => (
+            <span
+              key={i}
+              className="pm-crate__orange"
+              style={{ left: `${slot.x - 8}%`, top: `${slot.y - 12}%`, animationDelay: `${0.25 + i * 0.05}s` }}
+            >
+              <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+            </span>
+          ))}
+          <span className="pm-crate__tag" aria-hidden="true">
+            10
+          </span>
+        </div>
+      )}
+
+      {/* Blob's slow demonstration: a ghost orange makes the trip once. */}
+      {demo && (
+        <div
+          key={demo.key}
+          className="pm-game__demo"
+          style={{ left: demo.left, top: demo.top, width: demo.size, height: demo.size, "--dx": `${demo.dx}px`, "--dy": `${demo.dy}px` }}
+          aria-hidden="true"
+        >
+          <img src={ORANGE.src} alt="" draggable={false} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------------
-   The play area sits over the painted scene, in screen space, so the
-   oranges stay a good size for a finger on any screen: on the ground in
-   front of the stall at the left, the basket to their right, and the sand
-   on the far right left free for the seller and Blob.
+   The play area sits over the painted scene. The oranges and the basket
+   are placed in pixels from where the stall picture is (BasketGame.jsx),
+   so the oranges are on its table and the basket in front of it, at a
+   size a finger can manage, on any screen.
    ---------------------------------------------------------------------- */
 .pm-game {
   position: absolute;
@@ -12,35 +12,13 @@
 }
 
 /* While the tutorial points at the stall, the oranges fade back so the
-   stall is the only bright thing, even where they sit in front of it. */
-.pm-game.is-dim .pm-orange,
-.pm-game.is-dim .pm-game__crate {
-  opacity: 0.16;
-}
-
-.pm-orange,
-.pm-game__crate {
+   stall itself is the bright thing. */
+.pm-orange {
   transition: opacity 0.3s var(--pm-ease);
 }
 
-/* Left of the stall, so the stall itself stays clear. */
-.pm-game__pile {
-  position: absolute;
-  left: 2%;
-  bottom: 4%;
-  width: 29%;
-  height: 54%;
-}
-
-.pm-game__crate {
-  position: absolute;
-  left: -3%;
-  top: -10%;
-  width: 30%;
-  height: auto;
-  transform: rotate(-17deg);
-  filter: drop-shadow(0 8px 8px rgba(70, 40, 20, 0.3));
-  pointer-events: none;
+.pm-game.is-dim .pm-orange {
+  opacity: 0.16;
 }
 
 /* --- one orange -------------------------------------------------------------- */
@@ -148,14 +126,9 @@
 }
 
 /* --- the basket ---------------------------------------------------------------- */
-/* At the foot of the stall, in the middle. */
 .pm-basket {
   position: absolute;
-  left: 50%;
-  translate: -50% 0;
-  bottom: 4%;
-  width: min(25vw, 40vh, 340px);
-  aspect-ratio: 480 / 433;
+  z-index: 2;
   pointer-events: none;
   transition:
     scale 0.2s var(--pm-ease-pop),
@@ -165,6 +138,13 @@
 .pm-basket.is-hidden {
   opacity: 0;
   scale: 0.6;
+}
+
+/* Full: it closes up, and the crate of ten takes its place. */
+.pm-basket.is-closed {
+  opacity: 0;
+  scale: 0.75;
+  transition-duration: 0.35s;
 }
 
 .pm-basket__art {
@@ -197,7 +177,7 @@
 
 .pm-basket__orange {
   position: absolute;
-  width: 20%;
+  width: 22%;
   aspect-ratio: 168 / 182;
 }
 
@@ -208,58 +188,169 @@
   filter: drop-shadow(0 3px 2px rgba(70, 35, 10, 0.3));
 }
 
-/* The basket's own count, above it, popping with every orange. */
-.pm-basket__count {
+/* An empty space still to fill. */
+.pm-basket__gap {
   position: absolute;
-  top: -15%;
-  left: 50%;
-  translate: -50% 0;
+  width: 22%;
+  aspect-ratio: 1;
+  border: 3px dashed rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 1.5px rgba(76, 92, 203, 0.55);
+}
+
+.pm-basket__gap.is-pulsing {
+  animation: pm-gap-pulse 1.1s var(--pm-ease) infinite alternate;
+}
+
+@keyframes pm-gap-pulse {
+  to {
+    transform: scale(1.12);
+    background: rgba(255, 255, 255, 0.45);
+  }
+}
+
+/* The basket's own count, on a paper tag tied to the front of its rim:
+   it belongs to the basket, it isn't a score. */
+.pm-basket__tag {
+  position: absolute;
+  left: 3%;
+  top: 46%;
   display: grid;
   place-items: center;
-  width: clamp(48px, 19%, 68px);
+  min-width: clamp(30px, 21%, 46px);
   aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--pm-white);
+  padding: 0 4px;
+  border-radius: 8px 8px 12px 12px;
+  background: var(--pm-paper);
   box-shadow:
-    0 0 0 4px var(--pm-orange),
-    var(--pm-shadow-md);
+    0 0 0 2.5px #7a4a24,
+    0 4px 8px rgba(70, 40, 20, 0.35);
   font-family: var(--pm-font-display);
-  font-size: clamp(1.5rem, 4.5vmin, 2.25rem);
+  font-size: clamp(1.05rem, 3.4vmin, 1.6rem);
   font-weight: 400;
+  line-height: 1;
   color: var(--pm-ink);
+  rotate: -8deg;
   animation: pm-pop-in 0.35s var(--pm-ease-pop) both;
 }
 
-/* --- a short phone on its side: give the oranges more height ------------------- */
-@media (max-height: 480px) and (min-aspect-ratio: 1 / 1) {
-  .pm-game__pile {
-    bottom: 3%;
-    width: 31%;
-    height: 64%;
-  }
+/* The string it hangs from, looped over the rim. */
+.pm-basket__tag::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  width: 10px;
+  height: 14px;
+  translate: -50% 0;
+  border: 2px solid #7a4a24;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
 
-  .pm-basket {
-    bottom: 3%;
+/* --- the crate of ten ------------------------------------------------------------- */
+.pm-crate {
+  position: absolute;
+  z-index: 3;
+  aspect-ratio: 440 / 328;
+  pointer-events: none;
+  animation: pm-crate-in 0.5s var(--pm-ease-pop) 0.15s both;
+}
+
+@keyframes pm-crate-in {
+  from {
+    opacity: 0;
+    transform: translateY(10%) scale(0.7);
   }
 }
 
-/* --- a phone held upright: oranges across the middle, basket below -------------- */
-@media (max-aspect-ratio: 1 / 1) {
-  .pm-game__pile {
-    left: 3%;
-    right: 3%;
-    width: auto;
-    bottom: 30%;
-    height: 38%;
+.pm-crate__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 10px 10px rgba(70, 40, 20, 0.3));
+}
+
+.pm-crate__orange {
+  position: absolute;
+  width: 16%;
+  aspect-ratio: 168 / 182;
+  animation: pm-pop-in 0.3s var(--pm-ease-pop) both;
+}
+
+.pm-crate__orange img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 2px rgba(70, 35, 10, 0.3));
+}
+
+/* "10", stencilled on the crate's side. */
+.pm-crate__tag {
+  position: absolute;
+  left: 56%;
+  top: 62%;
+  display: grid;
+  place-items: center;
+  min-width: clamp(34px, 18%, 52px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 3px var(--pm-orange),
+    0 4px 8px rgba(70, 40, 20, 0.35);
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.1rem, 3.6vmin, 1.7rem);
+  color: var(--pm-ink);
+  animation: pm-pop-in 0.35s var(--pm-ease-pop) 0.8s both;
+}
+
+/* --- Blob's demonstration --------------------------------------------------------- */
+.pm-game__demo {
+  position: fixed;
+  z-index: 35;
+  pointer-events: none;
+  animation: pm-demo-trip 2.6s var(--pm-ease) both;
+}
+
+.pm-game__demo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px var(--pm-white));
+}
+
+@keyframes pm-demo-trip {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(0, -8px) scale(1.12);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(var(--dx), var(--dy)) scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.55);
+    opacity: 0;
+  }
+}
+
+/* Without motion, the ghost simply waits where it would land. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-game__demo {
+    animation: none;
+    transform: translate(var(--dx), var(--dy)) scale(0.6);
   }
 
-  .pm-game__crate {
-    width: 26%;
-    top: -18%;
-  }
-
-  .pm-basket {
-    bottom: 4%;
-    width: min(52vw, 23vh, 300px);
+  .pm-basket__gap.is-pulsing {
+    animation: none;
+    background: rgba(255, 255, 255, 0.45);
   }
 }

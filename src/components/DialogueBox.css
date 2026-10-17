@@ -160,16 +160,120 @@
   outline-offset: 4px;
 }
 
-/* Narrow screens: the button goes under the words, full width. */
+/* "Count again…": calm, never red. */
+.pm-dialogue__note {
+  margin-top: 4px;
+  font-family: var(--pm-font-display);
+  font-size: var(--pm-game-label);
+  font-weight: 400;
+  color: var(--pm-purple-700);
+  animation: pm-line-in 0.28s var(--pm-ease) both;
+}
+
+/* Three numbers to tap, big enough for a small finger. */
+.pm-dialogue__choices {
+  display: flex;
+  gap: 10px;
+}
+
+.pm-dialogue__choice {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pm-white);
+  box-shadow:
+    0 0 0 4px var(--pm-orange),
+    var(--pm-shadow-md);
+  font-family: var(--pm-font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  cursor: pointer;
+  transition: transform 0.2s var(--pm-ease-pop), background-color 0.2s var(--pm-ease);
+}
+
+.pm-dialogue__choice:hover {
+  background: var(--pm-orange-100);
+  transform: translateY(-2px);
+}
+
+.pm-dialogue__choice:focus-visible {
+  outline: 4px solid var(--pm-purple-700);
+  outline-offset: 4px;
+}
+
+.pm-dialogue__choice.is-shaking {
+  animation: pm-choice-shake 0.4s var(--pm-ease);
+}
+
+@keyframes pm-choice-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+/* Narrow screens: the button (or the numbers) go under the words. */
 @media (max-width: 560px) {
   .pm-dialogue__panel {
     grid-template-columns: auto minmax(0, 1fr);
     padding: 16px;
   }
 
-  .pm-dialogue__next {
+  .pm-dialogue__next,
+  .pm-dialogue__choices {
     grid-column: 1 / -1;
+  }
+
+  .pm-dialogue__next {
     width: 100%;
     min-height: 64px;
+  }
+
+  .pm-dialogue__choices {
+    justify-content: center;
+    gap: 18px;
+  }
+}
+
+/* A short screen (a phone on its side): one compact row. */
+@media (max-height: 480px) and (min-width: 561px) {
+  .pm-dialogue__panel {
+    min-height: 0;
+    gap: 10px 14px;
+    padding: 10px 14px 10px 10px;
+    border-radius: 24px;
+  }
+
+  .pm-dialogue__portrait {
+    width: 52px;
+  }
+
+  .pm-dialogue__line {
+    font-size: 1.2rem;
+  }
+
+  .pm-dialogue__next {
+    min-height: 56px;
+    min-width: 56px;
+    padding: 0 18px;
+    font-size: 1.15rem;
+  }
+
+  .pm-dialogue__choice {
+    width: 58px;
+    height: 58px;
+    font-size: 1.6rem;
+  }
+
+  .pm-dialogue__leaves {
+    display: none;
   }
 }

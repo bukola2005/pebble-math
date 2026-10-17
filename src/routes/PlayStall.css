@@ -13,19 +13,47 @@
   inset: 0;
 }
 
-/* What the seller asked for, kept in view: the number, that many
-   oranges, and the words. */
-.pm-stall__goal {
+/* --- the top of the screen: what to do, and who is talking ------------------------
+   Under the corner buttons and over the sky, so nothing covers the table
+   or the basket while the child is thinking. */
+.pm-stall__top {
   position: absolute;
-  top: max(12px, env(safe-area-inset-top));
-  left: 50%;
-  translate: -50% 0;
-  z-index: 4;
+  top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.pm-stall__top > * {
+  pointer-events: auto;
+}
+
+/* "Practice": small and calm, so nobody takes round 1 for the game. */
+.pm-stall__practice {
+  padding: 4px 14px;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1.5px var(--pm-glass-border);
+  font-size: var(--pm-small);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--pm-purple-700);
+}
+
+/* What the child is doing, kept in view. In round 1 the number comes with
+   that many oranges as pictures; after that, just the words. */
+.pm-stall__goal {
   display: grid;
   grid-template-columns: auto auto;
   align-items: center;
   column-gap: 12px;
-  max-width: calc(100vw - 260px);
+  max-width: calc(100vw - 24px);
   padding: 8px 18px 8px 8px;
   border-radius: 26px;
   background: var(--pm-paper);
@@ -33,6 +61,11 @@
     0 0 0 3px var(--pm-garden-leaf),
     var(--pm-shadow-md);
   animation: pm-goal-in 0.4s var(--pm-ease-pop) both;
+}
+
+.pm-stall__goal:has(> .pm-stall__goal-words:only-child) {
+  display: block;
+  padding: 10px 22px;
 }
 
 @keyframes pm-goal-in {
@@ -70,18 +103,18 @@
 
 .pm-stall__goal-words {
   font-family: var(--pm-font-display);
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 400;
   color: var(--pm-ink);
 }
 
-/* Blob pops up on the sand at the right to cheer. */
+/* Blob pops up on the sand at the right whenever he talks. */
 .pm-stall__blob {
   position: absolute;
-  right: 6%;
-  bottom: 30%;
+  right: 5%;
+  bottom: 14%;
   z-index: 3;
-  height: min(36vh, 340px);
+  height: min(34vh, 320px);
   aspect-ratio: 736 / 900;
   animation: pm-blob-cheer 0.6s var(--pm-ease-pop) both;
 }
@@ -102,24 +135,56 @@
   }
 }
 
-.pm-stall__dialogue {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: max(18px, env(safe-area-inset-bottom));
-  z-index: 6;
+/* A phone held upright has no spare sand: Blob is in the box's portrait. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-stall__blob {
+    display: none;
+  }
 }
 
-/* A phone held upright: the goal sits under the corner buttons. */
-@media (max-aspect-ratio: 1 / 1) {
-  .pm-stall__goal {
-    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
-    max-width: calc(100vw - 24px);
+/* A short screen (a phone on its side): everything sits a little higher,
+   and "Practice" moves up between the corner buttons. */
+@media (max-height: 480px) {
+  .pm-stall__top {
+    top: calc(max(8px, env(safe-area-inset-top)) + 54px);
   }
 
-  .pm-stall__blob {
-    right: 4%;
-    bottom: 42%;
-    height: 22vh;
+  .pm-stall__practice {
+    position: fixed;
+    top: max(20px, calc(env(safe-area-inset-top) + 8px));
+    left: 72px;
+  }
+
+  /* The goal moves up into the corner row, compact, so it never sits over
+     the oranges on the table. In round 1 the number and the pictures say
+     it; the words stay for screen readers. */
+  .pm-stall__goal {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 172px;
+    max-width: calc(100vw - 172px - 250px);
+    padding: 4px 14px 4px 4px;
+    border-radius: 24px;
+  }
+
+  .pm-stall__goal-number {
+    grid-row: auto;
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+
+  .pm-stall__goal-oranges img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pm-stall__goal-number ~ .pm-stall__goal-words {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }

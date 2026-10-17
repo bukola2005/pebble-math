@@ -4,52 +4,78 @@ import BasketAward from "../components/BasketAward";
 import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
 import DialogueBox from "../components/DialogueBox";
+import HintButton from "../components/HintButton";
 import PlayHud from "../components/PlayHud";
 import StallBackdrop from "../components/StallBackdrop";
-import { FRUIT_STALL, SPEAKERS, TUTORIAL, fillLine } from "../data/dialogue";
-import { BASKET_HOLDS, makeRound } from "../data/fruitStall";
+import { FRUIT_STALL, HINTS, NUMBER_WORDS, SPEAKERS, TUTORIAL, capitalise, fillLine } from "../data/dialogue";
+import { BASKET_HOLDS, ROUND_COUNT, setUpRound } from "../data/fruitStall";
 import { ORANGE } from "../data/market";
 import { getZiziLook } from "../data/zizi";
+import { recordRound } from "../lib/stallLog";
 import "./PlayStall.css";
 
-/*
-  /play/:playerId/stall/fruit: the Fruit Stall, round one only.
+const STALL_ID = "fruit-stall";
 
-  A child who has just come from Scene 1 is new here:
-    award     the basket, their first thing
+/*
+  /play/:playerId/stall/fruit: the Fruit Stall, rounds 1 to 5
+  (data/fruitStall.js). Oranges sit on the stall's table; the basket
+  stands in front of it.
+
+  Round 1 is practice, labelled so:
+    award     a child new here (just come from Scene 1) is given the basket
     tutorial  four beats, one highlight each, tap anywhere to move on;
               the last one lets them try a drag
     practised that orange hops back out of the basket
-  Then, and straight away for a returning child:
-    ask       the seller asks for N oranges (N from data/fruitStall.js)
+    ask       the seller asks for N oranges
     play      drag them in; the basket counts each drop
-    won       Blob: "You did it! Look, the first lock is open!"
-              "Play again" starts a fresh round one.
+    won       Blob: "You did it!"
+  Rounds 2 to 5 fill the basket to ten:
+    question  (rounds 2 and 3) Blob asks how many MORE; a wrong number
+              gets "Count again…"
+    play      drag oranges in
+    closing   the full basket closes into a crate of ten
+    summary   Blob: "Ten and three. Thirteen."
+    puzzled   (round 5) the stall is empty and the basket isn't full.
+              Blob: "Hmm. What happened there?", and nothing more.
 
-  Nothing here is saved yet: no stall_progress, no reward screen.
+  Blob's hint button gives one step of help per tap, and how many a
+  child used is noted for each round (lib/stallLog.js, in memory only).
+  Nothing is saved to the database yet.
 */
 
 export default function PlayStall() {
   const { player, newcomer } = useOutletContext();
-  const [round, setRound] = useState(() => makeRound(player.age_band));
+  const [round, setRound] = useState(() => setUpRound(0, player.age_band));
   const [inBasket, setInBasket] = useState([]);
   const [counted, setCounted] = useState([]);
   const [phase, setPhase] = useState(newcomer ? "award" : "ask");
   const [beat, setBeat] = useState(0);
+  const [hintStep, setHintStep] = useState(0);
+  const [hintTaps, setHintTaps] = useState(0);
+  const [hintShown, setHintShown] = useState(false);
+  const [demoKey, setDemoKey] = useState(0);
+  const [wrongTaps, setWrongTaps] = useState(0);
+  const [stall, setStall] = useState(null); // the stall picture, once it's in the page
   const gameRef = useRef(null);
-  const stallRef = useRef(null);
+  const tally = useRef({ hints: 0, wrong: 0 });
   const timers = useRef([]);
   const zizi = getZiziLook(player.character);
-  const values = { name: player.game_name, n: round.target };
 
   const later = (fn, ms) => timers.current.push(window.setTimeout(fn, ms));
   useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
 
-  // The tutorial's beats point at things on screen, found when they show.
+  const placed = inBasket.length - round.prefilled.length;
+  const onTable = round.oranges.length - placed;
+  const values = {
+    name: player.game_name,
+    n: round.target,
+    left: NUMBER_WORDS[onTable],
+    total: capitalise(NUMBER_WORDS[BASKET_HOLDS + onTable] ?? ""),
+  };
+
+  // --- the tutorial ---------------------------------------------------------------
   const beats = [
-    // (The stage is in the DOM before the tutorial starts, so these refs
-    // are always filled by the time a beat shows.)
-    { text: TUTORIAL.stall, shape: "box", target: () => stallRef.current },
+    { text: TUTORIAL.stall, shape: "box", target: () => stall },
     { text: TUTORIAL.orange, shape: "round", target: () => gameRef.current?.nearestOrange() },
     { text: TUTORIAL.basket, shape: "box", target: () => gameRef.current?.basket() },
     {
@@ -62,11 +88,29 @@ export default function PlayStall() {
   const tutorial = phase === "tutorial" ? beats[beat] : null;
   const trying = Boolean(tutorial?.dragTo);
 
-  const startRound = (fresh) => {
-    if (fresh) setRound(makeRound(player.age_band));
-    setInBasket([]);
+  const clearRoundState = () => {
     setCounted([]);
+    setHintStep(0);
+    setHintTaps(0);
+    setHintShown(false);
+    setDemoKey(0);
+    setWrongTaps(0);
+    tally.current = { hints: 0, wrong: 0 };
+  };
+
+  // After the tutorial: the same round 1, from an empty basket.
+  const toTheSeller = () => {
+    setInBasket([]);
+    clearRoundState();
     setPhase("ask");
+  };
+
+  const startRound = (index) => {
+    const next = setUpRound(index, player.age_band);
+    setRound(next);
+    setInBasket(next.prefilled);
+    clearRoundState();
+    setPhase(index === 0 ? "ask" : next.ask ? "question" : "play");
   };
 
   const advanceTutorial = (point) => {
@@ -79,37 +123,102 @@ export default function PlayStall() {
       }
     }
     if (beat < beats.length - 1) setBeat((b) => b + 1);
-    else startRound(false);
+    else toTheSeller();
   };
 
-  // --- what the child does -------------------------------------------------------
+  // --- what the child does ----------------------------------------------------------
   const tap = (id) => {
     if (!id) return;
+    setHintShown(false);
     setCounted((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
   };
 
   const drop = (id) => {
+    if (!(phase === "play" || trying)) return false;
     if (inBasket.includes(id) || inBasket.length >= BASKET_HOLDS) return false;
     setInBasket((list) => [...list, id]);
     setCounted((list) => list.filter((x) => x !== id));
+    setHintShown(false);
     if (phase === "tutorial") {
       // They tried it. The tutorial ends, that orange hops back out, and
-      // the real round starts.
+      // round 1 starts properly.
       setPhase("practised");
       later(() => gameRef.current?.flyBack(id), 900);
-      later(() => startRound(false), 1350);
+      later(toTheSeller, 1350);
     }
     return true;
   };
 
   const leave = (id) => setInBasket((list) => list.filter((x) => x !== id));
 
-  // The round is won the moment the basket holds the right number.
+  const choose = (value) => {
+    if (value === round.answer) {
+      setWrongTaps(0);
+      setPhase("play");
+    } else {
+      tally.current.wrong += 1;
+      setWrongTaps((n) => n + 1);
+    }
+  };
+
+  // One step of help per tap: a question, then the empty spaces, then
+  // the move itself, slowly. Never the answer.
+  const hint = () => {
+    tally.current.hints += 1;
+    setHintTaps((n) => n + 1);
+    setHintShown(true);
+    const next = Math.min(hintStep + 1, HINTS.length);
+    setHintStep(next);
+    if (next === HINTS.length) setDemoKey((k) => k + 1);
+  };
+
+  // --- the end of a round -------------------------------------------------------------
   useEffect(() => {
-    if (phase !== "play" || inBasket.length !== round.target) return undefined;
-    const id = window.setTimeout(() => setPhase("won"), 550);
+    if (phase !== "play") return undefined;
+    let next = null;
+    if (round.practice) {
+      if (inBasket.length === round.target) next = "won";
+    } else if (inBasket.length >= BASKET_HOLDS) next = "closing";
+    else if (onTable === 0) next = "puzzled";
+    if (!next) return undefined;
+
+    const id = window.setTimeout(
+      () => {
+        recordRound({
+          playerId: player.id,
+          stallId: STALL_ID,
+          round: round.number,
+          hintsUsed: tally.current.hints,
+          wrongAnswers: round.ask ? tally.current.wrong : null,
+        });
+        setHintShown(false);
+        setPhase(next);
+      },
+      next === "puzzled" ? 900 : 500
+    );
     return () => window.clearTimeout(id);
-  }, [phase, inBasket.length, round.target]);
+  }, [phase, inBasket.length, onTable, round, player.id]);
+
+  // The crate closes, then Blob says what is there.
+  useEffect(() => {
+    if (phase !== "closing") return undefined;
+    const id = window.setTimeout(() => setPhase("summary"), 1600);
+    return () => window.clearTimeout(id);
+  }, [phase]);
+
+  // --- what is on screen ---------------------------------------------------------------
+  const playing = phase === "question" || phase === "play";
+  const showGaps = playing && (round.outlines || hintStep >= 2);
+  const blobSays =
+    phase === "question"
+      ? FRUIT_STALL.howManyMore
+      : phase === "won"
+        ? FRUIT_STALL.practiceWon
+        : phase === "summary"
+          ? FRUIT_STALL.tenAnd
+          : phase === "puzzled"
+            ? FRUIT_STALL.whatHappened
+            : null;
 
   return (
     <div
@@ -119,7 +228,7 @@ export default function PlayStall() {
         if (trying && !event.target.closest(".pm-orange, .pm-hud, .pm-coach__bubble")) advanceTutorial(null);
       }}
     >
-      <StallBackdrop stallRef={stallRef} />
+      <StallBackdrop close stallRef={setStall} />
       <PlayHud player={player} />
 
       <main id="main" className="pm-stall__stage">
@@ -127,47 +236,77 @@ export default function PlayStall() {
 
         <BasketGame
           ref={gameRef}
+          stall={stall}
           seed={round.seed}
           oranges={round.oranges}
           inBasket={inBasket}
           counted={counted}
-          enabled={phase === "play" || trying}
+          canDrag={phase === "play" || trying}
+          canTap={phase !== "award" && phase !== "tutorial"}
           // The basket appears when the tutorial introduces it.
           basketHidden={phase === "award" || (phase === "tutorial" && beat < 2)}
           dim={phase === "tutorial" && beat === 0}
+          gapsUpTo={showGaps ? round.target : 0}
+          gapsPulse={hintStep >= 2}
+          closed={phase === "closing" || (phase === "summary" && !round.practice)}
+          demoKey={demoKey}
           onTap={tap}
           onDrop={drop}
           onLeave={leave}
         />
 
-        {phase === "play" && (
-          <p className="pm-stall__goal" role="status">
-            <span className="pm-stall__goal-number">{round.target}</span>
-            <span className="pm-stall__goal-oranges" aria-hidden="true">
-              {Array.from({ length: round.target }, (_, i) => (
-                <img key={i} src={ORANGE.src} alt="" draggable={false} />
-              ))}
-            </span>
-            <span className="pm-stall__goal-words">{fillLine(FRUIT_STALL.goal, values)}</span>
-          </p>
-        )}
-
-        {phase === "won" && (
+        {blobSays && (
           <div className="pm-stall__blob" aria-hidden="true">
             <img src={SPEAKERS.blob.portrait} width={736} height={900} alt="" draggable={false} />
           </div>
         )}
 
-        {(phase === "ask" || phase === "won") && (
-          <div className="pm-stall__dialogue">
+        <div className="pm-stall__top">
+          {round.practice && phase !== "award" && <p className="pm-stall__practice">{FRUIT_STALL.practice}</p>}
+
+          {phase === "play" && (
+            <p className="pm-stall__goal" role="status">
+              {round.practice ? (
+                <>
+                  <span className="pm-stall__goal-number">{round.target}</span>
+                  <span className="pm-stall__goal-oranges" aria-hidden="true">
+                    {Array.from({ length: round.target }, (_, i) => (
+                      <img key={i} src={ORANGE.src} alt="" draggable={false} />
+                    ))}
+                  </span>
+                  <span className="pm-stall__goal-words">{fillLine(FRUIT_STALL.goal, values)}</span>
+                </>
+              ) : (
+                <span className="pm-stall__goal-words">{FRUIT_STALL.fillGoal}</span>
+              )}
+            </p>
+          )}
+
+          {phase === "ask" && (
+            <DialogueBox line={FRUIT_STALL.ask} values={values} ziziPortrait={zizi} onNext={() => setPhase("play")} />
+          )}
+
+          {blobSays && (
             <DialogueBox
-              line={phase === "ask" ? FRUIT_STALL.ask : FRUIT_STALL.won}
+              line={blobSays}
               values={values}
               ziziPortrait={zizi}
-              buttonLabel={phase === "won" ? FRUIT_STALL.again : "Next"}
-              onNext={phase === "ask" ? () => setPhase("play") : () => startRound(true)}
+              choices={phase === "question" ? round.choices : null}
+              onChoose={choose}
+              note={phase === "question" && wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
+              noteKey={wrongTaps}
+              buttonLabel={phase === "puzzled" ? FRUIT_STALL.again : FRUIT_STALL.next}
+              onNext={() => startRound((round.index + 1) % ROUND_COUNT)}
             />
-          </div>
+          )}
+        </div>
+
+        {playing && (
+          <HintButton
+            message={hintShown && hintStep > 0 ? HINTS[hintStep - 1] : null}
+            shownKey={hintTaps}
+            onHint={hint}
+          />
         )}
       </main>
 

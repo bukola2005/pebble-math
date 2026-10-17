@@ -55,6 +55,7 @@ src/
     players.js              every query on the players table, and its error messages
     playFlow.js             the order of the play steps, and what each one loads
     speech.js               reads lines aloud (speechSynthesis), with the mute switch
+    stallLog.js             how each stall round went (hints used), in memory for now
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     validation.js           password length, email check, name limits
@@ -75,7 +76,9 @@ src/
     DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
     PlayHud.jsx             the play screens' corners: a way out, game name, mute
-    BasketGame.jsx          the oranges and the basket: tap to count, drag to move
+    BasketGame.jsx          oranges on the table, the basket and its crate of ten:
+                            tap to count, drag to move
+    HintButton.jsx          Blob's face in the corner: one step of help per tap
     CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
     BasketAward.jsx         the card that gives the child their basket
     Navbar.jsx              wordmark, links, Get Started, mobile menu
@@ -101,7 +104,7 @@ src/
   data/zizi.js              Zizi's six looks and her original look
   data/gameNames.js         the two word lists game names are built from
   data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall
-  data/fruitStall.js        how many oranges the seller asks for, by age band
+  data/fruitStall.js        the five rounds, and round 1's order by age band
   data/market.js            the market's art: the six layers, basket, orange, crate
   styles/game.css           the game screens' own tokens (garden green, paper)
   data/players.js           age bands and class levels a player may hold
@@ -276,16 +279,37 @@ drifts past, and Blob finds her. Her lines are labelled with the child's
 game name, never "Zizi". "Let's go" saves `scene1_done` and goes straight to
 the Fruit Stall.
 
-**The Fruit Stall, round one.** A child who has just played Scene 1 is given
-their basket (one card), then a four-beat tutorial: everything dims except
-one thing, an arrow bobs at it, and Blob explains it in a thought bubble.
-Tap anywhere to move on. The last beat lets them try a drag. A child who
-comes back later goes straight to the stall. The seller then asks for some
-oranges (2–5 under 7, 3–10 at 7–8, 5–10 at 9 and over) and the child drags
-them in; the basket counts each drop. There are always three more oranges
-than asked for, so the child has to stop at the right number. Blob says
-"You did it! Look, the first lock is open!" and "Play again" starts a fresh
-round one. Nothing about the stall is saved yet.
+**The Fruit Stall.** The stall is painted empty: the only oranges on screen
+are ones a child can move. They sit on its table, and the basket stands on
+the ground just in front, so every drag is short. Everything is placed from
+where the stall picture is on screen (`components/BasketGame.jsx`), and on
+a short screen the scene moves in closer so the oranges stay finger-sized.
+
+*Round 1 is practice*, labelled "Practice" on screen. A child who has just
+played Scene 1 is given their basket (one card), then a four-beat
+tutorial: everything dims except one thing, an arrow bobs at it, and Blob
+explains it in a thought bubble. Tap anywhere to move on; the last beat
+lets them try a drag. A child who comes back later goes straight to the
+seller, who asks for some oranges (2–5 under 7, 3–10 at 7–8, 5–10 at 9 and
+over). There are always three more than asked for, so the child has to stop
+at the right number.
+
+*Rounds 2 to 5* fill the basket to ten (`data/fruitStall.js`, and
+[docs/learning-rules.md](docs/learning-rules.md) for why). The basket
+starts part full; in rounds 2 and 3 Blob first asks "How many MORE to fill
+the basket?" with three numbers to tap, and a wrong one gets "Count
+again…". When the basket fills it closes into a crate of ten, and Blob
+says what is there: "Ten and three. Thirteen." Round 5 never fills the
+basket, and Blob says only "Hmm. What happened there?" "Play again" goes
+back to round 1.
+
+*Blob's hint button*, bottom left: each tap gives the next step (a
+question, then the empty spaces outlined, then the move shown slowly
+once), never the answer, and it resets each round. How many hints a child
+used, and how many wrong numbers they tapped, is noted per round in
+`lib/stallLog.js`, in memory only, shaped to be saved later.
+
+Nothing about the stall is saved to the database yet.
 
 Tapping an orange counts it: a number badge, 1, 2, 3, in the order tapped.
 Tapping a counted orange clears it and the rest renumber. That's the
@@ -425,10 +449,10 @@ message with a reload button instead of a white screen.
 
 ## Next
 
-Rounds two to five at the Fruit Stall (the "how many more?" question, then
-make-ten), the reward when a stall is cleared, the lock opening and the
-map. Later: a way for the grown-up to edit a child they've already added
-(their monster, name, age band), which the dashboard doesn't have yet.
+Saving the Fruit Stall (`stall_progress`, and the per-round record of hints
+in `lib/stallLog.js`), the reward when a stall is cleared, the lock opening
+and the map. Later: a way for the grown-up to edit a child they've already
+added (their monster, name, age band), which the dashboard doesn't have yet.
 
 The stall's living background is six layers on one 1920×1080 canvas,
 horizon at 55% (y 594), from back to front: sky, far, palms, ground, stall,

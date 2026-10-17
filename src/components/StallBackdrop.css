@@ -28,6 +28,14 @@
   transform: translateX(-50%);
 }
 
+/* Never narrower than 1080px: below that the stall's table is too short
+   for a row of finger-sized oranges. A short, wide screen then shows the
+   stall bigger and less sky. */
+.pm-backdrop--close .pm-world {
+  width: max(100vw, calc(100vh * 16 / 9), 1080px);
+  width: max(100vw, calc(100dvh * 16 / 9), 1080px);
+}
+
 .pm-layer {
   position: absolute;
   max-width: none;

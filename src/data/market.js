@@ -13,7 +13,8 @@ export const MARKET_LAYERS = [
   { id: "far", src: "/stall/far.webp", w: 1414, h: 124 },
   { id: "palms", src: "/stall/palms.webp", w: 849, h: 480 },
   { id: "ground", src: "/stall/ground.webp", w: 1920, h: 486 },
-  { id: "stall", src: "/stall/fruit-stall.webp", w: 695, h: 639 },
+  // The empty stall: the only fruit on screen is fruit a child can move.
+  { id: "stall", src: "/stall/fruit-stall.webp", w: 866, h: 787 },
   { id: "near", src: "/stall/near.webp", w: 1414, h: 662 },
 ];
 

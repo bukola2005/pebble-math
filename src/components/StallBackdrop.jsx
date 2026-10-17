@@ -6,14 +6,18 @@ import "./StallBackdrop.css";
  * stall, near) composed on a 1920×1080 stage that covers the screen.
  *
  * `dim` is the market under the haze, for Scene 1: darker, purpler, with
- * slow drifting haze. `stallRef` reaches the stall layer, so the tutorial
- * can point at it.
+ * slow drifting haze. `close` keeps the stall big enough to play at on a
+ * short screen (a phone on its side), at the cost of some sky. `stallRef`
+ * reaches the stall layer, so the game can find its table.
  *
  * Decorative only; the screens say in words what matters.
  */
-export default function StallBackdrop({ dim = false, stallRef }) {
+export default function StallBackdrop({ dim = false, close = false, stallRef }) {
   return (
-    <div className={`pm-backdrop${dim ? " pm-backdrop--dim" : ""}`} aria-hidden="true">
+    <div
+      className={`pm-backdrop${dim ? " pm-backdrop--dim" : ""}${close ? " pm-backdrop--close" : ""}`}
+      aria-hidden="true"
+    >
       <div className="pm-world">
         {MARKET_LAYERS.map((layer) => (
           <img
