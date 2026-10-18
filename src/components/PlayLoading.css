@@ -54,6 +54,6 @@
    motion it steps straight to each new value instead. */
 .pm-loading__fill {
   height: 100%;
-  background: var(--pm-orange);
+  background: var(--pm-purple);
   transform-origin: left center;
 }

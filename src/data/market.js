@@ -27,7 +27,7 @@ export const SELLER_PORTRAIT = { src: "/stall/seller-portrait.webp", w: 320, h: 
 /** Zizi's mum, from the mother sheet, behind her chain when a lock opens. */
 export const MUM_FACE = { src: "/characters/mum-face.webp", w: 300, h: 406 };
 
-/** The locks on Mum's chain: one for each stall in the chapter. */
+/** The locks on Mum's chain. The tutorial opens the first. */
 export const LOCK_COUNT = 5;
 export const ORANGE = { src: "/stall/orange.webp", w: 168, h: 182 };
 export const CRATE = { src: "/stall/crate.webp", w: 440, h: 328 };

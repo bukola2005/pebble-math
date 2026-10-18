@@ -181,7 +181,7 @@
   border-radius: 50%;
   background: var(--pm-white);
   box-shadow:
-    0 0 0 4px var(--pm-orange),
+    0 0 0 4px var(--pm-purple),
     var(--pm-shadow-md);
   font-family: var(--pm-font-display);
   font-size: 2rem;
@@ -192,7 +192,7 @@
 }
 
 .pm-dialogue__choice:hover {
-  background: var(--pm-orange-100);
+  background: var(--pm-purple-100);
   transform: translateY(-2px);
 }
 

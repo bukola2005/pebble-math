@@ -223,6 +223,8 @@ export default function BasketGame({
   const basketRef = useRef(null);
   const [geo, setGeo] = useState(null);
   const [demo, setDemo] = useState(null);
+  const [sparkles, setSparkles] = useState([]);
+  const justPlaced = useRef(null); // the orange that just went in, for its sparkles
   const drag = useRef(null);
   const suppressClick = useRef(false);
   const flights = useRef(new Map()); // id → the rect it is flying from
@@ -370,7 +372,10 @@ export default function BasketGame({
     if (!cancelled && d.over) {
       flights.current.set(d.id, d.el.querySelector(".pm-orange__body").getBoundingClientRect());
       suppressClick.current = false; // the orange is about to leave; no click follows
-      if (onDrop(d.id)) return;
+      if (onDrop(d.id)) {
+        justPlaced.current = d.id;
+        return;
+      }
       flights.current.delete(d.id);
     }
     springHome(d.el);
@@ -379,7 +384,8 @@ export default function BasketGame({
   const dropByKey = (id, el) => {
     if (!canDrag) return;
     flights.current.set(id, el.getBoundingClientRect());
-    if (!onDrop(id)) flights.current.delete(id);
+    if (onDrop(id)) justPlaced.current = id;
+    else flights.current.delete(id);
   };
 
   // --- landing, both ways ---------------------------------------------------------
@@ -388,8 +394,27 @@ export default function BasketGame({
     else map.current.delete(id);
   };
 
-  // Anything that just changed place flies from where it was.
+  // Anything that just changed place flies from where it was. An orange
+  // that has just gone into the basket also sends a few sparkles from
+  // where it lands to the basket's count (measured before it starts
+  // flying, so from where it ends up).
   useLayoutEffect(() => {
+    const placed = justPlaced.current;
+    if (placed && basketEls.current.has(placed)) {
+      justPlaced.current = null;
+      const tag = basketRef.current?.querySelector(".pm-basket__tag")?.getBoundingClientRect();
+      if (tag && !reducedMotion()) {
+        const o = basketEls.current.get(placed).getBoundingClientRect();
+        const x = o.left + o.width / 2;
+        const y = o.top + o.height / 2;
+        const key = `${placed}-${Date.now()}`;
+        setSparkles((list) => [
+          ...list,
+          { key, x, y, dx: tag.left + tag.width / 2 - x, dy: tag.top + tag.height / 2 - y },
+        ]);
+        window.setTimeout(() => setSparkles((list) => list.filter((s) => s.key !== key)), 700);
+      }
+    }
     for (const [id, from] of flights.current) {
       const el = basketEls.current.get(id) ?? tableEls.current.get(id);
       if (!el) continue;
@@ -568,6 +593,11 @@ export default function BasketGame({
         </span>
       )}
 
+      {/* A few sparkles from the orange just placed to the basket's count. */}
+      {sparkles.map((burst) => (
+        <Sparkles key={burst.key} x={burst.x} y={burst.y} dx={burst.dx} dy={burst.dy} />
+      ))}
+
       {/* Blob's slow demonstration: a ghost orange makes the trip once. */}
       {demo && (
         <div
@@ -581,4 +611,39 @@ export default function BasketGame({
       )}
     </div>
   );
+}
+
+/*
+  Five small four-point stars that scatter a little from (x, y) and then
+  fly to the count, all within half a second. Alternately white and
+  lavender: never orange, which only ever means "press this".
+*/
+const SPARKLE_SPREAD = [
+  [-18, -14],
+  [14, -20],
+  [22, 6],
+  [-20, 10],
+  [2, -26],
+];
+
+function Sparkles({ x, y, dx, dy }) {
+  return SPARKLE_SPREAD.map(([mx, my], i) => (
+    <svg
+      key={i}
+      className={`pm-sparkle${i % 2 ? " pm-sparkle--lavender" : ""}`}
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      style={{
+        left: x,
+        top: y,
+        "--mx": `${mx}px`,
+        "--my": `${my}px`,
+        "--dx": `${dx + mx * 0.2}px`,
+        "--dy": `${dy + my * 0.2}px`,
+        animationDelay: `${i * 15}ms`,
+      }}
+    >
+      <path d="M10 0 L12.4 7.6 L20 10 L12.4 12.4 L10 20 L7.6 12.4 L0 10 L7.6 7.6 Z" />
+    </svg>
+  ));
 }

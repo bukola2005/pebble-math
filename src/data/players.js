@@ -11,6 +11,18 @@ export const AGE_BANDS = [
   { id: "11-plus", label: "11 and over" },
 ];
 
+/**
+ * The bands a grown-up can pick when adding a child. Pebble Math covers
+ * kindergarten to Primary 3, so the older bands aren't offered: there are
+ * no games for them yet. They stay above so a child added earlier with one
+ * still shows its label.
+ */
+export const OFFERED_AGE_BANDS = AGE_BANDS.filter((band) => band.id === "under-7" || band.id === "7-8");
+
+/** Said under the age band picker. */
+export const AGE_RANGE_NOTE =
+  "Pebble Math is for kindergarten to Primary 3. There are no games above that level yet.";
+
 export const CLASS_LEVELS = [
   { id: "primary-1", label: "Primary 1" },
   { id: "primary-2", label: "Primary 2" },

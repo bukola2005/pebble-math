@@ -177,7 +177,7 @@ function Arrow({ className, style }) {
     <svg className={className} style={style} viewBox="0 0 56 64" aria-hidden="true">
       <path
         d="M20 4h16v28h13L28 60 7 32h13z"
-        fill="var(--pm-orange)"
+        fill="var(--pm-purple)"
         stroke="var(--pm-white)"
         strokeWidth="4"
         strokeLinejoin="round"

@@ -173,11 +173,11 @@
   border-color: var(--pm-purple-400);
 }
 
-/* Orange marks the chosen one, as it does across the product. */
+/* Lavender marks the chosen one. Orange is only ever the button to press. */
 .pm-monster__input:checked + .pm-monster__face {
-  border-color: var(--pm-orange);
-  background: var(--pm-orange-100);
-  box-shadow: var(--pm-shadow-orange);
+  border-color: var(--pm-purple-700);
+  background: var(--pm-purple-100);
+  box-shadow: var(--pm-shadow-md);
 }
 
 .pm-monster__input:focus-visible + .pm-monster__face {

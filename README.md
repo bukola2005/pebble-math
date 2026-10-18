@@ -182,8 +182,13 @@ Fonts request:
   fake the weight. The wordmark stays in Satoshi — it is the brand mark,
   not a headline.
 
-**Colour.** `#99A6F9` carries atmosphere and large areas. `#FE885C` is
-reserved for the primary action and small accents. White dominates.
+**Colour.** `#99A6F9` carries atmosphere and large areas. White dominates.
+In the game and the account pages, orange (`#FE885C`) means "press this"
+and nothing else: it is only ever the one button the child (or grown-up)
+should press. Anything chosen, counted or pointed at is lavender
+(`#99A6F9`, or `--pm-purple-700` where it must be read on white). Painted
+artwork, like the stall's awning, keeps its own colours. The landing page
+still uses orange for a few small accents.
 
 Two contrast decisions worth knowing:
 
@@ -221,6 +226,9 @@ that the game is in development.
 ```
 Grown-up   Get Started → /signup → confirm email → /signin → /dashboard
            add a child (name, age band, optional class) → Play
+           (the age bands offered are Under 7 and 7–8: Pebble Math covers
+           kindergarten to Primary 3, and the form says there are no games
+           above that level yet)
 
 Child      /play "Who's playing?" → tap own card → /play/:id (loading)
            → /intro      the film (until first_play_done)
@@ -317,8 +325,18 @@ step at a time, and the light follows the words: "Ten…" (the crate lifts
 and glows, everything else dims), "…and three." (the leftovers light up,
 with a 3 on their cloth), "Thirteen." (both, and a 13 between them). Each
 step waits for the voice, about a second apart; with the sound off, the
-child taps through them. Round 5 never fills the basket, and Blob says only
-"Hmm. What happened there?"
+child taps through them. Round 5 never fills the basket: the child puts all
+nine in, and Blob says what happened, one line at a time and paced the same
+way: "Hmm. The basket didn't fill this time." "Nine. One short of ten." (the
+one empty space lights up) "Not every pile makes a ten. That's fine."
+
+Rounds 1 to 5 are **the tutorial**, not a chapter; nothing on screen says
+"Chapter 1". After the lock opens, the card says the tutorial is finished
+and more of the market is coming.
+
+A child gets a few small sparkles each time an orange goes into the basket:
+they fly from where it lands to the basket's count, in under half a second
+(CSS and SVG, none with reduced motion).
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row. The first time, Blob says "You did it!

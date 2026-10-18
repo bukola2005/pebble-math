@@ -93,8 +93,8 @@
 
 .pm-pick:hover {
   transform: translateY(-4px);
-  border-color: var(--pm-orange);
-  box-shadow: var(--pm-shadow-orange);
+  border-color: var(--pm-purple-400);
+  box-shadow: var(--pm-shadow-md);
 }
 
 .pm-pick:active {

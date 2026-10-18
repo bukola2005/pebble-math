@@ -54,8 +54,8 @@
   border-radius: 50%;
   background: repeating-conic-gradient(
     from 0deg,
-    rgba(254, 136, 92, 0.24) 0deg 12deg,
-    rgba(254, 136, 92, 0) 12deg 30deg
+    rgba(153, 166, 249, 0.3) 0deg 12deg,
+    rgba(153, 166, 249, 0) 12deg 30deg
   );
   -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent 100%);
   mask-image: radial-gradient(closest-side, #000 30%, transparent 100%);

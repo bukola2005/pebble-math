@@ -8,8 +8,8 @@
  *            sized for two lines a child can read at arm's length.
  *
  * In any text, `{name}` becomes the child's game name, `{n}` the number of
- * oranges the seller asks for, and `{left}` / `{total}` the number words
- * at the end of a round (see NUMBER_WORDS).
+ * oranges the seller asks for, and `{left}` / `{total}` / `{count}` /
+ * `{short}` the number words at the end of a round (see NUMBER_WORDS).
  *
  * Every line is also read aloud (lib/speech.js), a placeholder until real
  * recordings exist.
@@ -82,8 +82,14 @@ export const FRUIT_STALL = {
     { show: "Ten… and {left}.", say: "and {left}." },
     { show: "Ten and {left}. {total}.", say: "{total}." },
   ],
-  // Round 5: the basket never fills. Blob doesn't explain.
-  whatHappened: { speaker: "blob", text: "Hmm. What happened there?" },
+  // Round 5: the basket never fills. Once every orange is in, Blob says
+  // what happened, one line at a time (the second lights the empty space),
+  // so the child leaves with a sentence, not a shrug.
+  shortOfTen: [
+    { show: "Hmm. The basket didn't fill this time.", say: "Hmm. The basket didn't fill this time." },
+    { show: "{count}. {short} short of ten.", say: "{count}. {short} short of ten." },
+    { show: "Not every pile makes a ten. That's fine.", say: "Not every pile makes a ten. That's fine." },
+  ],
 
   next: "Next",
 
@@ -92,19 +98,21 @@ export const FRUIT_STALL = {
   lockOpen: { speaker: "blob", text: "You did it! Look, the first lock is open!" },
 
   // The card after it, and the one a returning child sees first: how many
-  // of Mum's locks are open, and how many are still closed.
+  // of Mum's locks are open, and how many are still closed. Right after the
+  // lock opens it also says the tutorial is finished.
   locks: {
     open: ["No locks are open yet.", "One lock is open!", "{n} locks are open!"],
     closed: ["Every lock is open!", "One more to open.", "{n} more to open."],
+    finished: "You've finished the tutorial. More of the market is coming.",
     button: "Next",
   },
 
   // The end of a session, after round 5. Blob's errand (ERRANDS, below)
-  // comes first; the rest is the quiet end, until the map exists.
+  // comes first. `endLine` is said under it when the locks card didn't
+  // just say it (a child replaying the tutorial).
   endForNow: {
     errandLabel: "Something to try at home",
-    title: "That's as far as the market goes for now.",
-    text: "More of the market is on its way.",
+    endLine: "That's the end of the tutorial. More of the market is coming.",
     button: "Who's playing?",
   },
 };

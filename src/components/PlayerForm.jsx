@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import AuthField from "./AuthField";
 import CTAButton from "./CTAButton";
 import { PARENT_MONSTERS } from "../data/monsters";
-import { AGE_BANDS, CLASS_LEVELS } from "../data/players";
+import { AGE_RANGE_NOTE, CLASS_LEVELS, OFFERED_AGE_BANDS } from "../data/players";
 import { addPlayer, playerErrorMessage } from "../lib/players";
 import { PLAYER_NAME_MAX_LENGTH } from "../lib/validation";
 import "./PlayerForm.css";
@@ -15,7 +15,7 @@ function validate({ displayName, ageBand, monster }) {
   else if (name.includes("@"))
     // The one thing we can cheaply catch: an email address typed in by habit.
     errors.displayName = "Use a nickname, not an email address.";
-  if (!ageBand) errors.ageBand = "Choose an age band.";
+  if (!OFFERED_AGE_BANDS.some((band) => band.id === ageBand)) errors.ageBand = "Choose an age band.";
   if (!monster) errors.monster = "Pick a monster for them.";
   return errors;
 }
@@ -111,14 +111,16 @@ export default function PlayerForm({ userId, onAdded, onCancel }) {
         error={errors.displayName}
       />
 
-      {/* Age band: four choices, so radios dressed as chips. */}
+      {/* Age band: a few choices, so radios dressed as chips. Only the
+          bands the game serves; the note says plainly why there are no
+          older ones. */}
       <fieldset
         className="pm-choices"
-        aria-describedby={errors.ageBand ? "player-age-note" : undefined}
+        aria-describedby={`player-age-range${errors.ageBand ? " player-age-note" : ""}`}
       >
         <legend className="pm-choices__legend">Age band</legend>
         <div className="pm-choices__row">
-          {AGE_BANDS.map((band) => (
+          {OFFERED_AGE_BANDS.map((band) => (
             <label key={band.id} className="pm-choice">
               {/* The real radio stays in the page for keyboards and screen
                   readers; the chip next to it is what you see. */}
@@ -135,6 +137,9 @@ export default function PlayerForm({ userId, onAdded, onCancel }) {
             </label>
           ))}
         </div>
+        <p id="player-age-range" className="pm-playerform__note">
+          {AGE_RANGE_NOTE}
+        </p>
         {errors.ageBand && (
           <p id="player-age-note" className="pm-field__note pm-field__note--error">
             {errors.ageBand}

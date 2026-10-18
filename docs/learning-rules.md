@@ -8,10 +8,16 @@ applies to every chapter. The examples say which chapter they belong to.
 In each chapter, three or four rounds where a pattern holds, then one where
 it does not, so the child has to ask why rather than repeat a trick.
 
-**The guide never explains the break.** Blob asks "what happened there?"
-and lets the child work it out.
+**The break gets a sentence, not a silence.** Once the child has done the
+round, Blob says plainly what happened, in a line or two, and that it's
+fine. He never lectures on why the trick failed; the child is left with
+the surprise and a sentence to hold, not a shrug. (An earlier version had
+Blob only ask "what happened there?" and stop. A child waiting for an
+answer that never comes thinks the game has frozen.)
 
-### Chapter 1 (built): the Fruit Stall
+### The tutorial (built): the Fruit Stall
+
+Rounds 1 to 5 at the Fruit Stall are the tutorial, not a chapter.
 
 The basket holds exactly ten. When it fills, it closes into a crate of
 ten, which stays on screen, and the rest stay on the stall.
@@ -21,18 +27,18 @@ ten, which stays on screen, and the rest stay on the stall.
 | 2 | 8 | 5 | Blob asks "How many MORE to fill the basket?" The empty spaces are outlined. Two go in, the basket becomes a crate of ten, three are left: "Ten and three. Thirteen." |
 | 3 | 7 | 6 | The same question, no outlines. |
 | 4 | 9 | 7 | Blob asks nothing. The child does it. |
-| 5 | 6 | 3 | **The break.** Six and three is nine, so the basket never fills and the trained move doesn't apply. Blob says only "Hmm. What happened there?" |
+| 5 | 6 | 3 | **The break.** Six and three is nine, so the basket never fills and the trained move doesn't apply. The child puts all nine in, then Blob says, a line at a time: "Hmm. The basket didn't fill this time." "Nine. One short of ten." (the one empty space lights up) "Not every pile makes a ten. That's fine." |
 
 The child breaks 5 into 2 and 3 with their hands, for the same reason the
 division example below breaks 91 into 70 and 21: to make the first number
 friendly. Nobody says "decomposition" and nobody writes a sum. The number
 always comes after what the child did, never before.
 
-### Later-chapter examples. Not for Chapter 1.
+### Later-chapter examples. Not for the tutorial or the addition stalls.
 
 > These belong to the **multiplication** and **division** chapters. They
-> are well beyond the addition chapter and its ages. Don't use them in
-> Chapter 1. They are written down here so the rule's intent isn't lost.
+> are well beyond the addition stalls and their ages. Don't use them there.
+> They are written down here so the rule's intent isn't lost.
 
 - **Multiplication chapter.** 11 × 32 and 11 × 44 work by the digit
   pattern: write the two digits with their sum between them, so 32 gives

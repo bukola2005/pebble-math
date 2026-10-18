@@ -3,7 +3,7 @@ import { playLockOpen } from "../lib/sound";
 import "./LockChain.css";
 
 /*
-  Mum's chain, with one padlock for each stall in the chapter, drawn in
+  Mum's chain and its padlocks (LOCK_COUNT in data/market.js), drawn in
   SVG so it needs no artwork.
 
     total     how many locks
