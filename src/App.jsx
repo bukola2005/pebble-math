@@ -11,6 +11,7 @@ const SignUp = lazy(() => import("./routes/SignUp"));
 const SignIn = lazy(() => import("./routes/SignIn"));
 const ForgotPassword = lazy(() => import("./routes/ForgotPassword"));
 const ResetPassword = lazy(() => import("./routes/ResetPassword"));
+const EmailConfirmed = lazy(() => import("./routes/EmailConfirmed"));
 const ProtectedDashboard = lazy(() => import("./routes/ProtectedDashboard"));
 const ProtectedPlay = lazy(() => import("./routes/ProtectedPlay"));
 const ProtectedPlaySession = lazy(() => import("./routes/ProtectedPlaySession"));
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/signin" element={<SignIn />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/confirmed" element={<EmailConfirmed />} />
             <Route path="/dashboard" element={<ProtectedDashboard />} />
             <Route path="/play" element={<ProtectedPlay />} />
             {/* A child's play session. Its steps (/intro, /avatar, /name)

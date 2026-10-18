@@ -3,8 +3,8 @@
   gap: 8px;
 }
 
-/* Labels, inputs and helper text are Satoshi (--pm-font), never the
-   display face. */
+/* Labels, inputs and helper text are Plus Jakarta Sans (--pm-font),
+   never the display face. */
 .pm-field__label {
   font-size: var(--pm-small);
   font-weight: 700;

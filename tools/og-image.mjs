@@ -8,9 +8,7 @@
  *   node tools/og-image.mjs
  *
  * The fonts come from public/fonts/ and are embedded in the page, so
- * nothing is fetched from a font service. Satoshi isn't in git (see
- * .gitignore); without it the card's text falls back and looks
- * off-brand.
+ * nothing is fetched from a font service.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -32,7 +30,7 @@ const font = (file) => {
 export const cardHtml = () => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
 <style>
-  @font-face { font-family: "Satoshi"; src: url(${font("Satoshi-Variable.woff2")}) format("woff2"); font-weight: 300 900; }
+  @font-face { font-family: "Plus Jakarta Sans"; src: url(${font("PlusJakartaSans-latin.woff2")}) format("woff2"); font-weight: 200 800; }
   @font-face { font-family: "Fredoka One"; src: url(${font("FredokaOne-latin.woff2")}) format("woff2"); font-weight: 400; }
 </style>
 <style>
@@ -40,7 +38,7 @@ export const cardHtml = () => `<!doctype html>
   body {
     width: 1200px; height: 630px; display: flex; align-items: center;
     padding: 0 70px; gap: 40px; background: #fff; overflow: hidden;
-    font-family: "Satoshi", sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
     position: relative;
   }
   .glow {
@@ -51,7 +49,7 @@ export const cardHtml = () => `<!doctype html>
   .copy { position: relative; flex: 1; }
   .mark { font-size: 26px; font-weight: 800; letter-spacing: -.035em; color: #1e1e32; }
   h1 {
-    margin-top: 26px; font-family: "Fredoka One", "Satoshi", sans-serif;
+    margin-top: 26px; font-family: "Fredoka One", "Plus Jakarta Sans", sans-serif;
     font-weight: 400; font-size: 66px; line-height: 1.1; letter-spacing: -.005em; color: #1e1e32;
   }
   h1 em { font-style: normal; color: #e2622f; }

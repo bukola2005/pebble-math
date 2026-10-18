@@ -38,6 +38,7 @@ src/
     SignIn.jsx              sign in, then back to where they were going
     LegalPage.jsx           /privacy and /terms, straight from docs/privacy-and-terms-draft.md
     ForgotPassword.jsx      emails a reset link; never says whether an address exists
+    EmailConfirmed.jsx      /confirmed, where the sign-up confirmation link lands
     ResetPassword.jsx       where the reset link lands: choose a new password
     Dashboard.jsx           greeting, email, the account's players: add, delete, Play
     Play.jsx                "Who's playing?" — the child picks their own card
@@ -55,7 +56,7 @@ src/
     authRedirect.js         what an emailed link put in the address bar, read before supabase-js clears it
     players.js              every query on the players table, and its error messages
     playFlow.js             the order of the play steps, and what each one loads
-    speech.js               reads lines aloud (speechSynthesis), with the mute switch
+    speech.js               reads lines aloud with on-device voices only, with the mute switch
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
     sound.js                the lock's soft sound, made in the browser (no files)
@@ -86,7 +87,7 @@ src/
     HintButton.jsx          Blob's face in the corner: one step of help per tap
     CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
     BasketAward.jsx         the card that gives the child their basket
-    LockChain.jsx           Mum's chain and its five padlocks, drawn in SVG
+    LockChain.jsx           Mum's chain and its seven padlocks, drawn in SVG
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -136,8 +137,8 @@ public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogu
 public/art/*.webp           market map (day, misty), not used yet; the blank
                             storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
-public/fonts/               Fredoka One (with its licence) and Satoshi, served from
-                            this site; Satoshi is not in git (see "Fonts" below)
+public/fonts/               Plus Jakarta Sans and Fredoka One, with their licences,
+                            served from this site
 public/favicon.svg          the app mark
 public/og-image.png         the social sharing card
 public/robots.txt           crawling rules + sitemap pointer
@@ -162,23 +163,21 @@ regenerate the social card:
 node tools/og-image.mjs
 ```
 
-It reads the fonts from `public/fonts/`, so Satoshi has to be there (see
-"Fonts" below), or the card's text falls back and looks off-brand.
+It reads the fonts from `public/fonts/` and embeds them, so nothing is
+fetched from a font service.
 
 **Fonts.** Both typefaces are served from the site itself, so no visitor's
-IP address goes to Google Fonts or Fontshare. Fredoka One is in git with
-its licence. Satoshi is not: its licence (ITF Free Font License) allows
-self-hosting it for this site, but not handing the file out through a
-public repository, and this repository is public. Put
-`Satoshi-Variable.woff2` in `public/fonts/` on the machine that builds the
-site, from the official kit at fontshare.com/fonts/satoshi
-(`Fonts/WEB/fonts/`), unchanged: the licence forbids subsetting or
-converting it. Without it, body text falls back to the system sans-serif.
+IP address goes to a font service. Both are under the SIL Open Font
+License, which allows them in a public repository; the licences are next
+to the files.
 
-Three more things for the host. `/signup`, `/signin`, `/dashboard`, `/play`,
-`/privacy` and `/terms` are client-side routes, so the host must serve
-`index.html` for unknown paths
-(a rewrite to `/index.html`) or a refresh on those URLs will 404. And
+Three more things for the host. `/signup`, `/signin`, `/confirmed`,
+`/dashboard`, `/play`, `/privacy` and `/terms` are client-side routes, so
+the host must serve `index.html` for any path that isn't a file, or loading
+one of those addresses directly (from a bookmark, a refresh, or an emailed
+link) gives a 404. On Vercel, `vercel.json` does this with one rewrite;
+files that exist, like `/assets/…` and `/fonts/…`, are still served as
+themselves. On another host, set up the same rewrite there. And
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are read at build
 time, so set them in the host's build environment. A build without them still
 serves the landing page; sign-up, sign-in and the dashboard then say accounts
@@ -190,13 +189,14 @@ aren't available. And "Delete my account" needs `delete_my_account()` from
 **Type.** Two faces, both served from this site (`src/styles/fonts.css`,
 preloaded in `index.html`):
 
-- **Satoshi** (one variable file, every weight) — labels, instructions,
-  body copy and small UI text. It has no naira sign, so ₦ comes from the
-  system font.
+- **Plus Jakarta Sans** (variable, every weight) — labels, instructions,
+  body copy and small UI text. Its Latin file covers English; a second
+  file, with ₦ and accented letters, is fetched only by a page that uses
+  one of them.
 - **Fredoka One** — every headline, prompt and button on
   the site, hero and navbar included. It ships one weight, so anything
   set in it stays at `font-weight: 400`; bolding it makes the browser
-  fake the weight. The wordmark stays in Satoshi — it is the brand mark,
+  fake the weight. The wordmark stays in Plus Jakarta Sans — it is the brand mark,
   not a headline.
 
 **Colour.** `#99A6F9` carries atmosphere and large areas. White dominates.
@@ -241,7 +241,7 @@ that the game is in development.
 ## Getting in
 
 ```
-Grown-up   Get Started → /signup → confirm email → /signin → /dashboard
+Grown-up   Get Started → /signup → confirmation link → /confirmed → /dashboard
            add a child (name, age band, optional class) → Play
            (the age bands offered are Under 7 and 7–8, and the classes
            Kindergarten to Primary 3: Pebble Math covers kindergarten to
@@ -358,11 +358,11 @@ they fly from where it lands to the basket's count, in under half a second
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row. The first time, Blob says "You did it!
-Look, the first lock is open!" over Mum's face and her chain of five
-padlocks: the first lock's key turns, it springs open with a soft sound
+Look, the first lock is open!" over Mum's face and her chain of seven
+padlocks (one for the tutorial, one for each of the six stalls): the first lock's key turns, it springs open with a soft sound
 (made in the browser, `lib/sound.js`; the corner switch mutes it with the
 voice), and it falls away. No confetti, stars or score. A card then shows
-the five locks, one open and four closed. A child who has cleared the stall
+the seven locks, one open and six closed. A child who has cleared the stall
 before sees that card first when they come back, then starts at round 2:
 no tutorial, no practice. If `stall_progress` can't be read, the game
 starts as if nothing were cleared.
@@ -390,10 +390,14 @@ counts the focused orange and B puts it in the basket.
 **Every line is in `data/dialogue.js`**, to edit without touching code, and
 is read aloud with the browser's own voice (`lib/speech.js`) until real
 recordings exist. The speaker button in the top corner mutes it (and the
-lock's sound), and that is remembered on the device. Nigerian English is used where the browser
-has it (Edge does), then British, then any English. Chrome stays silent
-until the child has tapped something on the page, which every normal path
-through the game does.
+lock's sound), and that is remembered on the device. Only voices on the
+device itself are used: the online ones (Edge's "Online (Natural)" voices,
+Chrome's "Google" voices) send each line, the child's game name included,
+to Microsoft or Google, so they are never chosen, and a device with no
+voice of its own is silent. Among the device's voices, Nigerian English
+comes first, then British, then any English. Chrome stays silent until the
+child has tapped something on the page, which every normal path through
+the game does.
 
 **The game name** appears in the top corner of the play screens and as Zizi's
 label in the dialogue box, and nowhere else.
@@ -445,7 +449,7 @@ auth.users ─ profiles ─ players ─ stall_progress
   up. The sign-up form sends `role` and `full_name` as user metadata, and
   the trigger checks them rather than trusting them.
 
-Routes: `/` landing; `/signup`, `/signin`, `/forgot-password`,
+Routes: `/` landing; `/signup`, `/signin`, `/confirmed`, `/forgot-password`,
 `/reset-password`, `/privacy` and `/terms` public; `/dashboard`, `/play` and
 `/play/:playerId` protected. A signed-out visit to a protected page goes to `/signin` with the
 attempted location in router state, and sign-in sends them back.
@@ -472,6 +476,13 @@ checks for both. Supabase's source for this is `internal/api/signup.go` in
 supabase/auth. An address that signed up but never confirmed gets the
 confirmation email again and keeps its first password; the "check your
 email" screen says so.
+
+**The confirmation link** in the sign-up email lands on `/confirmed`, which
+says "Your email is confirmed." with a button to sign in. Opening the link
+also signs the grown-up in on that device, so the button goes straight on
+to the dashboard there. A link that had expired or been used, or a visit
+with no link at all, gets a plain sentence saying so and the same button;
+the page is never blank.
 
 **Forgotten passwords.** "Forgot your password?" on sign-in →
 `/forgot-password` emails a reset link → `/reset-password` sets the new one.
@@ -521,7 +532,7 @@ message with a reload button instead of a white screen.
      it is live.
    - **Redirect URLs**: add `http://localhost:5173/**` and, when you have it,
      `https://pebblemath.com/**`. The confirmation link returns to
-     `/dashboard` and the reset link to `/reset-password`; `/**` covers both.
+     `/confirmed` and the reset link to `/reset-password`; `/**` covers both.
      An address that isn't on this list is ignored and Supabase sends people
      to the Site URL instead, which for a reset link means landing on the
      home page with nothing happening.

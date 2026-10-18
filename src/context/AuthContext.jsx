@@ -21,9 +21,11 @@ const signUp = ({ email, password, fullName, role }) =>
     password,
     options: {
       data: { full_name: fullName, role },
-      // Where the confirmation link lands. The address must also be in the
-      // Redirect URLs list in the Supabase dashboard, or it is ignored.
-      emailRedirectTo: `${window.location.origin}/dashboard`,
+      // Where the confirmation link lands (routes/EmailConfirmed.jsx). The
+      // address must also be in the Redirect URLs list in the Supabase
+      // dashboard, or Supabase sends people to the Site URL (the landing
+      // page) instead.
+      emailRedirectTo: `${window.location.origin}/confirmed`,
     },
   });
 
