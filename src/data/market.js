@@ -21,7 +21,7 @@ export const MARKET_LAYERS = [
 export const BASKET = { src: "/stall/basket.webp", w: 480, h: 433 };
 
 /** The fruit seller: standing behind the stall, and her face for the dialogue box. */
-export const SELLER = { src: "/stall/seller.webp", w: 339, h: 900 };
+export const SELLER = { src: "/stall/seller.webp", w: 435, h: 900 };
 export const SELLER_PORTRAIT = { src: "/stall/seller-portrait.webp", w: 320, h: 320 };
 
 /** Zizi's mum, from the mother sheet, behind her chain when a lock opens. */
