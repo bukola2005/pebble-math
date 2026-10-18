@@ -4,7 +4,8 @@ Phase 1 (visual foundation + hero), Phase 2 (the landing page), Phase 4
 (adult accounts: sign up, sign in, dashboard — see [Accounts](#accounts))
 and Phase 5 (the way in: Get Started → sign-up, and a child's play session
 — see [Getting in](#getting-in)). Phase 3's local-only Get Started flow is
-retired.
+retired. The first play follows the game handoff: loading → film → Zizi's
+look → game name → Scene 1 → the Fruit Stall (round one).
 
 ## Run it
 
@@ -35,19 +36,32 @@ src/
                             shows "accounts aren't available" if Supabase isn't set up
     SignUp.jsx              parent / teacher creates the account
     SignIn.jsx              sign in, then back to where they were going
+    LegalPage.jsx           /privacy and /terms, straight from docs/privacy-and-terms-draft.md
     ForgotPassword.jsx      emails a reset link; never says whether an address exists
     ResetPassword.jsx       where the reset link lands: choose a new password
     Dashboard.jsx           greeting, email, the account's players: add, delete, Play
     Play.jsx                "Who's playing?" — the child picks their own card
-    PlaySession.jsx         loading → (first play: character → film → welcome) → market
+    PlaySessionShell.jsx    /play/:id and below: fetches the player, hands it to each step
+    PlayHub.jsx             /play/:id: the loading screen, then the next step
+    PlayIntro.jsx           /play/:id/intro: the opening film
+    PlayAvatar.jsx          /play/:id/avatar: choose Zizi's look, on the storybook
+    PlayName.jsx            /play/:id/name: build a game name from two word lists
+    PlayStory.jsx           /play/:id/story: Scene 1, the dim market, with Blob
+    PlayStall.jsx           /play/:id/stall/fruit: the basket, the tutorial, round one
     Protected*.jsx          each page above behind its sign-in check
   context/AuthContext.jsx   AuthProvider + useAuth: session, user, loading, signUp, signIn, signOut
   lib/
     supabase.js             the one Supabase client; null if the env is missing
     authRedirect.js         what an emailed link put in the address bar, read before supabase-js clears it
     players.js              every query on the players table, and its error messages
+    playFlow.js             the order of the play steps, and what each one loads
+    speech.js               reads lines aloud (speechSynthesis), with the mute switch
+    stallLog.js             how each stall round went (hints used), in memory for now
+    progress.js             stall_progress: which stalls a child has cleared
+    sound.js                the lock's soft sound, made in the browser (no files)
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
+    account.js              "Delete my account" (calls delete_my_account() in the database)
     validation.js           password length, email check, name limits
     useDocumentTitle.js     per-page browser-tab title
   styles/tokens.css         colour, type, space, depth, motion — edit here first
@@ -59,12 +73,20 @@ src/
     PageLoading.jsx         the lavender "Loading…" page
     AuthLayout.jsx          the page sign-up and sign-in share
     AuthField.jsx           label + input + hint + inline error
-    PlayerForm.jsx          add a player: name, age band, optional class
+    PlayerForm.jsx          add a player: name, age band, optional class, a monster
     PlayerCard.jsx          one player, with an inline "delete?" confirm
-    PlayerAvatar.jsx        a player's character, or a neutral circle until they pick
+    DeleteAccount.jsx       the dashboard's "Delete my account", behind typing DELETE
+    PlayerAvatar.jsx        the monster the grown-up picked, or a neutral circle
     PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
-    CharacterPicker.jsx     first play: the child picks one of the eight
-    MarketPlaceholder.jsx   "this is where the market opens"
+    DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
+    StallBackdrop.jsx       the stall's six painted layers, or the dim market
+    PlayHud.jsx             the play screens' corners: a way out, game name, mute
+    BasketGame.jsx          oranges on the table, the basket and its crate of ten:
+                            tap to count, drag to move
+    HintButton.jsx          Blob's face in the corner: one step of help per tap
+    CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
+    BasketAward.jsx         the card that gives the child their basket
+    LockChain.jsx           Mum's chain and its five padlocks, drawn in SVG
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -78,23 +100,44 @@ src/
     CTASection.jsx          closing panel
     Footer.jsx
     SectionHeading.jsx      eyebrow + title + lead, used by every section
-    VideoIntro.jsx          the opening film, with skip and sound
-    IntroSequence.jsx       the short personalised welcome after the film
+    VideoIntro.jsx          the opening film: tap to begin, with sound, Skip
     Character.jsx           any character, reusable anywhere
     Apple.jsx               one apple, for demonstrations
     CTAButton.jsx           the only button (primary / secondary)
     GlassPanel.jsx          the translucent surface
-  data/characters.js        the eight characters, with intrinsic sizes
+  data/characters.js        the eight monsters, with intrinsic sizes
+  data/monsters.js          Blob the guide, and the seven a grown-up can pick
+  data/zizi.js              Zizi's six looks and her original look
+  data/gameNames.js         the two word lists game names are built from
+  data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
+                            and Blob's errands for the end of a session
+  data/fruitStall.js        the five rounds, and round 1's order by age band
+  data/market.js            the market's art: the six layers, basket, orange, crate,
+                            the seller, Mum's face, and how many locks there are
+  styles/game.css           the game screens' own tokens (garden green, paper)
   data/players.js           age bands and class levels a player may hold
-  data/media.js             the agreed paths for the loading art and the film
+  data/media.js             the agreed paths for the loading art, storybook and film
+docs/learning-rules.md      how the game teaches, with examples for later chapters
 tools/og-image.mjs          regenerates the social card
-public/characters/*.webp    the eight playable characters, halos cleaned up
-public/characters/zizi.svg, mother-sheet.svg
-                            story characters; their use isn't decided yet
+public/characters/*.webp    the eight monsters, halos cleaned up
+public/characters/mother-sheet.svg
+                            Zizi's mother; story artwork only, never playable
+public/characters/mum-face.webp
+                            her face, cut from that sheet, behind her chain
+public/zizi/*.webp          Zizi: six looks (zizi-headband, -cornrows, -afro, -puffs,
+                            -twists, -braids) and the original, zizi-default
 public/video/pre-intro.*    the opening film (webm + mp4 + poster)
-public/loading/             the loading screen art goes here (see Getting in)
-public/art/*.webp           market map (day, misty) and a blank storybook; not used yet
+public/loading/hands-apart.webp
+                            the loading screen: Zizi and her mother pulled apart
+public/stall/*.webp         the Fruit Stall's six layers (sky, far, palms, ground,
+                            fruit-stall, near), the basket, orange and crate, and
+                            the seller (seller.webp, seller-portrait.webp)
+public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogue box
+public/art/*.webp           market map (day, misty), not used yet; the blank
+                            storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
+public/fonts/               Fredoka One (with its licence) and Satoshi, served from
+                            this site; Satoshi is not in git (see "Fonts" below)
 public/favicon.svg          the app mark
 public/og-image.png         the social sharing card
 public/robots.txt           crawling rules + sitemap pointer
@@ -119,33 +162,50 @@ regenerate the social card:
 node tools/og-image.mjs
 ```
 
-Run it from a machine that can load the brand fonts, or the card's text
-falls back and looks off-brand.
+It reads the fonts from `public/fonts/`, so Satoshi has to be there (see
+"Fonts" below), or the card's text falls back and looks off-brand.
 
-Two more things for the host. `/signup`, `/signin`, `/dashboard` and
-`/play` are client-side routes, so the host must serve `index.html` for unknown paths
+**Fonts.** Both typefaces are served from the site itself, so no visitor's
+IP address goes to Google Fonts or Fontshare. Fredoka One is in git with
+its licence. Satoshi is not: its licence (ITF Free Font License) allows
+self-hosting it for this site, but not handing the file out through a
+public repository, and this repository is public. Put
+`Satoshi-Variable.woff2` in `public/fonts/` on the machine that builds the
+site, from the official kit at fontshare.com/fonts/satoshi
+(`Fonts/WEB/fonts/`), unchanged: the licence forbids subsetting or
+converting it. Without it, body text falls back to the system sans-serif.
+
+Three more things for the host. `/signup`, `/signin`, `/dashboard`, `/play`,
+`/privacy` and `/terms` are client-side routes, so the host must serve
+`index.html` for unknown paths
 (a rewrite to `/index.html`) or a refresh on those URLs will 404. And
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are read at build
 time, so set them in the host's build environment. A build without them still
 serves the landing page; sign-up, sign-in and the dashboard then say accounts
-aren't available.
+aren't available. And "Delete my account" needs `delete_my_account()` from
+`supabase/schema.sql` in the database.
 
 ## The rules the design follows
 
-**Type.** Two faces, both loaded in `index.html` in a single Google
-Fonts request:
+**Type.** Two faces, both served from this site (`src/styles/fonts.css`,
+preloaded in `index.html`):
 
-- **Satoshi Variable** (Fontshare) — labels, instructions, body copy and
-  small UI text. Plus Jakarta Sans is the fallback where Satoshi isn't
-  loaded.
-- **Fredoka One** (Google Fonts) — every headline, prompt and button on
+- **Satoshi** (one variable file, every weight) — labels, instructions,
+  body copy and small UI text. It has no naira sign, so ₦ comes from the
+  system font.
+- **Fredoka One** — every headline, prompt and button on
   the site, hero and navbar included. It ships one weight, so anything
   set in it stays at `font-weight: 400`; bolding it makes the browser
   fake the weight. The wordmark stays in Satoshi — it is the brand mark,
   not a headline.
 
-**Colour.** `#99A6F9` carries atmosphere and large areas. `#FE885C` is
-reserved for the primary action and small accents. White dominates.
+**Colour.** `#99A6F9` carries atmosphere and large areas. White dominates.
+In the game and the account pages, orange (`#FE885C`) means "press this"
+and nothing else: it is only ever the one button the child (or grown-up)
+should press. Anything chosen, counted or pointed at is lavender
+(`#99A6F9`, or `--pm-purple-700` where it must be read on white). Painted
+artwork, like the stall's awning, keeps its own colours. The landing page
+still uses orange for a few small accents.
 
 Two contrast decisions worth knowing:
 
@@ -183,38 +243,164 @@ that the game is in development.
 ```
 Grown-up   Get Started → /signup → confirm email → /signin → /dashboard
            add a child (name, age band, optional class) → Play
+           (the age bands offered are Under 7 and 7–8, and the classes
+           Kindergarten to Primary 3: Pebble Math covers kindergarten to
+           Primary 3, and the form says there are no games above that
+           level yet)
 
-Child      /play "Who's playing?" → tap own card → /play/:id
-           loading → first play only: pick a character → the film → welcome
-                   → the market ("this is where the market opens")
+Child      /play "Who's playing?" → tap own card → /play/:id (loading)
+           → /intro      the film (until first_play_done)
+           → /avatar     Zizi's look (until character holds one)
+           → /name       the game name (until game_name is set)
+           → /story      Scene 1 (until scene1_done)
+           → /stall/fruit  the Fruit Stall, which is where every later
+                           visit starts until the map exists
 ```
+
+Every step is its own route and its own chunk of code, and `lib/playFlow.js`
+decides which one comes next from what the player row already holds. A
+child who stops halfway picks up at the step they left. Steps replace each
+other in the history, so Back from any of them returns to "Who's playing?".
+A visit, or a reload, always starts at the loading screen, so the steps
+can't be taken out of order and each one's pictures are in before it shows.
 
 Every Get Started button on the landing page goes to `/signup`. There is no
 student sign-up: a child can't own an account, so the grown-up creates one
 and adds the child from the dashboard.
 
+**Who is who.** Every child plays as **Zizi**, in the look they choose.
+The purple monster is **Blob**, the guide, and nobody can pick it. The other
+seven monsters are on the grown-up's side: a grown-up picks one for each
+child when adding them (`players.monster`), so the cards on the dashboard
+and on "Who's playing?" are easy to tell apart. Children added before
+monsters came back show a neutral circle with their initial.
+
 **"Who's playing?"** is built for a child: one big card per child (their
-character, or a neutral circle with their initial until they've picked
-one), nothing to type, no sign-out, no settings. The device stays signed in
-as the grown-up. A small link in the corner goes back to the dashboard.
+monster and their name), nothing to type, no sign-out, no settings. The
+device stays signed in as the grown-up. A small link in the corner goes
+back to the dashboard.
 
-**The loading screen** shows the art at `public/loading/pebble-loading.webp`
-with a bar that fills only as files actually arrive (`lib/preload.js`): on a
-first play, the eight characters, the film's poster and the film itself;
-after that, just the child's character. It stays up at least 700ms so a
-cached load doesn't flash. The film is downloaded once and played from that
-copy, so it is never fetched twice.
+**The loading screen** shows `public/loading/hands-apart.webp` full screen,
+with a slim bar low down that fills only as files actually arrive
+(`lib/preload.js`). It loads only what the next step needs: before the film,
+the film itself and its poster; before the avatar screen, the storybook and
+the seven Zizi pictures; after that, just the child's Zizi. It is a story
+beat as much as a wait, so it stays up for about two seconds on a first
+play and one second after that. That is a floor, never a delay added on
+top: the bar can't show more than has really loaded, it is only kept from
+racing across faster than the floor, and it glides between values. On a
+slow connection the screen ends a fraction of a second after the last file
+arrives. The film is downloaded once and played from that copy. While a child is busy on one step, the next step's
+code and pictures are fetched in the background.
 
-**First play** (`players.first_play_done` is false): the child picks one of
-the eight characters, which is saved at once; then the film plays (muted,
-since browsers refuse to autoplay sound, with a sound toggle and a Skip a
-child can find); then a welcome by name of under three seconds; then the
-market. `first_play_done` is saved when they reach the market. Every play
-after that goes straight from loading to the market.
+**The film** (until `players.first_play_done`): a full-screen "Tap to begin",
+because a browser only plays sound after a tap; then the film with its
+sound, and a Skip button there from the first second. `first_play_done` is
+saved when it ends or is skipped. On a phone held upright the whole frame
+is shown, letterboxed, rather than cropping the story.
 
-`prefers-reduced-motion` gets the film's poster frame and a play button
-instead of autoplay, a welcome that is already finished, and a bar that
-jumps instead of gliding.
+**Zizi's look** (until `players.character` holds one of the six): the open
+storybook, with the six looks on the left page and the chosen Zizi standing
+on the right page, in her original look until one is tapped. Tapping a look
+selects it and "This is me" saves it. On a phone held upright only the left
+page is shown.
+
+**The game name** (until `players.game_name` is set): two words, one from
+each list in `data/gameNames.js`, each stepped through with big arrows, and
+a Shuffle button. It starts on a random pair. There is no text box: a child
+never types anything, so they can't put a real name in. "That's my name!"
+saves it.
+
+**Scene 1** (until `players.scene1_done`): the dim market, as written in the
+handoff. The child's Zizi hides behind toppled crates while purple haze
+drifts past, and Blob finds her. Her lines are labelled with the child's
+game name, never "Zizi". "Let's go" saves `scene1_done` and goes straight to
+the Fruit Stall.
+
+**The Fruit Stall.** The stall is painted empty: the only oranges on screen
+are ones a child can move. They sit on its table, and the basket stands on
+the ground just in front, so every drag is short. Everything is placed from
+where the stall picture is on screen (`components/BasketGame.jsx`), and on
+a short screen the scene moves in closer so the oranges stay finger-sized.
+
+*Round 1 is practice*, labelled "Practice" on screen. A child who has just
+played Scene 1 is given their basket (one card), then a four-beat
+tutorial: everything dims except one thing, an arrow bobs at it, and Blob
+explains it in a thought bubble. Tap anywhere to move on; the last beat
+lets them try a drag. A child who comes back later goes straight to the
+seller, who asks for some oranges (2–5 under 7, 3–10 at 7–8, 5–10 at 9 and
+over). There are always three more than asked for, so the child has to stop
+at the right number.
+
+*Rounds 2 to 5* fill the basket to ten (`data/fruitStall.js`, and
+[docs/learning-rules.md](docs/learning-rules.md) for why). The basket
+starts part full; in rounds 2 and 3 Blob first asks "How many MORE to fill
+the basket?" with three numbers to tap, and a wrong one gets "Count
+again…". When the basket fills it closes into a crate of ten, and what is
+left on the stall moves onto a woven cloth beside it, so the leftovers
+can't be mistaken for the stall's stock. Then Blob says what is there one
+step at a time, and the light follows the words: "Ten…" (the crate lifts
+and glows, everything else dims), "…and three." (the leftovers light up,
+with a 3 on their cloth), "Thirteen." (both, and a 13 between them). Each
+step waits for the voice, about a second apart; with the sound off, the
+child taps through them. Round 5 never fills the basket: the child puts all
+nine in, and Blob says what happened, one line at a time and paced the same
+way: "Hmm. The basket didn't fill this time." "Nine. One short of ten." (the
+one empty space lights up) "Not every pile makes a ten. That's fine."
+
+Rounds 1 to 5 are **the tutorial**, not a chapter; nothing on screen says
+"Chapter 1". After the lock opens, the card says the tutorial is finished
+and more of the market is coming.
+
+A child gets a few small sparkles each time an orange goes into the basket:
+they fly from where it lands to the basket's count, in under half a second
+(CSS and SVG, none with reduced motion).
+
+*Clearing the stall.* Finishing round 5 clears the stall, and that is saved
+at once as a `stall_progress` row. The first time, Blob says "You did it!
+Look, the first lock is open!" over Mum's face and her chain of five
+padlocks: the first lock's key turns, it springs open with a soft sound
+(made in the browser, `lib/sound.js`; the corner switch mutes it with the
+voice), and it falls away. No confetti, stars or score. A card then shows
+the five locks, one open and four closed. A child who has cleared the stall
+before sees that card first when they come back, then starts at round 2:
+no tutorial, no practice. If `stall_progress` can't be read, the game
+starts as if nothing were cleared.
+
+*The end of a session.* After round 5 Blob gives the child one small thing
+to try away from the screen, picked at random from `ERRANDS` in
+`data/dialogue.js` ("Count out ten of anything at home. What's left
+over?"), with a quiet word that this is as far as the market goes for now
+and a way back to "Who's playing?".
+
+*Blob's hint button*, bottom left: each tap gives the next step (a
+question, then the empty spaces outlined, then the move shown slowly
+once), never the answer, and it resets each round. How many hints a child
+used, and how many wrong numbers they tapped, is noted per round in
+`lib/stallLog.js`, in memory only, shaped to be saved later.
+
+Tapping an orange counts it: a number badge, 1, 2, 3, in the order tapped.
+Tapping a counted orange clears it and the rest renumber. That's the
+child's scratchpad and changes nothing. Dragging is what moves an orange.
+An orange let go anywhere but over the basket springs back. One in the
+basket can't be picked up again, so nothing is counted twice. Both work
+with a finger, a mouse or a pen (pointer events). With a keyboard, Enter
+counts the focused orange and B puts it in the basket.
+
+**Every line is in `data/dialogue.js`**, to edit without touching code, and
+is read aloud with the browser's own voice (`lib/speech.js`) until real
+recordings exist. The speaker button in the top corner mutes it (and the
+lock's sound), and that is remembered on the device. Nigerian English is used where the browser
+has it (Edge does), then British, then any English. Chrome stays silent
+until the child has tapped something on the page, which every normal path
+through the game does.
+
+**The game name** appears in the top corner of the play screens and as Zizi's
+label in the dialogue box, and nowhere else.
+
+`prefers-reduced-motion` turns off the little pops, the bar's glide, the
+haze drifting, the bobbing arrow and the tutorial's moving demonstration
+(`styles/base.css`). The film never starts on its own in any case.
 
 The film is 22 seconds, 1280×720, encoded from the master in `source-art/`:
 
@@ -238,27 +424,45 @@ adult signs up with their own email and creates the players. A child just
 picks their profile from a list.
 
 ```
-auth.users ─ profiles ─ players
- (adult)     name, role   display name, age band, class (optional),
-                          character (null until picked), first_play_done
+auth.users ─ profiles ─ players ─ stall_progress
+ (adult)     name, role   display name, age band,     one row per stall
+                          class (optional), monster,  the child has cleared
+                          character (Zizi's look),
+                          game_name, first_play_done,
+                          scene1_done
 ```
 
-- `players` holds a display name the child chose, a **coarse age band**
-  (never a date of birth), an optional class, the character the child
-  picked on their first play, and whether that first play is done. Nothing
-  else. Do not add an email or password column to it. If a change seems to
-  need one, stop and rethink the change.
-- Row Level Security is on for both tables, and the policies are scoped to
-  `auth.uid()`: a signed-in account can only read and write its own profile
-  and its own players. Never ship a table without it.
+- `players` holds a nickname the grown-up gave, a **coarse age band**
+  (never a date of birth), an optional class, the monster the grown-up
+  picked, the Zizi look and the two-word game name the child chose, and how
+  far they've got. Nothing else. Do not add an email, password or date of
+  birth column to it. If a change seems to need one, stop and rethink the
+  change.
+- Row Level Security is on for every table, and the policies are scoped to
+  `auth.uid()`: a signed-in account can only read and write its own profile,
+  its own players and their progress. Never ship a table without it.
 - The `profiles` row is created by a database trigger when someone signs
   up. The sign-up form sends `role` and `full_name` as user metadata, and
   the trigger checks them rather than trusting them.
 
-Routes: `/` landing; `/signup`, `/signin`, `/forgot-password` and
-`/reset-password` public; `/dashboard`, `/play` and `/play/:playerId`
-protected. A signed-out visit to a protected page goes to `/signin` with the
+Routes: `/` landing; `/signup`, `/signin`, `/forgot-password`,
+`/reset-password`, `/privacy` and `/terms` public; `/dashboard`, `/play` and
+`/play/:playerId` protected. A signed-out visit to a protected page goes to `/signin` with the
 attempted location in router state, and sign-in sends them back.
+
+**The privacy notice and terms** (`/privacy`, `/terms`) show the matching
+sections of `docs/privacy-and-terms-draft.md`, word for word, read at build
+time: edit the draft and the pages follow. The draft's own preamble and its
+notes for reviewers aren't shown. Every `[BRACKETED]` placeholder is
+highlighted until it's filled in. The landing page's footer links to both,
+and the sign-up form says that creating an account means agreeing to them.
+
+**Delete my account**, at the foot of the dashboard, asks the grown-up to
+type DELETE. It then calls `delete_my_account()` (in `supabase/schema.sql`),
+which deletes the caller's own sign-in; the profile, every child on it and
+their progress go with it, because each table references the one above it
+`on delete cascade`. They are signed out, and the sign-in page says the
+account is gone. If it fails, nothing is deleted and the page says so.
 
 **Signing up with an address that already has an account** says so, with
 Sign in and Forgot-your-password links. Supabase hides this on purpose: with
@@ -288,8 +492,8 @@ components it uses, or it lands back in the main bundle.
 **The dashboard.** A parent or teacher lists, adds and deletes the players
 under their account, and sees which account they're in (the email, small,
 in the header). A delete asks first, and counts as done only when the
-database confirms a row was removed; saving a character and finishing a
-first play are checked the same way. **Play** opens "Who's playing?".
+database confirms a row was removed; saving a look, a game name and the
+end of the film are checked the same way. **Play** opens "Who's playing?".
 
 **When a page fails to load** (a dropped connection, or a new version of
 the site going live while a tab is open), `RouteErrorBoundary` shows a plain
@@ -327,10 +531,28 @@ message with a reload button instead of a white screen.
 
 ## Next
 
-The addition chapter itself: the first playable scene in the market, which
-replaces `MarketPlaceholder`. Also outstanding: the loading screen art
-(`public/loading/pebble-loading.webp`, 1600×893 WebP, ≤150 KB, without any
-painted "LOADING…" or bar), and Zizi: a playable character with several
-avatar designs, each with its own pick animation, which needs
-`characters.js` to grow from one picture per character to a list of designs
-(the mother is story artwork only and never goes in that file).
+The map and the other stalls (each bringing making ten back with
+different objects, see [docs/learning-rules.md](docs/learning-rules.md)),
+and saving the per-round record of hints in `lib/stallLog.js`. Later: a way
+for the grown-up to edit a child they've already added (their monster,
+name, age band), which the dashboard doesn't have yet.
+
+The stall's living background is six layers on one 1920×1080 canvas,
+horizon at 55% (y 594), from back to front: sky, far, palms, ground, stall,
+near. Keep all six: the stall is its own layer because it is what the child
+drags onto, at its own depth.
+
+| Layer | Placement |
+|---|---|
+| sky | fills the frame |
+| far | full width, bottom edge at y 608 |
+| palms | 430px tall, centred at 30% of the width, bottom at y 640 |
+| ground | full width, bottom at the canvas bottom |
+| stall | 700px tall, centred at 52% of the width, bottom at 99% of the height |
+| near | 138% of the width, centred, bottom 70px below the frame |
+
+Parallax runs from slowest to fastest: sky, far, palms, ground, near. The
+stall barely moves, because it is the subject. The empty sand on the right
+is for the fruit seller and Blob. The layers are in place as a still
+picture (`components/StallBackdrop.css`); the parallax and the living
+effects aren't built yet.

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CTAButton from "../components/CTAButton";
+import DeleteAccount from "../components/DeleteAccount";
 import PlayerCard from "../components/PlayerCard";
 import PlayerForm from "../components/PlayerForm";
 import { useAuth } from "../context/AuthContext";
@@ -206,9 +207,9 @@ export default function Dashboard() {
               <p className="pm-dash__empty-title">No players yet.</p>
               <p className="pm-dash__muted">
                 No child has been added to this account. Add one with a
-                nickname and an age band; they pick their own character the
-                first time they play. Children never need an email or a
-                password.
+                nickname, an age band and a monster so you can tell them
+                apart. In the game every child plays as Zizi. Children never
+                need an email or a password.
               </p>
               <CTAButton ref={addButton} onClick={() => setAdding(true)}>
                 Add a player
@@ -236,6 +237,8 @@ export default function Dashboard() {
             </ul>
           )}
         </section>
+
+        {status === "ready" && <DeleteAccount childCount={players.length} />}
       </main>
     </div>
   );

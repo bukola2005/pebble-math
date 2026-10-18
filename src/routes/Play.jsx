@@ -9,7 +9,7 @@ import "./Play.css";
 /**
  * "Who's playing?" — the screen a grown-up hands to a child.
  *
- * Built for a child, not an adult: one big card per child, their character
+ * Built for a child, not an adult: one big card per child, their monster
  * and their name, and nothing else to read or manage. No sign-out, no
  * settings, nothing to type. The device stays signed in as the grown-up;
  * the only way back to the dashboard is a small link in the corner.

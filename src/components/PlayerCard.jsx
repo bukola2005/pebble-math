@@ -6,8 +6,9 @@ import { deletePlayer, playerErrorMessage } from "../lib/players";
 import "./PlayerCard.css";
 
 /**
- * One player on the dashboard: character (or a neutral circle until they
- * pick one), display name, age band, and class level if there is one.
+ * One player on the dashboard: the monster the grown-up picked for them (or
+ * a neutral circle if there isn't one), display name, age band, and class
+ * level if there is one.
  * Deleting asks first, in the card itself.
  *
  * `onDeleted` is called only once the database confirms the row is gone.

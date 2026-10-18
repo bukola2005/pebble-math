@@ -1,0 +1,99 @@
+/* The privacy notice and terms: plain, readable text on white. */
+.pm-legal {
+  min-height: 100vh;
+  background: var(--pm-white);
+}
+
+.pm-legal__top {
+  padding: 22px var(--pm-gutter);
+  border-bottom: 1px solid var(--pm-line);
+}
+
+.pm-legal__mark {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--pm-ink);
+}
+
+.pm-legal__body {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 64px) var(--pm-gutter) 48px;
+  font-size: var(--pm-body);
+  line-height: 1.7;
+  color: var(--pm-ink);
+}
+
+.pm-legal__body > * + * {
+  margin-top: 14px;
+}
+
+.pm-legal__title {
+  margin-bottom: 8px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.pm-legal__heading {
+  margin-top: 36px;
+  font-family: var(--pm-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.pm-legal__subheading {
+  margin-top: 24px;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.pm-legal__list {
+  padding-left: 1.25em;
+  list-style: disc;
+}
+
+.pm-legal__list li + li {
+  margin-top: 6px;
+}
+
+.pm-legal__rule {
+  margin-block: 32px;
+  border: 0;
+  border-top: 1px solid var(--pm-line);
+}
+
+/* What still needs filling in, kept visible on purpose. */
+.pm-legal__todo {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #fff1b8;
+  box-shadow: inset 0 0 0 1px #e6c84f;
+  color: var(--pm-ink);
+}
+
+.pm-legal__foot {
+  padding: 24px var(--pm-gutter) 40px;
+  border-top: 1px solid var(--pm-line);
+}
+
+.pm-legal__foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 24px;
+}
+
+.pm-legal__link {
+  padding-block: 10px;
+  font-size: var(--pm-small);
+  font-weight: 600;
+  color: var(--pm-ink-muted);
+}
+
+.pm-legal__link:hover {
+  color: var(--pm-purple-700);
+}

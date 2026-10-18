@@ -1,0 +1,398 @@
+.pm-stall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #f1d7c0;
+  /* No double-tap zoom or pull-to-refresh while playing. */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+.pm-stall__stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* --- the top of the screen: what to do, and who is talking ------------------------
+   Under the corner buttons and over the sky, so nothing covers the table
+   or the basket while the child is thinking. */
+.pm-stall__top {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.pm-stall__top > * {
+  pointer-events: auto;
+}
+
+/* "Practice": small and calm, so nobody takes round 1 for the game. */
+.pm-stall__practice {
+  padding: 4px 14px;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1.5px var(--pm-glass-border);
+  font-size: var(--pm-small);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--pm-purple-700);
+}
+
+/* What the child is doing, kept in view. In round 1 the number comes with
+   that many oranges as pictures; after that, just the words. */
+.pm-stall__goal {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 18px 8px 8px;
+  border-radius: 26px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 3px var(--pm-garden-leaf),
+    var(--pm-shadow-md);
+  animation: pm-goal-in 0.4s var(--pm-ease-pop) both;
+}
+
+.pm-stall__goal:has(> .pm-stall__goal-words:only-child) {
+  display: block;
+  padding: 10px 22px;
+}
+
+@keyframes pm-goal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+.pm-stall__goal-number {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--pm-purple);
+  font-family: var(--pm-font-display);
+  font-size: 1.9rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-stall__goal-oranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.pm-stall__goal-oranges img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.pm-stall__goal-words {
+  font-family: var(--pm-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+/* Blob pops up on the sand at the right whenever he talks. */
+.pm-stall__blob {
+  position: absolute;
+  right: 5%;
+  bottom: 14%;
+  z-index: 3;
+  height: min(34vh, 320px);
+  aspect-ratio: 736 / 900;
+  animation: pm-blob-cheer 0.6s var(--pm-ease-pop) both;
+}
+
+.pm-stall__blob img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@keyframes pm-blob-cheer {
+  from {
+    opacity: 0;
+    transform: translateY(40%) scale(0.6);
+  }
+  60% {
+    transform: translateY(-6%) scale(1.04);
+  }
+}
+
+/* A phone held upright has no spare sand: Blob is in the box's portrait. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-stall__blob {
+    display: none;
+  }
+}
+
+/* A short screen (a phone on its side): everything sits a little higher,
+   and "Practice" moves up between the corner buttons. */
+@media (max-height: 480px) {
+  .pm-stall__top {
+    top: calc(max(8px, env(safe-area-inset-top)) + 54px);
+  }
+
+  .pm-stall__practice {
+    position: fixed;
+    top: max(20px, calc(env(safe-area-inset-top) + 8px));
+    left: 72px;
+  }
+
+  /* The goal moves up into the corner row, compact, so it never sits over
+     the oranges on the table. In round 1 the number and the pictures say
+     it; the words stay for screen readers. */
+  .pm-stall__goal {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 172px;
+    max-width: calc(100vw - 172px - 250px);
+    padding: 4px 14px 4px 4px;
+    border-radius: 24px;
+  }
+
+  .pm-stall__goal-number {
+    grid-row: auto;
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+
+  .pm-stall__goal-oranges img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pm-stall__goal-number ~ .pm-stall__goal-words {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* --- after round 5: as far as the market goes for now ----------------------------- */
+.pm-stall__end {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(22, 16, 44, 0.45);
+  animation: pm-end-in 0.4s var(--pm-ease) both;
+}
+
+@keyframes pm-end-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.pm-stall__end-card {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+  padding: 24px 24px 26px;
+  border-radius: 30px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 5px var(--pm-garden-leaf),
+    0 0 0 7px var(--pm-garden-deep),
+    0 24px 56px rgba(20, 14, 40, 0.4);
+  text-align: center;
+}
+
+.pm-stall__end-title {
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.8rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--pm-ink);
+}
+
+.pm-stall__end-text {
+  font-size: var(--pm-body);
+  line-height: 1.5;
+  color: var(--pm-ink-muted);
+}
+
+.pm-stall__end-button {
+  min-height: 60px;
+  margin-top: 6px;
+  padding: 0 30px;
+  border: 0;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+  font-family: var(--pm-font-display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--pm-ink-on-orange);
+  cursor: pointer;
+}
+
+.pm-stall__end-button:focus-visible {
+  outline: 4px solid var(--pm-purple-700);
+  outline-offset: 4px;
+}
+
+/* --- the first lock opens ---------------------------------------------------------
+   Mum in the haze, her chain across in front of her, under Blob's line.
+   Calm: no confetti, no stars, no score. */
+.pm-stall__reward {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(150px, 26vh, 230px) 16px 24px;
+  background: radial-gradient(60% 55% at 50% 58%, rgba(120, 96, 200, 0.55), rgba(22, 16, 44, 0.78));
+  animation: pm-end-in 0.5s var(--pm-ease) both;
+}
+
+.pm-stall__mum {
+  width: min(42vw, 30vh, 220px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #e6dcff, #b6a4ec);
+  box-shadow:
+    0 0 0 5px rgba(255, 255, 255, 0.85),
+    0 0 40px rgba(200, 180, 255, 0.7);
+}
+
+.pm-stall__mum img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+
+/* The chain hangs across the bottom of her picture. */
+.pm-stall__chain {
+  width: min(92vw, 560px);
+  margin-top: max(-60px, -8vh);
+  filter: drop-shadow(0 6px 8px rgba(10, 6, 30, 0.45));
+}
+
+/* --- the locks card ---------------------------------------------------------------------- */
+.pm-stall__locks-mum {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 20%;
+  background: radial-gradient(circle at 50% 40%, #e6dcff, #b6a4ec);
+  box-shadow: 0 0 0 4px var(--pm-white), var(--pm-shadow-sm);
+}
+
+.pm-stall__locks-row {
+  width: 100%;
+  margin: 2px 0 4px;
+}
+
+/* --- the end: Blob's errand ----------------------------------------------------------------- */
+.pm-stall__errand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.pm-stall__errand-blob {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  background: var(--pm-purple-100);
+  box-shadow: 0 0 0 3px var(--pm-white), var(--pm-shadow-sm);
+}
+
+.pm-stall__errand-label {
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pm-purple-700);
+}
+
+.pm-stall__errand-text {
+  margin-top: 4px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.3rem, 1rem + 1.2vw, 1.65rem);
+  font-weight: 400;
+  line-height: 1.22;
+  color: var(--pm-ink);
+}
+
+.pm-stall__end-quiet {
+  padding-top: 12px;
+  border-top: 1px solid var(--pm-line);
+  font-size: var(--pm-small);
+  line-height: 1.5;
+  color: var(--pm-ink-muted);
+}
+
+/* A short screen: everything a little smaller so it fits under the
+   corner buttons and Blob's line. */
+@media (max-height: 480px) {
+  .pm-stall__reward {
+    justify-content: flex-start;
+    padding-top: 142px;
+  }
+
+  .pm-stall__chain {
+    width: min(92vw, 560px, 130vh);
+  }
+
+  .pm-stall__end {
+    align-items: start;
+    padding-top: 66px;
+  }
+
+  .pm-stall__errand-blob {
+    width: 56px;
+    height: 56px;
+  }
+
+  .pm-stall__errand-text {
+    font-size: 1.2rem;
+  }
+
+  .pm-stall__locks-mum {
+    display: none;
+  }
+
+  .pm-stall__end-card {
+    gap: 8px;
+    padding: 16px 20px 18px;
+  }
+
+  .pm-stall__end-button {
+    min-height: 52px;
+  }
+}

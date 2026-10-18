@@ -14,6 +14,8 @@ const ResetPassword = lazy(() => import("./routes/ResetPassword"));
 const ProtectedDashboard = lazy(() => import("./routes/ProtectedDashboard"));
 const ProtectedPlay = lazy(() => import("./routes/ProtectedPlay"));
 const ProtectedPlaySession = lazy(() => import("./routes/ProtectedPlaySession"));
+// The privacy notice and terms: public, and also fetched only when opened.
+const LegalPage = lazy(() => import("./routes/LegalPage"));
 
 export default function App() {
   const location = useLocation();
@@ -33,6 +35,8 @@ export default function App() {
       <Suspense fallback={<PageLoading />}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/privacy" element={<LegalPage doc="privacy" />} />
+          <Route path="/terms" element={<LegalPage doc="terms" />} />
 
           {/* One AuthProvider for every page that needs an account (see AuthShell). */}
           <Route element={<AuthShell />}>
@@ -42,7 +46,10 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedDashboard />} />
             <Route path="/play" element={<ProtectedPlay />} />
-            <Route path="/play/:playerId" element={<ProtectedPlaySession />} />
+            {/* A child's play session. Its steps (/intro, /avatar, /name)
+                are routed inside PlaySessionShell, so that not even their
+                names ship with the landing page. */}
+            <Route path="/play/:playerId/*" element={<ProtectedPlaySession />} />
           </Route>
 
           {/* Anything else goes home rather than to a blank page. */}

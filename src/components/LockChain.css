@@ -1,0 +1,93 @@
+/* Mum's chain and its padlocks. Calm: no bounce, no sparkle. */
+.pm-chain {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pm-chain__link {
+  fill: none;
+  stroke: #8d93a1;
+  stroke-width: 4.5;
+}
+
+.pm-lock__shackle {
+  fill: none;
+  stroke: #9aa0ab;
+  stroke-width: 6.5;
+  stroke-linecap: round;
+}
+
+.pm-lock__body {
+  fill: url(#pm-lock-gold);
+  stroke: #8a5a1c;
+  stroke-width: 2.5;
+}
+
+.pm-lock__shine {
+  fill: rgba(255, 255, 255, 0.35);
+}
+
+.pm-lock__hole {
+  fill: #5b3a12;
+}
+
+/* Every part turns about its own middle, not the SVG's corner. */
+.pm-lock__swing,
+.pm-lock__slot {
+  transform-box: fill-box;
+  transform-origin: 50% 30%;
+}
+
+.pm-lock__slot {
+  transform-origin: 50% 0%;
+  transition: transform 0.5s var(--pm-ease);
+}
+
+/* Closed: the closed shackle shows. Open: the open one, and a soft glow. */
+.pm-lock__shackle--open,
+.pm-lock--open .pm-lock__shackle--closed,
+.pm-lock--falling .pm-lock__shackle--closed,
+.pm-lock--gone .pm-lock__shackle--closed {
+  display: none;
+}
+
+.pm-lock--open .pm-lock__shackle--open,
+.pm-lock--falling .pm-lock__shackle--open,
+.pm-lock--gone .pm-lock__shackle--open {
+  display: inline;
+}
+
+.pm-lock--open .pm-lock__swing {
+  filter: drop-shadow(0 0 6px rgba(255, 226, 150, 0.95));
+}
+
+/* The key turns in the keyhole. */
+.pm-lock--turning .pm-lock__slot,
+.pm-lock--open .pm-lock__slot,
+.pm-lock--falling .pm-lock__slot {
+  transform: rotate(90deg);
+}
+
+/* It slips off the chain and falls gently out of sight. */
+.pm-lock__swing {
+  transition:
+    transform 1s cubic-bezier(0.45, 0, 0.8, 0.6),
+    opacity 1s var(--pm-ease);
+}
+
+.pm-lock--falling .pm-lock__swing,
+.pm-lock--gone .pm-lock__swing {
+  transform: translateY(150px) rotate(24deg);
+  opacity: 0;
+}
+
+/* --- the card version: locks in a row, the open ones lighter ---------------------- */
+.pm-chain--small .pm-lock--open .pm-lock__body {
+  fill: #fff3d0;
+}
+
+.pm-chain--small .pm-lock--closed .pm-lock__swing {
+  opacity: 0.9;
+}

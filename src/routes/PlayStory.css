@@ -1,0 +1,129 @@
+.pm-story {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #3c3260;
+}
+
+.pm-story__stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* --- the cast --------------------------------------------------------------------
+   Zizi crouches at the left behind toppled crates; Blob pops up on the
+   right. Whoever is speaking is a little brighter. */
+.pm-story__zizi,
+.pm-story__blob {
+  position: absolute;
+  z-index: 2;
+  transition: filter 0.3s var(--pm-ease), transform 0.3s var(--pm-ease);
+  filter: brightness(0.82);
+}
+
+.pm-story__zizi.is-speaking,
+.pm-story__blob.is-speaking {
+  filter: none;
+}
+
+.pm-story__zizi {
+  left: 14%;
+  bottom: 9%;
+  height: min(64vh, 620px);
+  aspect-ratio: 344 / 900;
+}
+
+.pm-story__figure {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pm-story__zizi.is-speaking .pm-story__figure {
+  transform: translateY(-1.5%);
+  transition: transform 0.3s var(--pm-ease-pop);
+}
+
+.pm-story__crate {
+  position: absolute;
+  max-width: none;
+  height: auto;
+  filter: brightness(0.9) drop-shadow(0 10px 8px rgba(20, 10, 40, 0.45));
+}
+
+/* One tipped over in front, hiding her legs; one beside her, behind. */
+.pm-story__crate--front {
+  left: -38%;
+  bottom: -6%;
+  width: 150%;
+  transform: rotate(-9deg);
+}
+
+.pm-story__crate--back {
+  left: 58%;
+  bottom: 4%;
+  z-index: -1;
+  width: 120%;
+  transform: scaleX(-1) rotate(-6deg);
+}
+
+.pm-story__blob {
+  right: 12%;
+  bottom: 22%;
+  height: min(38vh, 380px);
+  aspect-ratio: 736 / 900;
+  animation: pm-blob-arrive 0.55s var(--pm-ease-pop) both;
+}
+
+.pm-story__blob img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@keyframes pm-blob-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(30%) scale(0.7);
+  }
+}
+
+.pm-story__dialogue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 5;
+}
+
+/* A phone held upright: smaller cast, higher up, above the box. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-story__zizi {
+    left: 6%;
+    bottom: 34%;
+    height: 38vh;
+  }
+
+  .pm-story__blob {
+    right: 4%;
+    bottom: 40%;
+    height: 22vh;
+  }
+}
+
+/* A short phone on its side: the box takes the lower half, the cast peeks
+   over it. */
+@media (max-height: 480px) and (min-aspect-ratio: 1 / 1) {
+  .pm-story__zizi {
+    left: 8%;
+    bottom: 22%;
+    height: 70vh;
+  }
+
+  .pm-story__blob {
+    bottom: 34%;
+    height: 44vh;
+  }
+}

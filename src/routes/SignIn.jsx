@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import AuthField from "../components/AuthField";
 import CTAButton from "../components/CTAButton";
 import { useAuth } from "../context/AuthContext";
+import { clearAccountDeletedNote, hasAccountDeletedNote } from "../lib/account";
 import { authErrorMessage } from "../lib/authErrors";
 import { isValidEmail } from "../lib/validation";
 
@@ -30,6 +31,11 @@ export default function SignIn() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Just after "Delete my account": say so, once.
+  const [accountDeleted] = useState(hasAccountDeletedNote);
+  useEffect(() => {
+    if (accountDeleted) clearAccountDeletedNote();
+  }, [accountDeleted]);
 
   // ProtectedRoute leaves the page the visitor was trying to reach in
   // router state. Signed in, we send them there, or to the dashboard if
@@ -95,6 +101,13 @@ export default function SignIn() {
         noValidate
         aria-busy={submitting}
       >
+        {/* Just after "Delete my account". */}
+        {accountDeleted && (
+          <p className="pm-auth__aside" role="status">
+            Your account has been deleted, with every child on it and everything they played.
+          </p>
+        )}
+
         <AuthField
           id="signin-email"
           label="Email"

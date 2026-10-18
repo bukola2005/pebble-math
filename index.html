@@ -11,7 +11,7 @@
     <title>Pebble Math — a math game for kids who learn by doing</title>
     <meta
       name="description"
-      content="Pebble Math is a 2D math game for children aged 7–10. Kids combine objects, spend from a wallet and build number sense inside one connected market."
+      content="Pebble Math is a 2D math game for children from kindergarten to Primary 3. Kids combine objects, spend from a wallet and build number sense inside one connected market."
     />
     <link rel="canonical" href="https://pebblemath.com/" />
     <meta name="theme-color" content="#99A6F9" />
@@ -26,7 +26,7 @@
     <meta property="og:title" content="Pebble Math — a math game for kids who learn by doing" />
     <meta
       property="og:description"
-      content="A 2D math game for children aged 7–10. Kids combine objects, spend from a wallet and build number sense inside one connected market."
+      content="A 2D math game for children from kindergarten to Primary 3. Kids combine objects, spend from a wallet and build number sense inside one connected market."
     />
     <meta property="og:url" content="https://pebblemath.com/" />
     <meta property="og:image" content="https://pebblemath.com/og-image.png" />
@@ -41,23 +41,17 @@
     <meta name="twitter:title" content="Pebble Math — a math game for kids who learn by doing" />
     <meta
       name="twitter:description"
-      content="A 2D math game for children aged 7–10. Kids combine objects, spend from a wallet and build number sense inside one connected market."
+      content="A 2D math game for children from kindergarten to Primary 3. Kids combine objects, spend from a wallet and build number sense inside one connected market."
     />
     <meta name="twitter:image" content="https://pebblemath.com/og-image.png" />
 
     <!-- Fonts: Satoshi for everything, Fredoka One for headlines,
-         prompts and buttons. Plus Jakarta Sans is Satoshi's fallback.
-         Both Google families come in one request. -->
-    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,800,900&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fredoka+One&display=swap"
-      rel="stylesheet"
-    />
+         prompts and buttons. Both are served from this site, so no
+         visitor's IP address goes to a font service. The @font-face
+         rules are in src/styles/fonts.css; these start the downloads
+         before the CSS is read. -->
+    <link rel="preload" href="/fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/FredokaOne-latin.woff2" as="font" type="font/woff2" crossorigin />
 
     <!-- What the product is, in a form search engines can read.
          Nothing here is a claim we can't stand behind: no ratings,
@@ -70,12 +64,12 @@
         "url": "https://pebblemath.com/",
         "applicationCategory": "EducationalApplication",
         "applicationSubCategory": "Math game",
-        "description": "A 2D math game for children aged 7 to 10. Children learn counting, addition, subtraction, multiplication, division, money and saving by handling objects and spending from a wallet inside one connected market.",
+        "description": "A 2D math game for children from kindergarten to Primary 3. Children learn counting, addition, subtraction, multiplication, division, money and saving by handling objects and spending from a wallet inside one connected market.",
         "inLanguage": "en",
         "audience": {
           "@type": "EducationalAudience",
           "educationalRole": "student",
-          "audienceType": "Children aged 7-10"
+          "audienceType": "Children from kindergarten to Primary 3"
         },
         "teaches": [
           "Counting",
