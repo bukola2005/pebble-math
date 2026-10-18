@@ -36,7 +36,7 @@ function Padlock({ x, y, state }) {
   );
 }
 
-export default function LockChain({ total = 5, open = 0, opening = -1, small = false }) {
+export default function LockChain({ total = 7, open = 0, opening = -1, small = false }) {
   // closed → turning → open (sound) → falling → gone
   const [stage, setStage] = useState(opening >= 0 ? "closed" : null);
 

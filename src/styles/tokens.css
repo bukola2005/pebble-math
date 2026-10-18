@@ -67,15 +67,15 @@
   --pm-r-pill: 999px;
 
   /* --- Type ------------------------------------------------------
-     Satoshi is the brand face: labels, instructions, small UI text,
-     and the whole hero. Both faces are served from this site
+     Plus Jakarta Sans is the brand face: labels, instructions, small
+     UI text, and the whole hero. Both faces are served from this site
      (styles/fonts.css); the system sans-serif shows until they load.
 
      Fredoka One is the playful voice: headlines, prompts and buttons
      from "Inside the market" downwards, and everywhere in the game
      flow. It has one weight, so anything set in it stays at 400 —
      never bold it, or the browser fakes the weight.                 */
-  --pm-font: "Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pm-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --pm-font-display: "Fredoka One", "Fredoka", var(--pm-font);
 
   --pm-display: clamp(2.6rem, 5.1vw, 4.25rem);

@@ -1,23 +1,36 @@
 /* ------------------------------------------------------------------
    The two typefaces, served from this site (public/fonts/) rather than
-   from Google Fonts and Fontshare, so a visitor's IP address doesn't go
-   to either. index.html preloads both files.
+   from a font service, so a visitor's IP address doesn't go to one.
+   index.html preloads the Latin file of each.
 
-   Satoshi: one variable file covering every weight from 300 to 900.
-   Its licence (ITF Free Font License) allows self-hosting for our own
-   site but not changing the file (no subsetting or conversion) and not
-   handing it out through a public repository, so it is used exactly as
-   Fontshare ships it and kept out of git (see .gitignore).
+   Plus Jakarta Sans: variable, every weight from 200 to 800, split the
+   way Google Fonts serves it. The Latin file covers English; the Latin
+   Extended one holds the naira sign and accented letters, and the
+   browser fetches it only on a page that uses one of them.
 
-   Fredoka One: the Latin file Google Fonts serves, under the SIL Open
-   Font License (public/fonts/OFL-Fredoka-One.txt).
+   Fredoka One: the Latin file Google Fonts serves.
+
+   Both are under the SIL Open Font License (public/fonts/OFL-*.txt),
+   which allows them in a public repository.
    ------------------------------------------------------------------ */
 @font-face {
-  font-family: "Satoshi";
-  src: url("/fonts/Satoshi-Variable.woff2") format("woff2");
-  font-weight: 300 900;
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-latin.woff2") format("woff2");
+  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-latin-ext.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 @font-face {

@@ -13,8 +13,3 @@ source-art/
 
 # Local Claude Code preview settings, different on every machine
 .claude/launch.json
-
-# Satoshi's licence allows self-hosting it on our own site, but not handing
-# it out through a public repository. The file lives here locally and has
-# to be put in place on the host at deploy time (see README, "Fonts").
-public/fonts/Satoshi-*

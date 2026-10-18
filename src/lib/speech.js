@@ -6,6 +6,12 @@ import { useEffect, useSyncExternalStore } from "react";
   voices there are depends on the browser and the device, and where there
   is none the game is simply silent. Nothing waits on speech finishing.
 
+  Only voices on the device itself are used. Browsers also offer online
+  voices (Edge's "Online (Natural)" ones, Chrome's "Google" ones), which
+  send each line to Microsoft or Google to be spoken, and the lines carry
+  the child's game name. So a device with no voice of its own stays
+  silent rather than fall back to one of those.
+
   Muting is remembered on this device (localStorage). It is a preference
   for this device, not progress, so it doesn't go to Supabase.
 */
@@ -62,13 +68,13 @@ const PREFERRED = ["en-ng", "en-gb", "en-za", "en-ke", "en-gh", "en-us", "en-au"
 
 let voice = null;
 
+/** The best English voice on the device itself, or null if it has none. */
 function pickVoice() {
-  const voices = window.speechSynthesis.getVoices();
+  const voices = window.speechSynthesis.getVoices().filter((v) => v.localService);
   const lang = (v) => v.lang.replace("_", "-").toLowerCase();
   for (const wanted of PREFERRED) {
-    const matches = voices.filter((v) => lang(v) === wanted);
-    // A voice on the device itself doesn't stall on a slow connection.
-    if (matches.length) return matches.find((v) => v.localService) ?? matches[0];
+    const match = voices.find((v) => lang(v) === wanted);
+    if (match) return match;
   }
   return voices.find((v) => lang(v).startsWith("en")) ?? null;
 }
@@ -76,7 +82,9 @@ function pickVoice() {
 let pending = 0;
 
 if (canSpeak) {
-  // Chrome lists its voices a moment after the page loads.
+  // Browsers list their voices a moment after they are first asked (Edge
+  // a few seconds), so ask now, well before the first line.
+  window.speechSynthesis.getVoices();
   window.speechSynthesis.addEventListener?.("voiceschanged", () => {
     voice = null;
   });
@@ -89,20 +97,26 @@ if (canSpeak) {
 /**
  * Says `text` in `speaker`'s voice, cutting off whatever was being said.
  * `onEnd` runs when the line has been said (or the browser gave up on it).
- * Returns false when nothing will be said at all (muted, or no speech), so
- * a caller pacing things to the voice knows to wait for a tap instead.
+ * Returns false when nothing will be said at all (muted, or no voice on
+ * the device), so a caller pacing things to the voice knows to wait for a
+ * tap instead.
  */
 export function speak(text, speaker = "narrator", { onEnd } = {}) {
   if (!canSpeak || muted || !text) return false;
   stopSpeaking();
+  // No voice on the device (or the list hasn't arrived yet): say nothing.
+  // Speaking without a voice set would let the browser pick its default,
+  // which can be an online one.
+  voice ??= pickVoice();
+  if (!voice) return false;
+  const chosen = voice;
   // Chrome can drop a line queued in the same moment as cancel().
   pending = window.setTimeout(() => {
-    voice ??= pickVoice();
     // Words in capitals ("How many MORE…") are for the eye; some voices
     // would spell them out letter by letter.
     const utterance = new SpeechSynthesisUtterance(text.replace(/\b[A-Z]{2,}\b/g, (word) => word.toLowerCase()));
-    if (voice) utterance.voice = voice;
-    utterance.lang = voice?.lang ?? "en-GB";
+    utterance.voice = chosen;
+    utterance.lang = chosen.lang;
     const style = STYLE[speaker] ?? STYLE.narrator;
     utterance.pitch = style.pitch;
     utterance.rate = style.rate;

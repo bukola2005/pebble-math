@@ -13,7 +13,7 @@
   padding: 22px var(--pm-gutter);
 }
 
-/* The wordmark stays in Satoshi; it is the brand mark, not a headline. */
+/* The wordmark stays in Plus Jakarta Sans; it is the brand mark, not a headline. */
 .pm-auth__mark {
   display: inline-block;
   padding-block: 8px;

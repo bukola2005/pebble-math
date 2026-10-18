@@ -21,7 +21,7 @@ A parent or teacher opens the account. **A child never signs up, never gives an 
 **From the adult who opens the account**
 
 - Email address — to sign you in and to let you reset your password
-- Password — stored only as an encrypted scramble that nobody, including us, can read back
+- Password — stored only as a hash, a one-way scramble that nobody, including us, can turn back into your password
 - Whether you are a parent or a teacher
 - Your name, if you give one
 
@@ -36,7 +36,13 @@ A parent or teacher opens the account. **A child never signs up, never gives an 
 
 **Stored in the browser**
 
-Whether sound is switched on or off. This stays on the device and is never sent to us.
+Three things, all of which stay on the device:
+
+- Whether sound is switched on or off
+- Your sign-in session, so you are not asked to sign in on every page
+- A short note used only to explain, on the next screen, that an account was deleted
+
+None of these are sent to us as data about you, and none are used for tracking or advertising.
 
 ## What we do not collect
 
@@ -50,12 +56,17 @@ We do not use advertising, we do not use analytics or tracking tools, and we do 
 
 ## Who can see a child's information
 
-Only the adult who added them. Accounts are separated at the database level, so one account cannot read another account's children. [THIS HAS BEEN TESTED WITH TWO SEPARATE ACCOUNTS.]
+Only the adult who added them. Accounts are separated at the database level, so one account cannot read another account's children.
+
+## Reading aloud
+
+The guide's words are read aloud using voices built into the device. Nothing spoken in the game is sent anywhere.
 
 ## Who else is involved
 
-- **Supabase** stores the accounts and the game data, on servers in [REGION]. They process it on our instructions and do not use it for anything of their own.
-- **Google Fonts and Fontshare** supply the typefaces. When a page loads, these services receive the visitor's IP address, as happens with any web font. No account data goes to them.
+- **Supabase** stores the accounts and the game data, on servers in [REGION]. They process it on our instructions and do not use it for anything of their own. Their sign-in records include the IP address a sign-in came from, kept as a security measure.
+
+We do not load fonts, scripts or anything else from other companies' servers. Everything the site needs comes from the site itself.
 
 ## How long we keep it
 
@@ -132,5 +143,11 @@ The laws of the Federal Republic of Nigeria. [CONFIRM WITH YOUR LAWYER.]
 1. **Age and consent.** Pebble Math never speaks to a child directly for consent — the adult does everything. That is deliberate and it is the main reason the design is as restrictive as it is. Worth confirming it is sufficient under the NDPA, and under COPPA and GDPR-K if the product ever goes outside Nigeria.
 2. **Schools.** A teacher adding thirty children raises a different question from a parent adding two. If schools are a real market, that route likely needs its own agreement.
 3. **Data location.** Supabase's region needs filling in, and it should be checked against any NDPA requirement about where Nigerian data may sit.
-4. **Deletion.** There is currently no self-service "delete my account" button in the product, only deleting individual children. That gap should close before launch, because the notice above promises deletion.
-5. **Fonts.** The font services see visitor IP addresses. Self-hosting the fonts would remove that entirely and is a small piece of work.
+4. **The 18-and-over rule is stated in the terms but not checked at sign-up.** Nothing stops a child creating an account. Worth a view on whether a stated rule is enough.
+5. **Account separation has been tested with two real accounts** on the live database, and one could not see the other's children. It is enforced by row-level security in the database, not by the app.
+
+### Closed since the first draft
+
+- Self-service account deletion now exists, and removes the account, the profile, every child and their progress.
+- Fonts are now served from the site itself. No third-party host receives visitor IP addresses.
+- Reading aloud now uses on-device voices only, so no spoken line, and no child's game name, leaves the device.

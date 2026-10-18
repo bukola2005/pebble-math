@@ -105,3 +105,8 @@
   text-align: center;
   color: var(--pm-ink-muted);
 }
+
+/* "Terms of Use" and "Privacy Notice" each stay on one line. */
+.pm-signup__legal a {
+  white-space: nowrap;
+}

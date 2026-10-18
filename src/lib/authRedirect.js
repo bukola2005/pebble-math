@@ -4,11 +4,13 @@
 
   Supabase sends people back from an emailed link with the details in the
   URL: `#access_token=…&type=recovery` when a password-reset link worked,
-  `#error=…&error_code=otp_expired` when it had expired or been used.
+  `…&type=signup` when a sign-up confirmation link did, and
+  `#error=…&error_code=otp_expired` when a link had expired or been used.
   supabase-js reads those, signs the person in, and then clears the address
   bar. It also fires a PASSWORD_RECOVERY event, but from a timer, so a page
   that starts listening a moment late can miss it. Reading the URL here,
-  once, is the dependable way for the reset page to know how it was opened.
+  once, is the dependable way for the reset page and /confirmed to know
+  how they were opened.
 
   lib/supabase.js imports this module first, so it always runs before the
   client starts.
