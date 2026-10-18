@@ -46,18 +46,12 @@
     <meta name="twitter:image" content="https://pebblemath.com/og-image.png" />
 
     <!-- Fonts: Satoshi for everything, Fredoka One for headlines,
-         prompts and buttons. Plus Jakarta Sans is Satoshi's fallback.
-         Both Google families come in one request. -->
-    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,800,900&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fredoka+One&display=swap"
-      rel="stylesheet"
-    />
+         prompts and buttons. Both are served from this site, so no
+         visitor's IP address goes to a font service. The @font-face
+         rules are in src/styles/fonts.css; these start the downloads
+         before the CSS is read. -->
+    <link rel="preload" href="/fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/FredokaOne-latin.woff2" as="font" type="font/woff2" crossorigin />
 
     <!-- What the product is, in a form search engines can read.
          Nothing here is a claim we can't stand behind: no ratings,

@@ -47,7 +47,7 @@ create table if not exists public.players (
   display_name text not null check (char_length(btrim(display_name)) between 1 and 24),
   age_band     text not null check (age_band in ('under-7', '7-8', '9-10', '11-plus')),
   class_level  text check (class_level in (
-                 'primary-1', 'primary-2', 'primary-3',
+                 'kindergarten', 'primary-1', 'primary-2', 'primary-3',
                  'primary-4', 'primary-5', 'primary-6')),
   monster      text check (monster in (
                  'green', 'blue', 'orange', 'pink', 'yellow', 'teal', 'lavender')),
@@ -72,6 +72,9 @@ alter table public.players
 alter table public.players
   add column if not exists game_name text check (char_length(game_name) between 3 and 40
                                                  and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$');
+-- Kindergarten joined the class levels. Primary 4 to 6 stay allowed for
+-- children added before the form stopped offering them.
+alter table public.players drop constraint if exists players_class_level_check, add constraint players_class_level_check check (class_level in ('kindergarten', 'primary-1', 'primary-2', 'primary-3', 'primary-4', 'primary-5', 'primary-6'));
 alter table public.players alter column character drop not null;
 alter table public.players alter column character drop default;
 
@@ -219,3 +222,33 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+
+-- ----------------------------------------------------------------------
+-- "Delete my account" on the dashboard. Deletes the caller's own sign-in;
+-- their profile, players and stall_progress rows go with it (each table
+-- references the one above it on delete cascade). It can only ever delete
+-- the account that calls it: there is no argument to point it elsewhere.
+--
+-- `security definer` lets it delete from auth.users, which a signed-in
+-- account can't touch directly; `set search_path = ''` keeps a look-alike
+-- object in another schema from being picked up.
+-- ----------------------------------------------------------------------
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := auth.uid();
+begin
+  if me is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  delete from auth.users where id = me;
+end;
+$$;
+
+revoke execute on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;

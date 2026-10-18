@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 // Global styles come first so every route has the tokens and the reset,
 // whichever page loads. Home imports them too; the bundler includes them once.
+import "./styles/fonts.css";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import App from "./App";

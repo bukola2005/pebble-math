@@ -55,3 +55,21 @@
   font-size: var(--pm-micro);
   color: var(--pm-ink-soft);
 }
+
+.pm-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin-block: -10px;
+}
+
+.pm-footer__legal-link {
+  padding-block: 10px;
+  color: var(--pm-ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pm-footer__legal-link:hover {
+  color: var(--pm-purple-700);
+}

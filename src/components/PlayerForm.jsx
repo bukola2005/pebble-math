@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import AuthField from "./AuthField";
 import CTAButton from "./CTAButton";
 import { PARENT_MONSTERS } from "../data/monsters";
-import { AGE_RANGE_NOTE, CLASS_LEVELS, OFFERED_AGE_BANDS } from "../data/players";
+import { AGE_RANGE_NOTE, OFFERED_AGE_BANDS, OFFERED_CLASS_LEVELS } from "../data/players";
 import { addPlayer, playerErrorMessage } from "../lib/players";
 import { PLAYER_NAME_MAX_LENGTH } from "../lib/validation";
 import "./PlayerForm.css";
@@ -160,7 +160,7 @@ export default function PlayerForm({ userId, onAdded, onCancel }) {
           onChange={change("classLevel")}
         >
           <option value="">No class</option>
-          {CLASS_LEVELS.map((level) => (
+          {OFFERED_CLASS_LEVELS.map((level) => (
             <option key={level.id} value={level.id}>
               {level.label}
             </option>

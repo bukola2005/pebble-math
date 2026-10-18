@@ -36,6 +36,7 @@ src/
                             shows "accounts aren't available" if Supabase isn't set up
     SignUp.jsx              parent / teacher creates the account
     SignIn.jsx              sign in, then back to where they were going
+    LegalPage.jsx           /privacy and /terms, straight from docs/privacy-and-terms-draft.md
     ForgotPassword.jsx      emails a reset link; never says whether an address exists
     ResetPassword.jsx       where the reset link lands: choose a new password
     Dashboard.jsx           greeting, email, the account's players: add, delete, Play
@@ -60,6 +61,7 @@ src/
     sound.js                the lock's soft sound, made in the browser (no files)
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
+    account.js              "Delete my account" (calls delete_my_account() in the database)
     validation.js           password length, email check, name limits
     useDocumentTitle.js     per-page browser-tab title
   styles/tokens.css         colour, type, space, depth, motion — edit here first
@@ -73,6 +75,7 @@ src/
     AuthField.jsx           label + input + hint + inline error
     PlayerForm.jsx          add a player: name, age band, optional class, a monster
     PlayerCard.jsx          one player, with an inline "delete?" confirm
+    DeleteAccount.jsx       the dashboard's "Delete my account", behind typing DELETE
     PlayerAvatar.jsx        the monster the grown-up picked, or a neutral circle
     PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
     DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
@@ -133,6 +136,8 @@ public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogu
 public/art/*.webp           market map (day, misty), not used yet; the blank
                             storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
+public/fonts/               Fredoka One (with its licence) and Satoshi, served from
+                            this site; Satoshi is not in git (see "Fonts" below)
 public/favicon.svg          the app mark
 public/og-image.png         the social sharing card
 public/robots.txt           crawling rules + sitemap pointer
@@ -157,26 +162,38 @@ regenerate the social card:
 node tools/og-image.mjs
 ```
 
-Run it from a machine that can load the brand fonts, or the card's text
-falls back and looks off-brand.
+It reads the fonts from `public/fonts/`, so Satoshi has to be there (see
+"Fonts" below), or the card's text falls back and looks off-brand.
 
-Two more things for the host. `/signup`, `/signin`, `/dashboard` and
-`/play` are client-side routes, so the host must serve `index.html` for unknown paths
+**Fonts.** Both typefaces are served from the site itself, so no visitor's
+IP address goes to Google Fonts or Fontshare. Fredoka One is in git with
+its licence. Satoshi is not: its licence (ITF Free Font License) allows
+self-hosting it for this site, but not handing the file out through a
+public repository, and this repository is public. Put
+`Satoshi-Variable.woff2` in `public/fonts/` on the machine that builds the
+site, from the official kit at fontshare.com/fonts/satoshi
+(`Fonts/WEB/fonts/`), unchanged: the licence forbids subsetting or
+converting it. Without it, body text falls back to the system sans-serif.
+
+Three more things for the host. `/signup`, `/signin`, `/dashboard`, `/play`,
+`/privacy` and `/terms` are client-side routes, so the host must serve
+`index.html` for unknown paths
 (a rewrite to `/index.html`) or a refresh on those URLs will 404. And
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are read at build
 time, so set them in the host's build environment. A build without them still
 serves the landing page; sign-up, sign-in and the dashboard then say accounts
-aren't available.
+aren't available. And "Delete my account" needs `delete_my_account()` from
+`supabase/schema.sql` in the database.
 
 ## The rules the design follows
 
-**Type.** Two faces, both loaded in `index.html` in a single Google
-Fonts request:
+**Type.** Two faces, both served from this site (`src/styles/fonts.css`,
+preloaded in `index.html`):
 
-- **Satoshi Variable** (Fontshare) — labels, instructions, body copy and
-  small UI text. Plus Jakarta Sans is the fallback where Satoshi isn't
-  loaded.
-- **Fredoka One** (Google Fonts) — every headline, prompt and button on
+- **Satoshi** (one variable file, every weight) — labels, instructions,
+  body copy and small UI text. It has no naira sign, so ₦ comes from the
+  system font.
+- **Fredoka One** — every headline, prompt and button on
   the site, hero and navbar included. It ships one weight, so anything
   set in it stays at `font-weight: 400`; bolding it makes the browser
   fake the weight. The wordmark stays in Satoshi — it is the brand mark,
@@ -226,9 +243,10 @@ that the game is in development.
 ```
 Grown-up   Get Started → /signup → confirm email → /signin → /dashboard
            add a child (name, age band, optional class) → Play
-           (the age bands offered are Under 7 and 7–8: Pebble Math covers
-           kindergarten to Primary 3, and the form says there are no games
-           above that level yet)
+           (the age bands offered are Under 7 and 7–8, and the classes
+           Kindergarten to Primary 3: Pebble Math covers kindergarten to
+           Primary 3, and the form says there are no games above that
+           level yet)
 
 Child      /play "Who's playing?" → tap own card → /play/:id (loading)
            → /intro      the film (until first_play_done)
@@ -427,10 +445,24 @@ auth.users ─ profiles ─ players ─ stall_progress
   up. The sign-up form sends `role` and `full_name` as user metadata, and
   the trigger checks them rather than trusting them.
 
-Routes: `/` landing; `/signup`, `/signin`, `/forgot-password` and
-`/reset-password` public; `/dashboard`, `/play` and `/play/:playerId`
-protected. A signed-out visit to a protected page goes to `/signin` with the
+Routes: `/` landing; `/signup`, `/signin`, `/forgot-password`,
+`/reset-password`, `/privacy` and `/terms` public; `/dashboard`, `/play` and
+`/play/:playerId` protected. A signed-out visit to a protected page goes to `/signin` with the
 attempted location in router state, and sign-in sends them back.
+
+**The privacy notice and terms** (`/privacy`, `/terms`) show the matching
+sections of `docs/privacy-and-terms-draft.md`, word for word, read at build
+time: edit the draft and the pages follow. The draft's own preamble and its
+notes for reviewers aren't shown. Every `[BRACKETED]` placeholder is
+highlighted until it's filled in. The landing page's footer links to both,
+and the sign-up form says that creating an account means agreeing to them.
+
+**Delete my account**, at the foot of the dashboard, asks the grown-up to
+type DELETE. It then calls `delete_my_account()` (in `supabase/schema.sql`),
+which deletes the caller's own sign-in; the profile, every child on it and
+their progress go with it, because each table references the one above it
+`on delete cascade`. They are signed out, and the sign-in page says the
+account is gone. If it fails, nothing is deleted and the page says so.
 
 **Signing up with an address that already has an account** says so, with
 Sign in and Forgot-your-password links. Supabase hides this on purpose: with

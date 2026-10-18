@@ -7,26 +7,40 @@
  *   npx playwright@latest install chromium   # first time only
  *   node tools/og-image.mjs
  *
- * It needs the brand fonts installed or reachable, otherwise the text
- * falls back and the card looks off-brand.
+ * The fonts come from public/fonts/ and are embedded in the page, so
+ * nothing is fetched from a font service. Satoshi isn't in git (see
+ * .gitignore); without it the card's text falls back and looks
+ * off-brand.
  */
-import { chromium } from "playwright";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 
-const html = `<!doctype html>
+const font = (file) => {
+  try {
+    return `data:font/woff2;base64,${readFileSync(path.join(root, "public", "fonts", file)).toString("base64")}`;
+  } catch {
+    console.warn(`public/fonts/${file} is missing; the card will use a fallback font.`);
+    return "";
+  }
+};
+
+/** The card's page. Relative image paths resolve against the project root. */
+export const cardHtml = () => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800&display=swap" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet" />
+<style>
+  @font-face { font-family: "Satoshi"; src: url(${font("Satoshi-Variable.woff2")}) format("woff2"); font-weight: 300 900; }
+  @font-face { font-family: "Fredoka One"; src: url(${font("FredokaOne-latin.woff2")}) format("woff2"); font-weight: 400; }
+</style>
 <style>
   * { box-sizing: border-box; margin: 0; }
   body {
     width: 1200px; height: 630px; display: flex; align-items: center;
     padding: 0 70px; gap: 40px; background: #fff; overflow: hidden;
-    font-family: "Satoshi Variable", "Plus Jakarta Sans", sans-serif;
+    font-family: "Satoshi", sans-serif;
     position: relative;
   }
   .glow {
@@ -37,7 +51,7 @@ const html = `<!doctype html>
   .copy { position: relative; flex: 1; }
   .mark { font-size: 26px; font-weight: 800; letter-spacing: -.035em; color: #1e1e32; }
   h1 {
-    margin-top: 26px; font-family: "Fredoka One", "Satoshi Variable", sans-serif;
+    margin-top: 26px; font-family: "Fredoka One", "Satoshi", sans-serif;
     font-weight: 400; font-size: 66px; line-height: 1.1; letter-spacing: -.005em; color: #1e1e32;
   }
   h1 em { font-style: normal; color: #e2622f; }
@@ -59,7 +73,7 @@ const html = `<!doctype html>
   <div class="copy">
     <div class="mark">Pebble Math</div>
     <h1>A market where kids learn to <em>use</em> math.</h1>
-    <p>A 2D math game for children 7–10, built around one connected market.</p>
+    <p>A 2D math game for children from kindergarten to Primary 3, built around one connected market.</p>
     <div class="chips">
       <span class="chip">Addition</span>
       <span class="chip">Subtraction</span>
@@ -69,11 +83,15 @@ const html = `<!doctype html>
   <div class="art"><img src="./public/characters/purple.webp" alt="" /></div>
 </body></html>`;
 
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
-await page.goto(`file://${root}/`);
-await page.setContent(html, { waitUntil: "networkidle" });
-await page.waitForTimeout(1200); // let webfonts settle
-await page.screenshot({ path: path.join(root, "public", "og-image.png") });
-await browser.close();
-console.log("wrote public/og-image.png");
+// Run directly (not imported): draw the card with Playwright.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const { chromium } = await import("playwright");
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+  await page.goto(`file://${root}/`);
+  await page.setContent(cardHtml(), { waitUntil: "load" });
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: path.join(root, "public", "og-image.png") });
+  await browser.close();
+  console.log("wrote public/og-image.png");
+}

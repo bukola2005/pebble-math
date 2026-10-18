@@ -3,7 +3,8 @@
  *
  * Round 1 is practice: the seller asks for some oranges and the child
  * drags them into an empty basket. How many depends on the age band (the
- * site says ages 7 to 10; the bands are the ones in data/players.js).
+ * game covers kindergarten to Primary 3; the bands are the ones in
+ * data/players.js, and only Under 7 and 7–8 are offered now).
  *
  * Rounds 2 to 5 teach making ten. The basket holds exactly ten; when it
  * fills, it closes into a crate of ten and the rest stay on the stall.

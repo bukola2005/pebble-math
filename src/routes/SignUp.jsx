@@ -295,6 +295,19 @@ export default function SignUp() {
         >
           {submitting ? "Creating your account…" : "Create account"}
         </CTAButton>
+
+        {/* Opens in a new tab, so nothing typed here is lost. */}
+        <p className="pm-signup__legal">
+          Creating an account means you agree to the{" "}
+          <a className="pm-auth__link" href="/terms" target="_blank" rel="noopener">
+            Terms of Use
+          </a>{" "}
+          and the{" "}
+          <a className="pm-auth__link" href="/privacy" target="_blank" rel="noopener">
+            Privacy Notice
+          </a>
+          .
+        </p>
       </form>
     </AuthLayout>
   );

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
 const LINKS = [
@@ -29,6 +30,14 @@ export default function Footer() {
 
       <div className="pm-shell pm-footer__base">
         <span>© {new Date().getFullYear()} Pebble Math</span>
+        <nav className="pm-footer__legal" aria-label="Legal">
+          <Link className="pm-footer__legal-link" to="/privacy">
+            Privacy notice
+          </Link>
+          <Link className="pm-footer__legal-link" to="/terms">
+            Terms of use
+          </Link>
+        </nav>
         <span>Prices in naira (₦)</span>
       </div>
     </footer>

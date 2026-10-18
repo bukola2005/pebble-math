@@ -97,3 +97,11 @@
   line-height: 1.4;
   color: var(--pm-ink-muted);
 }
+
+/* Under the button: what creating an account agrees to. */
+.pm-signup__legal {
+  font-size: var(--pm-small);
+  line-height: 1.55;
+  text-align: center;
+  color: var(--pm-ink-muted);
+}

@@ -24,6 +24,7 @@ export const AGE_RANGE_NOTE =
   "Pebble Math is for kindergarten to Primary 3. There are no games above that level yet.";
 
 export const CLASS_LEVELS = [
+  { id: "kindergarten", label: "Kindergarten" },
   { id: "primary-1", label: "Primary 1" },
   { id: "primary-2", label: "Primary 2" },
   { id: "primary-3", label: "Primary 3" },
@@ -31,6 +32,15 @@ export const CLASS_LEVELS = [
   { id: "primary-5", label: "Primary 5" },
   { id: "primary-6", label: "Primary 6" },
 ];
+
+/**
+ * The classes a grown-up can pick: kindergarten to Primary 3, the same
+ * range as the game. Primary 4 to 6 stay above so a child added earlier
+ * with one still shows its label.
+ */
+export const OFFERED_CLASS_LEVELS = CLASS_LEVELS.filter((level) =>
+  ["kindergarten", "primary-1", "primary-2", "primary-3"].includes(level.id)
+);
 
 const labelFor = (list, id) => list.find((item) => item.id === id)?.label ?? null;
 

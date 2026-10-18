@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CTAButton from "../components/CTAButton";
+import DeleteAccount from "../components/DeleteAccount";
 import PlayerCard from "../components/PlayerCard";
 import PlayerForm from "../components/PlayerForm";
 import { useAuth } from "../context/AuthContext";
@@ -236,6 +237,8 @@ export default function Dashboard() {
             </ul>
           )}
         </section>
+
+        {status === "ready" && <DeleteAccount childCount={players.length} />}
       </main>
     </div>
   );

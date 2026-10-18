@@ -90,7 +90,8 @@ the per-round record of hints isn't saved yet.
 - **Objects first, the numeral second.** The basket's count is on a tag on
   its rim and follows each drop; it is the basket's, not a score.
 - **How many oranges are asked for**, by age band: under 7 asks for 2–5,
-  7–8 asks for 3–10, 9 and over asks for 5–10. The site still says ages 7
-  to 10.
+  7–8 asks for 3–10, 9 and over asks for 5–10. The game covers
+  kindergarten to Primary 3, and the dashboard now offers only Under 7 and
+  7–8; the 9-and-over range is kept for children added before that.
 - **No coins or currency.** Things unlock through locks and levels. Money
   arrives with the money chapter, designed alongside the naira wallet.
