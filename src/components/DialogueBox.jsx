@@ -99,12 +99,7 @@ export default function DialogueBox({
             className={`pm-dialogue__portrait pm-dialogue__portrait--${line.speaker}`}
             aria-hidden="true"
           >
-            <img
-              src={portrait}
-              alt=""
-              draggable={false}
-              style={speaker.portraitFit === "contain" ? { objectFit: "contain" } : undefined}
-            />
+            <img src={portrait} alt="" draggable={false} />
           </span>
         )}
 

@@ -17,12 +17,12 @@
 
 /**
  * Who can speak. The child's Zizi is labelled with their game name, never
- * "Zizi". The fruit seller has no picture yet, so an orange stands in.
+ * "Zizi".
  */
 export const SPEAKERS = {
   zizi: { label: "{name}", voice: "zizi" },
   blob: { label: "Blob", voice: "blob", portrait: "/characters/purple.webp" },
-  seller: { label: "Fruit seller", voice: "seller", portrait: "/stall/orange.webp", portraitFit: "contain" },
+  seller: { label: "Fruit seller", voice: "seller", portrait: "/stall/seller-portrait.webp" },
 };
 
 /** Scene 1, the dim market, as written in the handoff. Blob is the friend. */
@@ -87,17 +87,47 @@ export const FRUIT_STALL = {
 
   next: "Next",
 
-  // After round 5: as far as the market goes for now, until the reward
-  // and the map are built.
+  // The stall is cleared (after round 5, the first time): a lock on Mum's
+  // chain opens.
+  lockOpen: { speaker: "blob", text: "You did it! Look, the first lock is open!" },
+
+  // The card after it, and the one a returning child sees first: how many
+  // of Mum's locks are open, and how many are still closed.
+  locks: {
+    open: ["No locks are open yet.", "One lock is open!", "{n} locks are open!"],
+    closed: ["Every lock is open!", "One more to open.", "{n} more to open."],
+    button: "Next",
+  },
+
+  // The end of a session, after round 5. Blob's errand (ERRANDS, below)
+  // comes first; the rest is the quiet end, until the map exists.
   endForNow: {
+    errandLabel: "Something to try at home",
     title: "That's as far as the market goes for now.",
     text: "More of the market is on its way.",
     button: "Who's playing?",
   },
-
-  // For when a whole stall is cleared and its lock opens (not built yet).
-  lockOpen: { speaker: "blob", text: "You did it! Look, the first lock is open!" },
 };
+
+/**
+ * Blob's errand at the end of a session: one small thing to try away from
+ * the screen, so the idea goes home with the child. Plain words, nothing
+ * to check. One list per stall; one line is picked at random.
+ */
+export const ERRANDS = {
+  "fruit-stall": [
+    "Next time someone buys something, see if you can fill a ten.",
+    "Count out ten of anything at home. What's left over?",
+    "Make a pile of ten stones or bottle tops. How many more does a pile of seven need?",
+    "Next time fruit goes into a bag, count to ten. How many are left?",
+  ],
+};
+
+/** "One lock is open!" / "Four more to open." for any number of locks. */
+export function lockWords(open, total) {
+  const pick = (list, count) => list[Math.min(count, 2)].replace("{n}", capitalise(NUMBER_WORDS[count] ?? String(count)));
+  return { open: pick(FRUIT_STALL.locks.open, open), closed: pick(FRUIT_STALL.locks.closed, total - open) };
+}
 
 /**
  * Blob's hint button: each tap gives the next step, never the answer.

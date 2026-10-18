@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes, useNavigate, useParams } from "react-r
 import CTAButton from "../components/CTAButton";
 import PlayLoading from "../components/PlayLoading";
 import { getPlayer } from "../lib/players";
+import { listClearedStalls } from "../lib/progress";
 import { nextStep } from "../lib/playFlow";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import "../styles/game.css";
@@ -22,7 +23,8 @@ const PlayStall = lazy(() => import("./PlayStall"));
  * once and hands it to whichever step is showing, through the Outlet
  * context:
  *
- *   player       the row, kept up to date as steps save things
+ *   player       the row, kept up to date as steps save things, plus
+ *                `cleared_stalls` (from stall_progress)
  *   goNext(p)    record what a step just saved, then go to the next step
  *   filmUrl      the film, if the loading screen already downloaded it
  *   keepFilm(u)  for the loading screen to hand that copy over
@@ -51,13 +53,18 @@ export default function PlaySessionShell() {
 
   useEffect(() => {
     let active = true;
-    getPlayer(playerId)
-      .then(({ data, error }) => {
+    // Which stalls they have cleared comes alongside, as
+    // `player.cleared_stalls`. If that can't be read, the game still
+    // starts, as if none were cleared yet.
+    const cleared = listClearedStalls(playerId).catch((error) => ({ data: [], error }));
+    Promise.all([getPlayer(playerId), cleared])
+      .then(([{ data, error }, stalls]) => {
         if (!active) return;
+        if (stalls.error) console.warn("Couldn't read which stalls are cleared.", stalls.error);
         if (error) setFailure(error);
         else if (!data) setMissing(true);
         else {
-          setPlayer(data);
+          setPlayer({ ...data, cleared_stalls: stalls.data });
           setNewcomer(!data.scene1_done);
           // Every visit starts at the loading screen, even a reload in the
           // middle of a step, so the step's pictures are in before it shows

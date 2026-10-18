@@ -56,6 +56,8 @@ src/
     playFlow.js             the order of the play steps, and what each one loads
     speech.js               reads lines aloud (speechSynthesis), with the mute switch
     stallLog.js             how each stall round went (hints used), in memory for now
+    progress.js             stall_progress: which stalls a child has cleared
+    sound.js                the lock's soft sound, made in the browser (no files)
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     validation.js           password length, email check, name limits
@@ -81,6 +83,7 @@ src/
     HintButton.jsx          Blob's face in the corner: one step of help per tap
     CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
     BasketAward.jsx         the card that gives the child their basket
+    LockChain.jsx           Mum's chain and its five padlocks, drawn in SVG
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -103,9 +106,11 @@ src/
   data/monsters.js          Blob the guide, and the seven a grown-up can pick
   data/zizi.js              Zizi's six looks and her original look
   data/gameNames.js         the two word lists game names are built from
-  data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall
+  data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
+                            and Blob's errands for the end of a session
   data/fruitStall.js        the five rounds, and round 1's order by age band
-  data/market.js            the market's art: the six layers, basket, orange, crate
+  data/market.js            the market's art: the six layers, basket, orange, crate,
+                            the seller, Mum's face, and how many locks there are
   styles/game.css           the game screens' own tokens (garden green, paper)
   data/players.js           age bands and class levels a player may hold
   data/media.js             the agreed paths for the loading art, storybook and film
@@ -114,13 +119,16 @@ tools/og-image.mjs          regenerates the social card
 public/characters/*.webp    the eight monsters, halos cleaned up
 public/characters/mother-sheet.svg
                             Zizi's mother; story artwork only, never playable
+public/characters/mum-face.webp
+                            her face, cut from that sheet, behind her chain
 public/zizi/*.webp          Zizi: six looks (zizi-headband, -cornrows, -afro, -puffs,
                             -twists, -braids) and the original, zizi-default
 public/video/pre-intro.*    the opening film (webm + mp4 + poster)
 public/loading/hands-apart.webp
                             the loading screen: Zizi and her mother pulled apart
 public/stall/*.webp         the Fruit Stall's six layers (sky, far, palms, ground,
-                            fruit-stall, near) and the basket, orange and crate
+                            fruit-stall, near), the basket, orange and crate, and
+                            the seller (seller.webp, seller-portrait.webp)
 public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogue box
 public/art/*.webp           market map (day, misty), not used yet; the blank
                             storybook behind the avatar screen
@@ -310,17 +318,30 @@ and glows, everything else dims), "…and three." (the leftovers light up,
 with a 3 on their cloth), "Thirteen." (both, and a 13 between them). Each
 step waits for the voice, about a second apart; with the sound off, the
 child taps through them. Round 5 never fills the basket, and Blob says only
-"Hmm. What happened there?" After it, a small card says this is as far as
-the market goes for now, with a way back to "Who's playing?". The reward
-round will replace that card.
+"Hmm. What happened there?"
+
+*Clearing the stall.* Finishing round 5 clears the stall, and that is saved
+at once as a `stall_progress` row. The first time, Blob says "You did it!
+Look, the first lock is open!" over Mum's face and her chain of five
+padlocks: the first lock's key turns, it springs open with a soft sound
+(made in the browser, `lib/sound.js`; the corner switch mutes it with the
+voice), and it falls away. No confetti, stars or score. A card then shows
+the five locks, one open and four closed. A child who has cleared the stall
+before sees that card first when they come back, then starts at round 2:
+no tutorial, no practice. If `stall_progress` can't be read, the game
+starts as if nothing were cleared.
+
+*The end of a session.* After round 5 Blob gives the child one small thing
+to try away from the screen, picked at random from `ERRANDS` in
+`data/dialogue.js` ("Count out ten of anything at home. What's left
+over?"), with a quiet word that this is as far as the market goes for now
+and a way back to "Who's playing?".
 
 *Blob's hint button*, bottom left: each tap gives the next step (a
 question, then the empty spaces outlined, then the move shown slowly
 once), never the answer, and it resets each round. How many hints a child
 used, and how many wrong numbers they tapped, is noted per round in
 `lib/stallLog.js`, in memory only, shaped to be saved later.
-
-Nothing about the stall is saved to the database yet.
 
 Tapping an orange counts it: a number badge, 1, 2, 3, in the order tapped.
 Tapping a counted orange clears it and the rest renumber. That's the
@@ -332,8 +353,8 @@ counts the focused orange and B puts it in the basket.
 
 **Every line is in `data/dialogue.js`**, to edit without touching code, and
 is read aloud with the browser's own voice (`lib/speech.js`) until real
-recordings exist. The speaker button in the top corner mutes it, and that
-is remembered on the device. Nigerian English is used where the browser
+recordings exist. The speaker button in the top corner mutes it (and the
+lock's sound), and that is remembered on the device. Nigerian English is used where the browser
 has it (Edge does), then British, then any English. Chrome stays silent
 until the child has tapped something on the page, which every normal path
 through the game does.
@@ -460,13 +481,11 @@ message with a reload button instead of a white screen.
 
 ## Next
 
-Saving the Fruit Stall (`stall_progress`, and the per-round record of hints
-in `lib/stallLog.js`), the reward when a stall is cleared (with Blob's
-"Look, the first lock is open!", already in `data/dialogue.js`), the lock
-opening and the map. The fruit seller's art is on its way: the figure goes
-behind the stall on the right, where the sand is empty, and the portrait
-replaces the orange that stands in for them in the dialogue box. Later: a way for the grown-up to edit a child they've already
-added (their monster, name, age band), which the dashboard doesn't have yet.
+The map and the other stalls (each bringing making ten back with
+different objects, see [docs/learning-rules.md](docs/learning-rules.md)),
+and saving the per-round record of hints in `lib/stallLog.js`. Later: a way
+for the grown-up to edit a child they've already added (their monster,
+name, age band), which the dashboard doesn't have yet.
 
 The stall's living background is six layers on one 1920×1080 canvas,
 horizon at 55% (y 594), from back to front: sky, far, palms, ground, stall,

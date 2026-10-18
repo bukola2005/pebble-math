@@ -42,9 +42,31 @@ always comes after what the child did, never before.
   neither part shares into sevens. Split it as 70 and 21 and it works:
   10 + 3 = 13. The child chooses the split themselves, by dragging batches.
 
+## Bring every idea back with different objects
+
+Every chapter must bring an earlier chapter's idea back with different
+objects. Making ten with oranges must reappear with coins, with buns, with
+passengers. If an idea only ever appears with one object, the child learns
+the object, not the idea.
+
+When a chapter is planned, list which earlier ideas it brings back, and
+with what.
+
+## A bridge out of the screen
+
+At the end of a session Blob gives the child one small thing to try away
+from the screen: "Count out ten of anything at home. What's left over?" A
+child who can only do this inside the game has not learned anything
+portable; this line is the bridge out.
+
+Plain words, no mechanics, and nothing checks whether they did it. The
+lines live in `ERRANDS` in `src/data/dialogue.js`, a list per stall, one
+picked at random.
+
 ## The Fruit Stall
 
-Built, and still to be saved (nothing about a stall is in the database yet):
+Built. Clearing the stall (finishing round 5) is saved in `stall_progress`;
+the per-round record of hints isn't saved yet.
 
 - **Round one is practice**, and says so on screen. The seller asks for N
   oranges, the child drags them into the basket one at a time, and the

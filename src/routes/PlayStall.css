@@ -211,7 +211,7 @@
   display: grid;
   justify-items: center;
   gap: 12px;
-  width: min(380px, 100%);
+  width: min(420px, 100%);
   padding: 24px 24px 26px;
   border-radius: 30px;
   background: var(--pm-paper);
@@ -254,4 +254,145 @@
 .pm-stall__end-button:focus-visible {
   outline: 4px solid var(--pm-purple-700);
   outline-offset: 4px;
+}
+
+/* --- the first lock opens ---------------------------------------------------------
+   Mum in the haze, her chain across in front of her, under Blob's line.
+   Calm: no confetti, no stars, no score. */
+.pm-stall__reward {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(150px, 26vh, 230px) 16px 24px;
+  background: radial-gradient(60% 55% at 50% 58%, rgba(120, 96, 200, 0.55), rgba(22, 16, 44, 0.78));
+  animation: pm-end-in 0.5s var(--pm-ease) both;
+}
+
+.pm-stall__mum {
+  width: min(42vw, 30vh, 220px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #e6dcff, #b6a4ec);
+  box-shadow:
+    0 0 0 5px rgba(255, 255, 255, 0.85),
+    0 0 40px rgba(200, 180, 255, 0.7);
+}
+
+.pm-stall__mum img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+
+/* The chain hangs across the bottom of her picture. */
+.pm-stall__chain {
+  width: min(92vw, 560px);
+  margin-top: max(-60px, -8vh);
+  filter: drop-shadow(0 6px 8px rgba(10, 6, 30, 0.45));
+}
+
+/* --- the locks card ---------------------------------------------------------------------- */
+.pm-stall__locks-mum {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 20%;
+  background: radial-gradient(circle at 50% 40%, #e6dcff, #b6a4ec);
+  box-shadow: 0 0 0 4px var(--pm-white), var(--pm-shadow-sm);
+}
+
+.pm-stall__locks-row {
+  width: 100%;
+  margin: 2px 0 4px;
+}
+
+/* --- the end: Blob's errand ----------------------------------------------------------------- */
+.pm-stall__errand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.pm-stall__errand-blob {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  background: var(--pm-purple-100);
+  box-shadow: 0 0 0 3px var(--pm-white), var(--pm-shadow-sm);
+}
+
+.pm-stall__errand-label {
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pm-purple-700);
+}
+
+.pm-stall__errand-text {
+  margin-top: 4px;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.3rem, 1rem + 1.2vw, 1.65rem);
+  font-weight: 400;
+  line-height: 1.22;
+  color: var(--pm-ink);
+}
+
+.pm-stall__end-quiet {
+  padding-top: 12px;
+  border-top: 1px solid var(--pm-line);
+  font-size: var(--pm-small);
+  line-height: 1.5;
+  color: var(--pm-ink-muted);
+}
+
+/* A short screen: everything a little smaller so it fits under the
+   corner buttons and Blob's line. */
+@media (max-height: 480px) {
+  .pm-stall__reward {
+    justify-content: flex-start;
+    padding-top: 142px;
+  }
+
+  .pm-stall__chain {
+    width: min(92vw, 560px, 130vh);
+  }
+
+  .pm-stall__end {
+    align-items: start;
+    padding-top: 66px;
+  }
+
+  .pm-stall__errand-blob {
+    width: 56px;
+    height: 56px;
+  }
+
+  .pm-stall__errand-text {
+    font-size: 1.2rem;
+  }
+
+  .pm-stall__locks-mum {
+    display: none;
+  }
+
+  .pm-stall__end-card {
+    gap: 8px;
+    padding: 16px 20px 18px;
+  }
+
+  .pm-stall__end-button {
+    min-height: 52px;
+  }
 }

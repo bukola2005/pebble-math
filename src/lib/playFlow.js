@@ -1,4 +1,4 @@
-import { BASKET, CRATE, MARKET_IMAGES, ORANGE } from "../data/market";
+import { BASKET, CRATE, MARKET_IMAGES, MUM_FACE, ORANGE, SELLER, SELLER_PORTRAIT } from "../data/market";
 import { INTRO_FILM, STORYBOOK } from "../data/media";
 import { ZIZI_DEFAULT, ZIZI_LOOKS, getZiziLook } from "../data/zizi";
 import { pickPlayableSource, preloadFile, preloadImage } from "./preload";
@@ -89,6 +89,9 @@ export function stepTasks(step, player, keepFilm) {
         image(BASKET.src),
         image(ORANGE.src),
         image(CRATE.src),
+        image(SELLER.src),
+        image(SELLER_PORTRAIT.src),
+        image(MUM_FACE.src),
         image(getZiziLook(player.character).src),
       ];
     default:

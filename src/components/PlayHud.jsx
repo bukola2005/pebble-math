@@ -6,7 +6,7 @@ import "./PlayHud.css";
 /**
  * The corners of every play screen: a small way out on the left, and on
  * the right the child's game name (the one place it is shown) with the
- * switch for reading aloud.
+ * sound switch: reading aloud and the game's few sounds.
  */
 export default function PlayHud({ player }) {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ export default function PlayHud({ player }) {
           <button
             type="button"
             className="pm-hud__button"
-            aria-label="Read aloud"
+            aria-label="Sound"
             aria-pressed={!muted}
             onClick={() => setMuted(!muted)}
           >

@@ -5,12 +5,25 @@ import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
 import DialogueBox from "../components/DialogueBox";
 import HintButton from "../components/HintButton";
+import LockChain from "../components/LockChain";
 import PlayHud from "../components/PlayHud";
 import StallBackdrop from "../components/StallBackdrop";
-import { FRUIT_STALL, HINTS, NUMBER_WORDS, SPEAKERS, TUTORIAL, capitalise, fillLine } from "../data/dialogue";
+import {
+  ERRANDS,
+  FRUIT_STALL,
+  HINTS,
+  NUMBER_WORDS,
+  SPEAKERS,
+  TUTORIAL,
+  capitalise,
+  fillLine,
+  lockWords,
+} from "../data/dialogue";
 import { BASKET_HOLDS, ROUND_COUNT, setUpRound } from "../data/fruitStall";
-import { ORANGE } from "../data/market";
+import { LOCK_COUNT, MUM_FACE, ORANGE } from "../data/market";
 import { getZiziLook } from "../data/zizi";
+import { clearStall } from "../lib/progress";
+import { primeSound } from "../lib/sound";
 import { speak, useReadAloud } from "../lib/speech";
 import { recordRound } from "../lib/stallLog";
 import "./PlayStall.css";
@@ -40,19 +53,31 @@ const STALL_ID = "fruit-stall";
               step lighting up what it names
     puzzled   (round 5) the stall is empty and the basket isn't full.
               Blob: "Hmm. What happened there?", and nothing more.
-    end       a small card: as far as the market goes for now
+              The stall is cleared: stall_progress gets its row now.
+  The first time the stall is cleared:
+    reward    Blob: "You did it! Look, the first lock is open!" One lock
+              on Mum's chain turns, falls away, and a soft sound plays.
+    locks     a card: how many of Mum's locks are open, how many closed
+  And always, last:
+    end       Blob's errand, something to try away from the screen, and
+              a quiet word that this is as far as the market goes for now
+
+  A child who has cleared the stall before starts with the locks card
+  ("welcome") and then round 2: no tutorial, no practice.
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
-  Nothing is saved to the database yet.
 */
 
 export default function PlayStall() {
   const { player, newcomer } = useOutletContext();
-  const [round, setRound] = useState(() => setUpRound(0, player.age_band));
-  const [inBasket, setInBasket] = useState([]);
+  const clearedBefore = !newcomer && (player.cleared_stalls ?? []).includes(STALL_ID);
+  const [round, setRound] = useState(() => setUpRound(clearedBefore ? 1 : 0, player.age_band));
+  const [inBasket, setInBasket] = useState(() => round.prefilled);
   const [counted, setCounted] = useState([]);
-  const [phase, setPhase] = useState(newcomer ? "award" : "ask");
+  const [phase, setPhase] = useState(newcomer ? "award" : clearedBefore ? "welcome" : "ask");
+  const [cleared, setCleared] = useState(clearedBefore);
+  const [justCleared, setJustCleared] = useState(false);
   const [beat, setBeat] = useState(0);
   const [hintStep, setHintStep] = useState(0);
   const [hintTaps, setHintTaps] = useState(0);
@@ -122,8 +147,15 @@ export default function PlayStall() {
     setPhase(index === 0 ? "ask" : next.ask ? "question" : "play");
   };
 
-  // After a round: on to the next, or, after the last, the end for now.
-  const afterRound = () => (round.index + 1 < ROUND_COUNT ? startRound(round.index + 1) : setPhase("end"));
+  // After a round: on to the next. After the last: the lock opening, if
+  // the stall has only just been cleared, and then the end.
+  const afterRound = () => {
+    if (round.index + 1 < ROUND_COUNT) startRound(round.index + 1);
+    else if (justCleared) {
+      primeSound(); // from this tap, so the lock's sound may play
+      setPhase("reward");
+    } else setPhase("end");
+  };
 
   const advanceTutorial = (point) => {
     // "Tap one to count it": a tap on the highlighted orange counts it.
@@ -205,11 +237,24 @@ export default function PlayStall() {
         });
         setHintShown(false);
         setPhase(next);
+        // Round 5 done: the stall is cleared. Saved the moment it happens,
+        // so a child who closes the game now still finds the lock open.
+        if (round.index === ROUND_COUNT - 1 && !cleared) {
+          setCleared(true);
+          setJustCleared(true);
+          clearStall(player.id, STALL_ID)
+            .then(({ error }) => {
+              // The child sees the lock open either way; it opens again
+              // next time if this didn't save.
+              if (error) console.warn("Couldn't save that the Fruit Stall was cleared.", error);
+            })
+            .catch((error) => console.warn("Couldn't save that the Fruit Stall was cleared.", error));
+        }
       },
       next === "puzzled" ? 900 : 500
     );
     return () => window.clearTimeout(id);
-  }, [phase, inBasket.length, onTable, round, player.id]);
+  }, [phase, inBasket.length, onTable, round, player.id, cleared]);
 
   // The crate closes; the leftovers move to their cloth; then Blob says
   // what is there.
@@ -270,11 +315,18 @@ export default function PlayStall() {
           ? summaryLine
           : phase === "puzzled"
             ? FRUIT_STALL.whatHappened
-            : null;
+            : phase === "reward"
+              ? FRUIT_STALL.lockOpen
+              : null;
   const spotlight =
     phase === "summary" ? [null, "crate", "tray", "both"][Math.min(summaryStep, 3)] : null;
-  const nextStep = () =>
-    phase === "summary" && summaryStep < FRUIT_STALL.tenAnd.length ? setSummaryStep((n) => n + 1) : afterRound();
+  const nextStep = () => {
+    if (phase === "summary" && summaryStep < FRUIT_STALL.tenAnd.length) setSummaryStep((n) => n + 1);
+    else if (phase === "reward") setPhase("locks");
+    else afterRound();
+  };
+  // How many of Mum's locks are open: every stall cleared, this one included.
+  const locksOpen = new Set([...(player.cleared_stalls ?? []), ...(cleared ? [STALL_ID] : [])]).size;
 
   return (
     <div
@@ -293,7 +345,7 @@ export default function PlayStall() {
         }
       }}
     >
-      <StallBackdrop close stallRef={setStall} />
+      <StallBackdrop close seller stallRef={setStall} />
       <PlayHud player={player} />
 
       <main id="main" className="pm-stall__stage">
@@ -323,9 +375,21 @@ export default function PlayStall() {
           onLeave={leave}
         />
 
-        {blobSays && (
+        {blobSays && phase !== "reward" && (
           <div className="pm-stall__blob" aria-hidden="true">
             <img src={SPEAKERS.blob.portrait} width={736} height={900} alt="" draggable={false} />
+          </div>
+        )}
+
+        {/* The first lock on Mum's chain opens. */}
+        {phase === "reward" && (
+          <div className="pm-stall__reward">
+            <div className="pm-stall__mum">
+              <img src={MUM_FACE.src} width={MUM_FACE.w} height={MUM_FACE.h} alt="Zizi's mum" draggable={false} />
+            </div>
+            <div className="pm-stall__chain">
+              <LockChain total={LOCK_COUNT} open={locksOpen - 1} opening={locksOpen - 1} />
+            </div>
           </div>
         )}
 
@@ -379,6 +443,8 @@ export default function PlayStall() {
         )}
       </main>
 
+      {phase === "welcome" && <LocksCard open={locksOpen} onDone={() => setPhase(round.ask ? "question" : "play")} />}
+      {phase === "locks" && <LocksCard open={locksOpen} onDone={() => setPhase("end")} />}
       {phase === "end" && <EndForNow onDone={() => navigate("/play")} />}
 
       {phase === "award" && (
@@ -404,24 +470,74 @@ export default function PlayStall() {
   );
 }
 
-/** After round 5: a small, quiet card. The reward round replaces it later. */
-function EndForNow({ onDone }) {
+/**
+ * Mum's locks: how many are open, how many still closed, so the child sees
+ * the shape of what is ahead. After the first lock opens, and first thing
+ * when a child who has opened it comes back.
+ */
+function LocksCard({ open, onDone }) {
   const buttonRef = useRef(null);
-  const { title, text, button } = FRUIT_STALL.endForNow;
+  const words = lockWords(open, LOCK_COUNT);
 
-  useReadAloud(`${title} ${text}`, "narrator");
+  useReadAloud(`${words.open} ${words.closed}`, SPEAKERS.blob.voice);
 
   useEffect(() => {
     buttonRef.current?.focus({ preventScroll: true });
   }, []);
 
   return (
-    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-end-title">
-      <div className="pm-stall__end-card">
-        <h2 id="pm-end-title" className="pm-stall__end-title">
-          {title}
+    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-locks-title">
+      <div className="pm-stall__end-card pm-stall__locks-card">
+        <img className="pm-stall__locks-mum" src={MUM_FACE.src} width={MUM_FACE.w} height={MUM_FACE.h} alt="" draggable={false} />
+        <div className="pm-stall__locks-row">
+          <LockChain total={LOCK_COUNT} open={open} small />
+        </div>
+        <h2 id="pm-locks-title" className="pm-stall__end-title">
+          {words.open}
         </h2>
-        <p className="pm-stall__end-text">{text}</p>
+        <p className="pm-stall__end-text">{words.closed}</p>
+        <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
+          {FRUIT_STALL.locks.button}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The end of a session: Blob's errand, one small thing to try away from
+ * the screen, picked at random from data/dialogue.js. Then a quiet word
+ * that this is as far as the market goes for now.
+ */
+function EndForNow({ onDone }) {
+  const buttonRef = useRef(null);
+  const { errandLabel, title, text, button } = FRUIT_STALL.endForNow;
+  const [errand] = useState(() => {
+    const list = ERRANDS[STALL_ID];
+    return list[Math.floor(Math.random() * list.length)];
+  });
+
+  useReadAloud(`${errand} ${title}`, SPEAKERS.blob.voice);
+
+  useEffect(() => {
+    buttonRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  return (
+    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-end-errand">
+      <div className="pm-stall__end-card">
+        <div className="pm-stall__errand">
+          <img className="pm-stall__errand-blob" src={SPEAKERS.blob.portrait} alt="" draggable={false} />
+          <div>
+            <p className="pm-stall__errand-label">{errandLabel}</p>
+            <h2 id="pm-end-errand" className="pm-stall__errand-text">
+              {errand}
+            </h2>
+          </div>
+        </div>
+        <p className="pm-stall__end-quiet">
+          {title} {text}
+        </p>
         <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
           {button}
         </button>

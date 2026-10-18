@@ -86,12 +86,8 @@
   object-position: 50% 12%;
 }
 
-.pm-dialogue__portrait--seller {
-  background: var(--pm-orange-100);
-}
-
 .pm-dialogue__portrait--seller img {
-  padding: 14%;
+  object-position: 50% 30%;
 }
 
 .pm-dialogue__speaker {

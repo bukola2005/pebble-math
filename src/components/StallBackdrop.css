@@ -84,6 +84,16 @@
   transform: translateX(-50%);
 }
 
+/* The fruit seller, behind the stall's right end, on the empty sand.
+   Sized so the table comes to her waist. */
+.pm-layer--seller {
+  left: 74%;
+  bottom: 4%;
+  width: auto;
+  height: 44%;
+  transform: translateX(-50%);
+}
+
 .pm-layer--near {
   left: 50%;
   bottom: -6.481%;
