@@ -20,6 +20,11 @@ import "./BasketGame.css";
   Both work by touch, mouse and pen (pointer events). With a keyboard:
   Enter counts the focused orange, B puts it in the basket.
 
+  In Chapter 1 there are also full crates on the table (`crates`), each
+  ten oranges in two rows of five, stacked at the table's left end. When
+  a full basket shuts, its crate flies up to join them and the basket is
+  empty again (`emptied`).
+
   Everything is placed from where the stall picture is on screen, so the
   oranges sit on its table at any screen size. The parent owns the state
   (which oranges are counted, which are in the basket); this component
@@ -185,6 +190,35 @@ function setAside(geo, count, orangeSize) {
   return { crate: { left, top: bottom - crateWidth * (CRATE.h / CRATE.w), width: crateWidth }, tray, size, spot };
 }
 
+/*
+  Full crates on the table: stacked at its left end, two to a row, the
+  second row sitting on the first, so the loose oranges keep the rest of
+  the table. Room is kept for `room` crates, the most the round will have,
+  so nothing shifts when a new one arrives.
+*/
+const CRATE_GAP = 4;
+
+function crateStack(geo, room) {
+  const width = Math.round(Math.min(geo.stallH * 0.24, (geo.right - geo.left) * 0.22, 130));
+  const height = (width * CRATE.h) / CRATE.w;
+  const across = Math.min(room, 2);
+  return {
+    width: across * width + (across - 1) * CRATE_GAP,
+    spot: (i) => ({
+      left: geo.left + (i % 2) * (width + CRATE_GAP),
+      top: geo.rest - height * 0.92 - Math.floor(i / 2) * height * 0.57,
+      width,
+    }),
+  };
+}
+
+/** Where a full basket's crate stands, over the basket (see `closed`). */
+function closedCrate(b) {
+  const width = b.width * 1.1;
+  const height = width * (CRATE.h / CRATE.w);
+  return { left: b.left + b.width / 2 - width / 2, top: b.top + b.height - height, width, height };
+}
+
 /** Plays an element's move from where it was (`from`) to where it is now. */
 function flyIn(el, from, duration) {
   if (!from || !el || reducedMotion()) return;
@@ -214,6 +248,9 @@ export default function BasketGame({
   gapsPulse = false,
   closed = false,
   trayed = false,
+  crates = 0,
+  crateRoom = 0,
+  emptied = false,
   spotlight = null,
   total = 0,
   demoKey = 0,
@@ -231,6 +268,8 @@ export default function BasketGame({
   const flights = useRef(new Map()); // id → the rect it is flying from
   const tableEls = useRef(new Map());
   const basketEls = useRef(new Map());
+  const crateEls = useRef(new Map());
+  const cratesShown = useRef(crates);
 
   // Follow the stall picture as the screen changes.
   useLayoutEffect(() => {
@@ -246,7 +285,8 @@ export default function BasketGame({
     };
   }, [stall]);
 
-  const layout = geo ? arrange(oranges, seed, geo) : null;
+  const stack = geo && crateRoom ? crateStack(geo, crateRoom) : null;
+  const layout = geo ? arrange(oranges, seed, stack ? { ...geo, left: geo.left + stack.width + 12 } : geo) : null;
 
   const nearestOrange = () => {
     const b = basketRef.current?.getBoundingClientRect();
@@ -422,6 +462,9 @@ export default function BasketGame({
       flyIn(el, from, 300);
       flights.current.delete(id);
     }
+    // A full basket's crate, up onto the table with the others.
+    if (crates > cratesShown.current && geo) flyIn(crateEls.current.get(crates - 1), closedCrate(geo.basket), 650);
+    cratesShown.current = crates;
   });
 
   if (!layout) return <div className="pm-game" />;
@@ -432,7 +475,8 @@ export default function BasketGame({
   // Rows further back first, so the front row is drawn over them.
   onTable.sort((a, b) => layout.spots[b].row - layout.spots[a].row);
 
-  const inSlots = inBasket.slice(0, SLOTS.length).map((id, i) => ({ id, ...SLOTS[i] }));
+  const inSlots = emptied ? [] : inBasket.slice(0, SLOTS.length).map((id, i) => ({ id, ...SLOTS[i] }));
+  const held = emptied ? 0 : inBasket.length;
   inSlots.sort((a, b) => a.layer - b.layer);
   const gaps = SLOTS.slice(inBasket.length, Math.min(gapsUpTo, SLOTS.length));
   const b = geo.basket;
@@ -445,6 +489,32 @@ export default function BasketGame({
 
       {/* Everything but what Blob is naming goes dim. */}
       {spotlight && <div className="pm-game__dim" aria-hidden="true" />}
+
+      {/* Chapter 1: the full crates on the table, the tens. */}
+      {stack &&
+        Array.from({ length: crates }, (_, i) => {
+          const at = stack.spot(i);
+          return (
+            <div
+              key={i}
+              ref={keep(crateEls, i)}
+              className="pm-stack-crate"
+              style={{ left: at.left, top: at.top, width: at.width }}
+              role="img"
+              aria-label="A crate of ten oranges"
+            >
+              <img className="pm-crate__art" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
+              {CRATE_SLOTS.map((slot, k) => (
+                <span key={k} className="pm-stack-crate__orange" style={{ left: `${slot.x - 8}%`, top: `${slot.y - 12}%` }}>
+                  <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+                </span>
+              ))}
+              <span className="pm-stack-crate__tag" aria-hidden="true">
+                10
+              </span>
+            </div>
+          );
+        })}
 
       {/* The cloth the leftovers go on, with how many there are. */}
       {aside && (
@@ -543,11 +613,11 @@ export default function BasketGame({
           />
         ))}
         {/* The basket's own count, on a tag tied to its rim. */}
-        <span key={inBasket.length} className="pm-basket__tag" aria-hidden="true">
-          {inBasket.length}
+        <span key={held} className="pm-basket__tag" aria-hidden="true">
+          {held}
         </span>
         <p className="pm-sr-only" aria-live="polite">
-          {inBasket.length === 1 ? "1 orange in the basket" : `${inBasket.length} oranges in the basket`}
+          {held === 1 ? "1 orange in the basket" : `${held} oranges in the basket`}
         </p>
       </div>
 
@@ -555,15 +625,7 @@ export default function BasketGame({
       {closed && (
         <div
           className="pm-crate"
-          style={
-            aside
-              ? aside.crate
-              : {
-                  left: b.left + b.width / 2 - b.width * 0.55,
-                  top: b.top + b.height - b.width * 1.1 * (CRATE.h / CRATE.w),
-                  width: b.width * 1.1,
-                }
-          }
+          style={aside ? aside.crate : closedCrate(b)}
           role="img"
           aria-label="A crate of ten oranges"
         >
@@ -581,6 +643,17 @@ export default function BasketGame({
             10
           </span>
         </div>
+      )}
+
+      {/* Chapter 1: the crates and the loose oranges together, and how many. */}
+      {stack && spotlight === "both" && (
+        <span
+          className="pm-game__total"
+          style={{ left: geo.left + stack.width + 6, top: Math.min(...Array.from({ length: crates }, (_, i) => stack.spot(i).top)) - 8 }}
+          aria-hidden="true"
+        >
+          {total}
+        </span>
       )}
 
       {/* Both together, and how many that makes, above the gap between them. */}

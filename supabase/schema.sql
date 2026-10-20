@@ -162,10 +162,14 @@ create policy "players_delete_own" on public.players
 -- ----------------------------------------------------------------------
 create table if not exists public.stall_progress (
   player_id  uuid not null references public.players (id) on delete cascade,
-  stall_id   text not null check (stall_id in ('fruit-stall')),
+  stall_id   text not null check (stall_id in ('fruit-stall', 'fruit-stall-chapter-1')),
   cleared_at timestamptz not null default now(),
   primary key (player_id, stall_id)
 );
+
+-- For a database made before Chapter 1: the Fruit Stall's tutorial is
+-- 'fruit-stall', its Chapter 1 'fruit-stall-chapter-1'.
+alter table public.stall_progress drop constraint if exists stall_progress_stall_id_check, add constraint stall_progress_stall_id_check check (stall_id in ('fruit-stall', 'fruit-stall-chapter-1'));
 
 alter table public.stall_progress enable row level security;
 revoke all on public.stall_progress from anon;

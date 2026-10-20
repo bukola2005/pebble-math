@@ -533,3 +533,78 @@
   scale: 1.1;
   transition: scale 0.3s var(--pm-ease-pop);
 }
+
+/* --- Chapter 1: full crates on the table ---------------------------------------------
+   Smaller than the basket's crate, each with its ten oranges and a small
+   "10", stacked at the table's left end. */
+.pm-stack-crate {
+  position: absolute;
+  z-index: 2;
+  aspect-ratio: 440 / 328;
+  pointer-events: none;
+}
+
+.pm-stack-crate__orange {
+  position: absolute;
+  width: 16%;
+  aspect-ratio: 168 / 182;
+}
+
+.pm-stack-crate__orange img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pm-stack-crate__tag {
+  position: absolute;
+  left: 54%;
+  top: 60%;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--pm-paper);
+  font-family: var(--pm-font-display);
+  font-size: 0.8125rem;
+  color: var(--pm-ink);
+  transition: scale 0.35s var(--pm-ease-pop);
+}
+
+/* "Three crates…": the crates lift and glow, their 10s grow. */
+.pm-game--spot-crates .pm-stack-crate,
+.pm-game--spot-loose .pm-stack-crate,
+.pm-game--spot-both .pm-stack-crate {
+  z-index: 6;
+}
+
+.pm-game--spot-crates .pm-stack-crate .pm-crate__art,
+.pm-game--spot-both .pm-stack-crate .pm-crate__art {
+  filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 14px rgba(255, 220, 130, 0.9));
+}
+
+.pm-game--spot-crates .pm-stack-crate__tag {
+  scale: 1.35;
+}
+
+/* "…and four loose.": the crates stay lit, but softer, and the loose
+   oranges lift and glow. */
+.pm-game--spot-loose .pm-stack-crate .pm-crate__art {
+  filter: drop-shadow(0 0 8px rgba(255, 220, 130, 0.55));
+}
+
+.pm-game--spot-loose .pm-orange,
+.pm-game--spot-both .pm-orange {
+  z-index: 6;
+}
+
+.pm-game--spot-loose .pm-orange .pm-orange__body,
+.pm-game--spot-both .pm-orange .pm-orange__body {
+  transform: translateY(-10%);
+}
+
+.pm-game--spot-loose .pm-orange .pm-orange__body img,
+.pm-game--spot-both .pm-orange .pm-orange__body img {
+  filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 12px rgba(255, 220, 130, 0.9));
+}

@@ -99,3 +99,43 @@ export function setUpRound(index, ageBand) {
     seed,
   };
 }
+
+/**
+ * Chapter 1, Stage A: adding past ten. Each round is a sum like 28 + 6:
+ * full crates already on the table (the tens), loose oranges in the
+ * basket with its empty spaces outlined, so a child can see how many more
+ * it needs without counting, and more loose oranges on the stall. A full
+ * basket shuts into one more crate; what is left stays loose.
+ *   crates    full crates on the table when the round starts
+ *   inBasket  loose oranges already in the basket
+ *   onStall   loose oranges on the stall's table
+ */
+export const CHAPTER_ONE_ROUNDS = [
+  { crates: 2, inBasket: 8, onStall: 6 }, // 28 + 6 = 34
+  { crates: 1, inBasket: 7, onStall: 5 }, // 17 + 5 = 22
+  { crates: 3, inBasket: 9, onStall: 4 }, // 39 + 4 = 43
+];
+
+/** Chapter 1's row in stall_progress, once it is cleared. */
+export const CHAPTER_ONE_ID = "fruit-stall-chapter-1";
+
+/** A Chapter 1 round, ready to play: `index` 0 is the first. */
+export function setUpChapterRound(index) {
+  const seed = randomInt(1, 2 ** 30);
+  const ids = (kind, count) => Array.from({ length: count }, (_, i) => `${kind}-${seed}-${i}`);
+  const round = CHAPTER_ONE_ROUNDS[index];
+  return {
+    index,
+    number: index + 1,
+    chapter: 1,
+    practice: false,
+    crates: round.crates,
+    target: BASKET_HOLDS,
+    prefilled: ids("basket", round.inBasket),
+    oranges: ids("orange", round.onStall),
+    ask: false,
+    choices: [],
+    outlines: true,
+    seed,
+  };
+}

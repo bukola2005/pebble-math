@@ -16,11 +16,20 @@ import {
   NUMBER_WORDS,
   SPEAKERS,
   TUTORIAL,
+  CHAPTER_ONE,
   capitalise,
   fillLine,
   lockWords,
+  numberName,
 } from "../data/dialogue";
-import { BASKET_HOLDS, ROUND_COUNT, setUpRound } from "../data/fruitStall";
+import {
+  BASKET_HOLDS,
+  CHAPTER_ONE_ID,
+  CHAPTER_ONE_ROUNDS,
+  ROUND_COUNT,
+  setUpChapterRound,
+  setUpRound,
+} from "../data/fruitStall";
 import { LOCK_COUNT, MUM_FACE, ORANGE } from "../data/market";
 import { getZiziLook } from "../data/zizi";
 import { clearStall } from "../lib/progress";
@@ -75,8 +84,16 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               if the locks card didn't just say so, that the tutorial is
               finished and more of the market is coming)
 
-  A child who has cleared the stall before starts with the locks card
-  ("welcome") and then round 2: no tutorial, no practice.
+  A child who has finished the tutorial plays Chapter 1 instead, after
+  the locks card ("welcome"): the same stall, with full crates on the
+  table. Stage A adds past ten (data/fruitStall.js, CHAPTER_ONE_ROUNDS):
+    ask       the seller asks the child to pack the new oranges (once)
+    play      fill the basket; its empty spaces are outlined
+    closing   it shuts into a crate, which goes up onto the table with
+              the others (the basket is empty again)
+    summary   Blob: "Three crates… and four loose. Thirty-four." one step
+              at a time, the crates lighting, then the loose oranges, then
+              both, and only then the number
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
@@ -95,7 +112,13 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
 export default function PlayStall() {
   const { player, newcomer } = useOutletContext();
   const clearedBefore = !newcomer && (player.cleared_stalls ?? []).includes(STALL_ID);
-  const [round, setRound] = useState(() => setUpRound(clearedBefore ? 1 : 0, player.age_band));
+  // Once the tutorial is done, the stall is Chapter 1.
+  const chapterOne = clearedBefore;
+  const roundCount = chapterOne ? CHAPTER_ONE_ROUNDS.length : ROUND_COUNT;
+  const setUp = (index) => (chapterOne ? setUpChapterRound(index) : setUpRound(index, player.age_band));
+  const [round, setRound] = useState(() => setUp(0));
+  const [crates, setCrates] = useState(() => round.crates ?? 0); // full crates on the table (Chapter 1)
+  const [packed, setPacked] = useState(false); // this round's full basket is now one of them
   const [inBasket, setInBasket] = useState(() => round.prefilled);
   const [counted, setCounted] = useState([]);
   const [phase, setPhase] = useState(newcomer ? "award" : clearedBefore ? "welcome" : "ask");
@@ -120,7 +143,7 @@ export default function PlayStall() {
   useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
 
   // The progress meter (see above).
-  const [meterTotal] = useState(() => ROUND_COUNT - (clearedBefore ? 1 : 0));
+  const [meterTotal] = useState(() => roundCount);
   const [meterFilled, setMeterFilled] = useState(0);
   const [meterGlow, setMeterGlow] = useState(false);
   const [bursts, setBursts] = useState([]); // sparkles on their way to it
@@ -174,9 +197,13 @@ export default function PlayStall() {
     total: capitalise(NUMBER_WORDS[BASKET_HOLDS + onTable] ?? ""),
     count: capitalise(NUMBER_WORDS[inBasket.length] ?? ""),
     short: capitalise(NUMBER_WORDS[BASKET_HOLDS - inBasket.length] ?? ""),
+    crates: `${capitalise(NUMBER_WORDS[crates] ?? String(crates))} ${crates === 1 ? "crate" : "crates"}`,
+    loose: NUMBER_WORDS[onTable],
+    sum: capitalise(numberName(crates * BASKET_HOLDS + onTable) ?? ""),
   };
   // The lines Blob says one step at a time, by phase.
-  const stepped = { summary: FRUIT_STALL.tenAnd, puzzled: FRUIT_STALL.shortOfTen }[phase] ?? null;
+  const stepped =
+    { summary: chapterOne ? CHAPTER_ONE.cratesAnd : FRUIT_STALL.tenAnd, puzzled: FRUIT_STALL.shortOfTen }[phase] ?? null;
 
   // --- the tutorial ---------------------------------------------------------------
   const beats = [
@@ -211,20 +238,22 @@ export default function PlayStall() {
   };
 
   const startRound = (index) => {
-    const next = setUpRound(index, player.age_band);
+    const next = setUp(index);
     setRound(next);
     setInBasket(next.prefilled);
+    setCrates(next.crates ?? 0);
+    setPacked(false);
     clearRoundState();
     setTrayed(false);
     setLineStep(0);
-    setPhase(index === 0 ? "ask" : next.ask ? "question" : "play");
+    setPhase(chapterOne ? "play" : index === 0 ? "ask" : next.ask ? "question" : "play");
   };
 
   // After a round: on to the next. After the last: its segment of the
   // meter fills and the meter glows, then the lock opens, if the stall has
   // only just been cleared, and then the end.
   const afterRound = () => {
-    if (round.index + 1 < ROUND_COUNT) startRound(round.index + 1);
+    if (round.index + 1 < roundCount) startRound(round.index + 1);
     else {
       primeSound(); // from this tap, so the sounds may play
       setPhase("finishing");
@@ -307,7 +336,7 @@ export default function PlayStall() {
       () => {
         recordRound({
           playerId: player.id,
-          stallId: STALL_ID,
+          stallId: chapterOne ? CHAPTER_ONE_ID : STALL_ID,
           round: round.number,
           hintsUsed: tally.current.hints,
           wrongAnswers: round.ask ? tally.current.wrong : null,
@@ -320,7 +349,7 @@ export default function PlayStall() {
         if (next !== "puzzled") fillMeter();
         // Round 5 done: the stall is cleared. Saved the moment it happens,
         // so a child who closes the game now still finds the lock open.
-        if (round.index === ROUND_COUNT - 1 && !cleared) {
+        if (!chapterOne && round.index === ROUND_COUNT - 1 && !cleared) {
           setCleared(true);
           setJustCleared(true);
           clearStall(player.id, STALL_ID)
@@ -341,7 +370,14 @@ export default function PlayStall() {
   // what is there.
   useEffect(() => {
     if (phase !== "closing") return undefined;
-    const aside = window.setTimeout(() => setTrayed(true), 900);
+    const aside = window.setTimeout(() => {
+      if (chapterOne) {
+        // The new crate goes up onto the table with the others, and the
+        // basket is empty again.
+        setCrates((n) => n + 1);
+        setPacked(true);
+      } else setTrayed(true);
+    }, 900);
     const say = window.setTimeout(() => {
       setLineStep(1);
       setPhase("summary");
@@ -399,7 +435,7 @@ export default function PlayStall() {
             : null;
   const spotlight =
     phase === "summary"
-      ? [null, "crate", "tray", "both"][Math.min(lineStep, 3)]
+      ? (chapterOne ? [null, "crates", "loose", "both"] : [null, "crate", "tray", "both"])[Math.min(lineStep, 3)]
       : phase === "puzzled" && lineStep === 2
         ? "gap"
         : null;
@@ -444,10 +480,13 @@ export default function PlayStall() {
           dim={phase === "tutorial" && beat === 0}
           gapsUpTo={showGaps ? round.target : 0}
           gapsPulse={hintStep >= 2 && !gapShown}
-          closed={phase === "closing" || (phase === "summary" && !round.practice)}
+          closed={(phase === "closing" && !packed) || (phase === "summary" && !round.practice && !chapterOne)}
           trayed={trayed}
+          crates={crates}
+          crateRoom={chapterOne ? (round.crates ?? 0) + 1 : 0}
+          emptied={packed}
           spotlight={spotlight}
-          total={BASKET_HOLDS + onTable}
+          total={chapterOne ? crates * BASKET_HOLDS + onTable : BASKET_HOLDS + onTable}
           demoKey={demoKey}
           onTap={tap}
           onDrop={drop}
@@ -494,7 +533,7 @@ export default function PlayStall() {
           )}
 
           {phase === "ask" && (
-            <DialogueBox line={FRUIT_STALL.ask} values={values} ziziPortrait={zizi} onNext={() => setPhase("play")} />
+            <DialogueBox line={chapterOne ? CHAPTER_ONE.intro : FRUIT_STALL.ask} values={values} ziziPortrait={zizi} onNext={() => setPhase("play")} />
           )}
 
           {blobSays && (
@@ -527,9 +566,17 @@ export default function PlayStall() {
         <Sparkles key={burst.key} x={burst.x} y={burst.y} dx={burst.dx} dy={burst.dy} />
       ))}
 
-      {phase === "welcome" && <LocksCard open={locksOpen} onDone={() => setPhase(round.ask ? "question" : "play")} />}
+      {phase === "welcome" && (
+        <LocksCard open={locksOpen} onDone={() => setPhase(chapterOne ? "ask" : round.ask ? "question" : "play")} />
+      )}
       {phase === "locks" && <LocksCard open={locksOpen} finished onDone={() => setPhase("end")} />}
-      {phase === "end" && <EndForNow sayEnd={!justCleared} onDone={() => navigate("/play")} />}
+      {phase === "end" && (
+        <EndForNow
+          sayEnd={!justCleared}
+          endLine={chapterOne ? CHAPTER_ONE.endLine : undefined}
+          onDone={() => navigate("/play")}
+        />
+      )}
 
       {phase === "award" && (
         <BasketAward
@@ -596,9 +643,9 @@ function LocksCard({ open, finished = false, onDone }) {
  * the screen, picked at random from data/dialogue.js. `sayEnd` adds that
  * the tutorial is finished, when the locks card hasn't just said so.
  */
-function EndForNow({ sayEnd, onDone }) {
+function EndForNow({ sayEnd, endLine = FRUIT_STALL.endForNow.endLine, onDone }) {
   const buttonRef = useRef(null);
-  const { errandLabel, endLine, button } = FRUIT_STALL.endForNow;
+  const { errandLabel, button } = FRUIT_STALL.endForNow;
   const [errand] = useState(() => {
     const list = ERRANDS[STALL_ID];
     return list[Math.floor(Math.random() * list.length)];

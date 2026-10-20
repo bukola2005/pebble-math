@@ -115,7 +115,8 @@ src/
   data/gameNames.js         the two word lists game names are built from
   data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
                             and Blob's errands for the end of a session
-  data/fruitStall.js        the five rounds, and round 1's order by age band
+  data/fruitStall.js        the tutorial's five rounds (round 1's order by age band)
+                            and Chapter 1's rounds
   data/market.js            the market's art: the six layers, basket, orange, crate,
                             the seller, Mum's face, and how many locks there are
   styles/game.css           the game screens' own tokens (garden green, paper)
@@ -362,8 +363,8 @@ they fly from where it lands to the basket's count, in under half a second
 
 *The progress meter* sits beside the child's name, in the same glass chip
 style (on a phone, inside the name's chip, under the name). It has one
-segment for each round the child plays today: five, or four for a child
-who starts at round 2, and it starts empty every time. When a round is
+segment for each round the child plays today: five in the tutorial,
+three in Chapter 1, and it starts empty every time. When a round is
 answered (the order in round 1, a full basket in rounds 2 to 4, round 5
 once Blob has explained it), sparkles fly from the basket's count into the
 next segment, which turns from outlined to solid lavender as they land,
@@ -392,10 +393,26 @@ padlocks (one for the tutorial, one for each of the six stalls): the first lock'
 voice), and it falls away. As it springs, a handful of sparkles fly out
 from the shackle, the basket's sparkles a little bigger, in under half a
 second (none with reduced motion). No confetti, star ratings or score. A card then shows
-the seven locks, one open and six closed. A child who has cleared the stall
-before sees that card first when they come back, then starts at round 2:
-no tutorial, no practice. If `stall_progress` can't be read, the game
-starts as if nothing were cleared.
+the seven locks, one open and six closed. A child who has finished the
+tutorial sees that card first when they come back, then plays Chapter 1
+(below). If `stall_progress` can't be read, the game starts as if
+nothing were cleared.
+
+*Chapter 1, Stage A: adding past ten.* The same stall, now with full
+crates on the table: each a crate of ten oranges in two rows of five, with
+a small 10, stacked at the table's left end. Each round is a sum like
+28 + 6 (`CHAPTER_ONE_ROUNDS` in `data/fruitStall.js`: 28 + 6, 17 + 5,
+39 + 4), though the child never sees it written. Two crates on the table,
+eight oranges in the basket with its two empty spaces outlined, so the
+child can see how many more it needs without counting, and six loose on
+the stall. They drag two in; the basket shuts into a crate, which goes up
+onto the table with the others, and four loose oranges are left. Then
+Blob, one step at a time: "Three crates…" (the crates light), "…and four
+loose." (the loose oranges light), "Thirty-four." (both, and only now the
+number). Objects first, the number second. The seller asks the child to
+pack the new oranges once, at the start. Stage B, subtraction by cracking
+a crate, comes next. Clearing Chapter 1 will be saved as a
+`fruit-stall-chapter-1` row in `stall_progress`.
 
 *The end of a session.* After round 5 Blob gives the child one small thing
 to try away from the screen, picked at random from `ERRANDS` in
