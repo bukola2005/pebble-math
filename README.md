@@ -59,7 +59,8 @@ src/
     speech.js               reads lines aloud with on-device voices only, with the mute switch
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
-    sound.js                the lock's soft sound, made in the browser (no files)
+    sound.js                the game's sounds, made in the browser (no files): the
+                            lock, a correct answer, the progress meter filling
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     account.js              "Delete my account" (calls delete_my_account() in the database)
@@ -81,7 +82,9 @@ src/
     PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
     DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
-    PlayHud.jsx             the play screens' corners: a way out, game name, mute
+    PlayHud.jsx             the play screens' corners: a way out, game name, mute,
+                            and at a stall the progress meter
+    Sparkles.jsx            the small stars that fly to the basket's count and the meter
     BasketGame.jsx          oranges on the table, the basket and its crate of ten:
                             tap to count, drag to move
     HintButton.jsx          Blob's face in the corner: one step of help per tap
@@ -356,6 +359,30 @@ and more of the market is coming.
 A child gets a few small sparkles each time an orange goes into the basket:
 they fly from where it lands to the basket's count, in under half a second
 (CSS and SVG, none with reduced motion).
+
+*The progress meter* sits beside the child's name, in the same glass chip
+style (on a phone, inside the name's chip, under the name). It has one
+segment for each round the child plays today: five, or four for a child
+who starts at round 2, and it starts empty every time. When a round is
+answered (the order in round 1, a full basket in rounds 2 to 4, round 5
+once Blob has explained it), sparkles fly from the basket's count into the
+next segment, which turns from outlined to solid lavender as they land,
+with a soft rising sound. When the last fills, the meter glows briefly
+with a warmer sound, and then the lock opens. A right answer to "How many
+MORE?" gets the rising sound too. It is not a score: no number, no
+percentage, nothing to compare; it only shows how far through the child
+is. Without motion the segments simply light, with the same sounds.
+
+The two sounds are made in `lib/sound.js`, and the corner switch mutes
+them:
+
+- **A correct answer** (240 ms): two sine notes a fifth apart, the second
+  70 ms after the first, each gliding up a whole tone in 60 ms (660 to
+  740 Hz, then 990 to 1110 Hz), with a faint sine an octave above the
+  second (1980 to 2220 Hz) for air. 8 ms rise, then they fade.
+- **The meter full** (half a second): four triangle-wave notes rising C5,
+  E5, G5, C6 (523, 659, 784, 1047 Hz), 80 ms apart, through a 2400 Hz
+  low-pass, each fading over 260 ms, over a quiet sine at C4 (262 Hz).
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row. The first time, Blob says "You did it!

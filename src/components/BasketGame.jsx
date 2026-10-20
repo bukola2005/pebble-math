@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { BASKET, CRATE, ORANGE } from "../data/market";
+import Sparkles from "./Sparkles";
 import "./BasketGame.css";
 
 /*
@@ -611,39 +612,4 @@ export default function BasketGame({
       )}
     </div>
   );
-}
-
-/*
-  Five small four-point stars that scatter a little from (x, y) and then
-  fly to the count, all within half a second. Alternately white and
-  lavender: never orange, which only ever means "press this".
-*/
-const SPARKLE_SPREAD = [
-  [-18, -14],
-  [14, -20],
-  [22, 6],
-  [-20, 10],
-  [2, -26],
-];
-
-function Sparkles({ x, y, dx, dy }) {
-  return SPARKLE_SPREAD.map(([mx, my], i) => (
-    <svg
-      key={i}
-      className={`pm-sparkle${i % 2 ? " pm-sparkle--lavender" : ""}`}
-      viewBox="0 0 20 20"
-      aria-hidden="true"
-      style={{
-        left: x,
-        top: y,
-        "--mx": `${mx}px`,
-        "--my": `${my}px`,
-        "--dx": `${dx + mx * 0.2}px`,
-        "--dy": `${dy + my * 0.2}px`,
-        animationDelay: `${i * 15}ms`,
-      }}
-    >
-      <path d="M10 0 L12.4 7.6 L20 10 L12.4 12.4 L10 20 L7.6 12.4 L0 10 L7.6 7.6 Z" />
-    </svg>
-  ));
 }

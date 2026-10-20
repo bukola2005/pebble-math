@@ -7,6 +7,7 @@ import DialogueBox from "../components/DialogueBox";
 import HintButton from "../components/HintButton";
 import LockChain from "../components/LockChain";
 import PlayHud from "../components/PlayHud";
+import Sparkles, { SPARKLES_LAND_MS } from "../components/Sparkles";
 import StallBackdrop from "../components/StallBackdrop";
 import {
   ERRANDS,
@@ -23,12 +24,17 @@ import { BASKET_HOLDS, ROUND_COUNT, setUpRound } from "../data/fruitStall";
 import { LOCK_COUNT, MUM_FACE, ORANGE } from "../data/market";
 import { getZiziLook } from "../data/zizi";
 import { clearStall } from "../lib/progress";
-import { primeSound } from "../lib/sound";
+import { playCorrect, playMeterFull, primeSound } from "../lib/sound";
 import { speak, useReadAloud } from "../lib/speech";
 import { recordRound } from "../lib/stallLog";
 import "./PlayStall.css";
 
 const STALL_ID = "fruit-stall";
+
+// How long the full meter glows before the lock opens.
+const GLOW_MS = 800;
+
+const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 /*
   /play/:playerId/stall/fruit: the Fruit Stall, rounds 1 to 5
@@ -57,6 +63,8 @@ const STALL_ID = "fruit-stall";
               (the empty space lights up) "Not every pile makes a ten.
               That's fine." The tutorial is done, and the stall cleared:
               stall_progress gets its row now.
+    finishing after round 5's Next: its segment of the meter fills and the
+              whole meter glows
   The first time the stall is cleared:
     reward    Blob: "You did it! Look, the first lock is open!" One lock
               on Mum's chain turns, falls away, and a soft sound plays.
@@ -72,6 +80,16 @@ const STALL_ID = "fruit-stall";
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
+
+  The progress meter, beside the child's name, has a segment for each
+  round they play today (four for a child who starts at round 2). When a
+  round is answered (the order in round 1, a full basket in rounds 2 to 4,
+  and round 5 once Blob has explained it), sparkles fly from the basket's
+  count into the next segment, which lights as they land, with a soft
+  rising "yes". The last one makes the meter glow, with a warmer sound,
+  and then the lock opens. A right answer to "How many MORE?" gets the
+  "yes" too. It is not a score: no number, nothing to compare, and it
+  starts empty each time.
 */
 
 export default function PlayStall() {
@@ -100,6 +118,52 @@ export default function PlayStall() {
 
   const later = (fn, ms) => timers.current.push(window.setTimeout(fn, ms));
   useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
+
+  // The progress meter (see above).
+  const [meterTotal] = useState(() => ROUND_COUNT - (clearedBefore ? 1 : 0));
+  const [meterFilled, setMeterFilled] = useState(0);
+  const [meterGlow, setMeterGlow] = useState(false);
+  const [bursts, setBursts] = useState([]); // sparkles on their way to it
+  const filledRef = useRef(0);
+  const meterRef = useRef(null);
+
+  // A round answered: sparkles from the basket's count into the next
+  // segment, which lights, with the "yes", as they land. The last one
+  // glows with the warmer sound. `then` runs after (for the last, after
+  // the glow). Without motion the segment simply lights.
+  const fillMeter = (then) => {
+    const i = filledRef.current;
+    if (i >= meterTotal) {
+      then?.();
+      return;
+    }
+    filledRef.current = i + 1;
+    const last = i + 1 === meterTotal;
+    const land = () => {
+      setMeterFilled(i + 1);
+      if (last) {
+        playMeterFull();
+        setMeterGlow(true);
+        later(() => setMeterGlow(false), GLOW_MS);
+        if (then) later(then, GLOW_MS);
+      } else {
+        playCorrect();
+        then?.();
+      }
+    };
+    const from = gameRef.current?.basket()?.querySelector(".pm-basket__tag")?.getBoundingClientRect();
+    const to = meterRef.current?.querySelector(`[data-segment="${i}"]`)?.getBoundingClientRect();
+    if (!from || !to || reducedMotion()) {
+      land();
+      return;
+    }
+    const key = `${i}-${Date.now()}`;
+    const x = from.left + from.width / 2;
+    const y = from.top + from.height / 2;
+    setBursts((list) => [...list, { key, x, y, dx: to.left + to.width / 2 - x, dy: to.top + to.height / 2 - y }]);
+    later(land, SPARKLES_LAND_MS);
+    later(() => setBursts((list) => list.filter((b) => b.key !== key)), 700);
+  };
 
   const placed = inBasket.length - round.prefilled.length;
   const onTable = round.oranges.length - placed;
@@ -156,14 +220,16 @@ export default function PlayStall() {
     setPhase(index === 0 ? "ask" : next.ask ? "question" : "play");
   };
 
-  // After a round: on to the next. After the last: the lock opening, if
-  // the stall has only just been cleared, and then the end.
+  // After a round: on to the next. After the last: its segment of the
+  // meter fills and the meter glows, then the lock opens, if the stall has
+  // only just been cleared, and then the end.
   const afterRound = () => {
     if (round.index + 1 < ROUND_COUNT) startRound(round.index + 1);
-    else if (justCleared) {
-      primeSound(); // from this tap, so the lock's sound may play
-      setPhase("reward");
-    } else setPhase("end");
+    else {
+      primeSound(); // from this tap, so the sounds may play
+      setPhase("finishing");
+      fillMeter(() => setPhase(justCleared ? "reward" : "end"));
+    }
   };
 
   const advanceTutorial = (point) => {
@@ -189,6 +255,7 @@ export default function PlayStall() {
   const drop = (id) => {
     if (!(phase === "play" || trying)) return false;
     if (inBasket.includes(id) || inBasket.length >= BASKET_HOLDS) return false;
+    primeSound(); // from this drop, for the "yes" when the round is answered
     setInBasket((list) => [...list, id]);
     setCounted((list) => list.filter((x) => x !== id));
     setHintShown(false);
@@ -206,6 +273,7 @@ export default function PlayStall() {
 
   const choose = (value) => {
     if (value === round.answer) {
+      playCorrect();
       setWrongTaps(0);
       setPhase("play");
     } else {
@@ -247,6 +315,9 @@ export default function PlayStall() {
         setHintShown(false);
         if (next === "puzzled") setLineStep(1);
         setPhase(next);
+        // The order filled, or the basket: that round's segment. (Round 5's
+        // fills once Blob has explained it: see afterRound.)
+        if (next !== "puzzled") fillMeter();
         // Round 5 done: the stall is cleared. Saved the moment it happens,
         // so a child who closes the game now still finds the lock open.
         if (round.index === ROUND_COUNT - 1 && !cleared) {
@@ -354,7 +425,7 @@ export default function PlayStall() {
       }}
     >
       <StallBackdrop close seller stallRef={setStall} />
-      <PlayHud player={player} />
+      <PlayHud player={player} meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }} />
 
       <main id="main" className="pm-stall__stage">
         <h1 className="pm-sr-only">The Fruit Stall</h1>
@@ -450,6 +521,11 @@ export default function PlayStall() {
           />
         )}
       </main>
+
+      {/* Sparkles from the basket's count into the meter. */}
+      {bursts.map((burst) => (
+        <Sparkles key={burst.key} x={burst.x} y={burst.y} dx={burst.dx} dy={burst.dy} />
+      ))}
 
       {phase === "welcome" && <LocksCard open={locksOpen} onDone={() => setPhase(round.ask ? "question" : "play")} />}
       {phase === "locks" && <LocksCard open={locksOpen} finished onDone={() => setPhase("end")} />}
