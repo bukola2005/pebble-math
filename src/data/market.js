@@ -24,7 +24,8 @@ export const BASKET = { src: "/stall/basket.webp", w: 480, h: 433 };
 export const SELLER = { src: "/stall/seller.webp", w: 435, h: 900 };
 export const SELLER_PORTRAIT = { src: "/stall/seller-portrait.webp", w: 320, h: 320 };
 
-/** Zizi's mum, from the mother sheet, behind her chain when a lock opens. */
+/** Zizi's mum, smiling, from the opening film (the frame at 2.5 s), behind
+    her chain when a lock opens. */
 export const MUM_FACE = { src: "/characters/mum-face.webp", w: 300, h: 406 };
 
 /** The locks on Mum's chain: the tutorial opens the first, and each of the

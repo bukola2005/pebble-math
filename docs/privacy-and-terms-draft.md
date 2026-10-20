@@ -65,6 +65,7 @@ The guide's words are read aloud using voices built into the device. Nothing spo
 ## Who else is involved
 
 - **Supabase** stores the accounts and the game data, on servers in [REGION]. They process it on our instructions and do not use it for anything of their own. Their sign-in records include the IP address a sign-in came from, kept as a security measure.
+- **Vercel** serves the website itself. Like any web host, their records include the IP address each page was requested from.
 
 We do not load fonts, scripts or anything else from other companies' servers. Everything the site needs comes from the site itself.
 

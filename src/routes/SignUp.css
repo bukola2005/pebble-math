@@ -98,15 +98,33 @@
   color: var(--pm-ink-muted);
 }
 
-/* Under the button: what creating an account agrees to. */
-.pm-signup__legal {
+/* Above the button: the agreement, a real checkbox. The whole line is
+   the tap target; the box itself is purple, never orange. */
+.pm-signup__agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   font-size: var(--pm-small);
-  line-height: 1.55;
-  text-align: center;
-  color: var(--pm-ink-muted);
+  line-height: 1.5;
+  color: var(--pm-ink);
+  cursor: pointer;
+}
+
+.pm-signup__check {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--pm-purple-700);
+  cursor: pointer;
+}
+
+.pm-signup__check:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
 }
 
 /* "Terms of Use" and "Privacy Notice" each stay on one line. */
-.pm-signup__legal a {
+.pm-signup__agree a {
   white-space: nowrap;
 }

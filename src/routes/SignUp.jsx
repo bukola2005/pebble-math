@@ -72,6 +72,8 @@ export default function SignUp() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // The terms and privacy notice: ticked by the grown-up, never assumed.
+  const [agreed, setAgreed] = useState(false);
   // Set to the address once sign-up worked but still needs confirming.
   const [confirmingEmail, setConfirmingEmail] = useState("");
   // Set to the address when it turns out to have an account already.
@@ -91,7 +93,7 @@ export default function SignUp() {
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || !agreed) return;
 
     const found = validate(values);
     const invalid = Object.keys(found);
@@ -282,6 +284,30 @@ export default function SignUp() {
           error={errors.password}
         />
 
+        {/* Agreement is explicit: Create account stays off until this is
+            ticked. The links open in a new tab, so nothing typed here is
+            lost, and clicking one doesn't tick the box. */}
+        <label className="pm-signup__agree">
+          <input
+            className="pm-signup__check"
+            type="checkbox"
+            name="agree"
+            checked={agreed}
+            onChange={(event) => setAgreed(event.target.checked)}
+            required
+          />
+          <span>
+            I agree to the{" "}
+            <a className="pm-auth__link" href="/terms" target="_blank" rel="noopener">
+              Terms of Use
+            </a>{" "}
+            and the{" "}
+            <a className="pm-auth__link" href="/privacy" target="_blank" rel="noopener">
+              Privacy Notice
+            </a>
+          </span>
+        </label>
+
         {formError && (
           <p className="pm-auth__alert" role="alert">
             {formError}
@@ -291,23 +317,10 @@ export default function SignUp() {
         <CTAButton
           type="submit"
           className="pm-auth__submit"
-          disabled={submitting}
+          disabled={!agreed || submitting}
         >
           {submitting ? "Creating your account…" : "Create account"}
         </CTAButton>
-
-        {/* Opens in a new tab, so nothing typed here is lost. */}
-        <p className="pm-signup__legal">
-          Creating an account means you agree to the{" "}
-          <a className="pm-auth__link" href="/terms" target="_blank" rel="noopener">
-            Terms of Use
-          </a>{" "}
-          and the{" "}
-          <a className="pm-auth__link" href="/privacy" target="_blank" rel="noopener">
-            Privacy Notice
-          </a>
-          .
-        </p>
       </form>
     </AuthLayout>
   );

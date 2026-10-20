@@ -22,8 +22,10 @@ function validate({ email, password }) {
 export default function SignIn() {
   const { session, signIn } = useAuth();
   const location = useLocation();
-  // Arriving from "already has an account" or a reset email, the address
-  // comes along in router state so it doesn't need typing twice.
+  // Arriving from "already has an account", a reset email or /confirmed,
+  // the address comes along in router state (never the address bar) so it
+  // doesn't need typing twice, and the cursor starts in the password box.
+  const carriedEmail = Boolean(location.state?.email);
   const [values, setValues] = useState({
     email: location.state?.email ?? "",
     password: "",
@@ -128,6 +130,7 @@ export default function SignIn() {
           name="password"
           type="password"
           autoComplete="current-password"
+          autoFocus={carriedEmail}
           required
           value={values.password}
           onChange={change("password")}
