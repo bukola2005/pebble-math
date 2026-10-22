@@ -386,11 +386,12 @@ export default function PlayStall() {
   const canCrack = stageB && phase === "play" && !cracked && (round.index > FIRST_ORDER_ROUND || crackReady);
 
   // Blob waits until the child reaches for another (any touch) or sits
-  // still for a few seconds, and only then asks.
+  // still for two seconds (longer feels like the game has frozen), and
+  // only then asks.
   useEffect(() => {
     if (!atWall || wall) return undefined;
     const ask = () => setWall(true);
-    const id = window.setTimeout(ask, 4000);
+    const id = window.setTimeout(ask, 2000);
     window.addEventListener("pointerdown", ask, { capture: true, once: true });
     return () => {
       window.clearTimeout(id);

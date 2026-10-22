@@ -37,13 +37,13 @@ Passengers get on and off. How many on the bus now? The shortest, most repeatabl
 
 A customer takes things off the shelf. What's left?
 
-**The mechanic: crack the crate.** A child has 3 crates of ten and 2 loose tins, and a customer wants 15. There aren't enough loose ones. So the child **taps a crate and it breaks open** into ten loose tins, and now there are enough.
+**The mechanic returns: crack the crate.** A child has 3 crates of ten and 2 loose tins, and a customer wants 15. There aren't enough loose ones, so they tap a crate and it breaks open.
 
-This is the tutorial's make-a-ten running backwards, which is why it belongs here: a child who filled a basket to make a crate already knows what a crate is worth. Nothing new has to be explained. It is also, quietly, regrouping — the thing most children meet as a borrowing rule they do not understand.
+They met this at the Fruit Stall with oranges. Here it is tins, a different shop, a different customer — the same idea. That is the rule of this market working as intended: an idea a child only ever meets with one object is an idea stuck to that object.
 
 Two kinds of subtraction worth meeting separately: taking away, and finding the difference between two shelves.
 
-*Brings back:* the crate itself, from the fruit stall.
+*Brings back:* cracking a crate, from Chapter 1.
 
 ### 4. Bookshop — multiplication as equal groups
 **Year:** Primary 2 to 3 · **Objects:** pencils in packs, exercise books in bundles

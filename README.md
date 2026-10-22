@@ -425,7 +425,7 @@ outlines, a crate shape for each crate, a circle for each loose orange.
 The child carries crates and loose oranges to it, by touch or mouse.
 Each order needs more loose oranges than there are. In the first, nothing
 warns the child and nothing is greyed out: they carry the two loose ones
-across, run out, and reach for another, and only then does Blob ask
+across, run out, and reach for another (or wait two seconds), and only then does Blob ask
 "Hmm. Not enough loose ones. What's inside a crate?" (his line stays up,
 with no button, and the crates breathe a little light). A tap on a crate
 splits it open with a short wooden crack; its ten oranges spill into the
