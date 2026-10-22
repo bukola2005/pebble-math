@@ -37,6 +37,12 @@
   color: var(--pm-ink-muted);
 }
 
+/* What they have earned, if anything, left-aligned under the name. */
+.pm-player__rewards .pm-rewards {
+  justify-content: flex-start;
+  margin-top: 6px;
+}
+
 /* --- the "are you sure" row, on its own line under the card ------------ */
 .pm-player__confirm {
   flex-basis: 100%;

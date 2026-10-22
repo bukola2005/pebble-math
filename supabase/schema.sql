@@ -191,6 +191,46 @@ create policy "stall_progress_insert_own" on public.stall_progress
 
 
 -- ----------------------------------------------------------------------
+-- attempts: every answer a child gives in a test round (Chapter 1, Stage
+-- C), right or wrong, and if wrong, which step broke. Collected now so the
+-- data is there when the teacher dashboard is built; nothing shows it yet.
+-- Like stall_progress, its policies check that the player belongs to the
+-- caller, and it has no update or delete; deleting the player removes it.
+-- ----------------------------------------------------------------------
+create table if not exists public.attempts (
+  id          uuid primary key default gen_random_uuid(),
+  player_id   uuid not null references public.players (id) on delete cascade,
+  stall_id    text not null check (stall_id in ('fruit-stall-chapter-1')),
+  stage       text not null check (stage in ('C')),
+  round       smallint not null check (round between 1 and 20),
+  asked       smallint not null check (asked between 0 and 99),
+  crates      smallint not null check (crates between 0 and 20),
+  loose       smallint not null check (loose between 0 and 99),
+  total       smallint check (total between 0 and 99),
+  failed_step text check (failed_step in ('crates', 'loose', 'total')),
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists attempts_player_idx on public.attempts (player_id, created_at);
+
+alter table public.attempts enable row level security;
+revoke all on public.attempts from anon;
+grant select, insert on public.attempts to authenticated;
+
+drop policy if exists "attempts_select_own" on public.attempts;
+create policy "attempts_select_own" on public.attempts
+  for select to authenticated
+  using (exists (select 1 from public.players p
+                 where p.id = player_id and p.profile_id = (select auth.uid())));
+
+drop policy if exists "attempts_insert_own" on public.attempts;
+create policy "attempts_insert_own" on public.attempts
+  for insert to authenticated
+  with check (exists (select 1 from public.players p
+                      where p.id = player_id and p.profile_id = (select auth.uid())));
+
+
+-- ----------------------------------------------------------------------
 -- Create the profile row automatically when someone signs up.
 --
 -- The sign-up form sends role and full_name as user metadata; that
@@ -232,7 +272,7 @@ create trigger on_auth_user_created
 
 -- ----------------------------------------------------------------------
 -- "Delete my account" on the dashboard. Deletes the caller's own sign-in;
--- their profile, players and stall_progress rows go with it (each table
+-- their profile, players, stall_progress and attempts rows go with it (each table
 -- references the one above it on delete cascade). It can only ever delete
 -- the account that calls it: there is no argument to point it elsewhere.
 --

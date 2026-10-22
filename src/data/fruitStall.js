@@ -110,9 +110,17 @@ export function setUpRound(index, ageBand) {
  * shuts into one more crate; what is left stays loose.
  *
  * Stage B: taking away, like 32 - 15. Crates and a few loose oranges on
- * the table, an empty basket, and a customer's order. Each needs more
- * loose oranges than there are, so one crate has to be cracked open (its
- * ten go into the basket); each round has a different shape of order.
+ * the table, an empty basket, and Grandma's order. Each needs more loose
+ * oranges than there are, so one crate has to be cracked open (its ten go
+ * into the basket); each round has a different shape of order.
+ *
+ * Stage C: three test rounds, and nothing to help: Grandma's order, the
+ * stock on the stall, and an empty counter. Build 33; hand over one crate
+ * and five, then say how many that is (15); build 20, which needs no loose
+ * oranges at all. More stock than any answer needs, so the child chooses.
+ *   want      the number the customer wants
+ *   read      the reading round: Grandma says the crates and oranges, and
+ *             after handing them over the child puts in the number
  *
  *   crates    full crates on the table when the round starts
  *   inBasket  loose oranges already in the basket
@@ -126,10 +134,16 @@ export const CHAPTER_ONE_ROUNDS = [
   { stage: "B", crates: 3, onStall: 2, order: { crates: 1, loose: 5 } }, // 32 - 15 = 17
   { stage: "B", crates: 4, onStall: 1, order: { crates: 2, loose: 3 } }, // 41 - 23 = 18
   { stage: "B", crates: 2, onStall: 3, order: { crates: 0, loose: 8 } }, // 23 - 8 = 15
+  { stage: "C", crates: 4, onStall: 6, want: 33 }, // build 33
+  { stage: "C", crates: 3, onStall: 7, want: 15, read: true }, // hand over 1 crate and 5, then 15
+  { stage: "C", crates: 3, onStall: 4, want: 20 }, // build 20: no loose ones
 ];
 
 /** The first Stage B round, where a crate opens only after the child needs one. */
 export const FIRST_ORDER_ROUND = CHAPTER_ONE_ROUNDS.findIndex((round) => round.stage === "B");
+
+/** The first Stage C round. */
+export const FIRST_TEST_ROUND = CHAPTER_ONE_ROUNDS.findIndex((round) => round.stage === "C");
 
 /** Chapter 1's row in stall_progress, once it is cleared. */
 export const CHAPTER_ONE_ID = "fruit-stall-chapter-1";
@@ -150,6 +164,8 @@ export function setUpChapterRound(index) {
     prefilled: ids("basket", round.inBasket ?? 0),
     oranges: ids("orange", round.onStall),
     order: round.order ?? null,
+    want: round.want ?? null,
+    read: Boolean(round.read),
     ask: false,
     choices: [],
     outlines: round.stage === "A",

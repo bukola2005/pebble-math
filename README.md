@@ -362,10 +362,10 @@ A child gets a few small sparkles each time an orange goes into the basket:
 they fly from where it lands to the basket's count, in under half a second
 (CSS and SVG, none with reduced motion).
 
-*The progress meter* sits beside the child's name, in the same glass chip
-style (on a phone, inside the name's chip, under the name). It has one
-segment for each round the child plays today: five in the tutorial,
-three in Chapter 1, and it starts empty every time. When a round is
+*The progress meter* is a ring around the child's face, in the name's
+chip: an SVG circle cut into one segment per round the child plays today
+(stroke-dasharray, small gaps between), filling clockwise from the top.
+Five in the tutorial, nine in Chapter 1, and it starts empty every time. When a round is
 answered (the order in round 1, a full basket in rounds 2 to 4, round 5
 once Blob has explained it), sparkles fly from the basket's count into the
 next segment, which turns from outlined to solid lavender as they land,
@@ -419,8 +419,8 @@ pack the new oranges once, at the start.
 
 *Chapter 1, Stage B: taking away, by cracking a crate.* Three orders
 (32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
-the table and an empty basket, stepped left to make room for the
-customer's order: a cloth beside it with the order drawn as dotted
+the table and an empty basket, stepped left to make room for Grandma's
+order: a cloth beside it with the order drawn as dotted
 outlines, a crate shape for each crate, a circle for each loose orange.
 The child carries crates and loose oranges to it, by touch or mouse.
 Each order needs more loose oranges than there are. In the first, nothing
@@ -433,14 +433,35 @@ basket's ten spaces, and from there they can be carried to the order. A
 crate tapped before that does nothing. In the next two orders the child
 can open one whenever they like, and Blob asks again only if they run
 out. Anything the order doesn't want springs back. When the order is
-full it glows, its segment of the meter fills, the customer takes it,
+full it glows, its segment of the meter fills, Grandma takes it,
 and Blob names what is left the same way: "One crate…" (lights the
 crate), "…and seven loose." (lights the loose ones, in the basket),
 "Seventeen." No hint button in Stage B yet.
 
-*The end of Chapter 1.* Finishing it the first time is saved at once as
-a `fruit-stall-chapter-1` row in `stall_progress`, and a card says "The
-market is opening up!": the map comes next. It opens no lock. Mum's
+*Chapter 1, Stage C: three tests.* Nothing to help: no outlines, no
+hint, no Blob, nothing counted aloud, and the basket put away. Grandma's
+order stays up with a Done button, and the counter, a plain wooden top in
+the middle, starts empty. "A customer wants 33 oranges.": the child
+carries crates and loose oranges from the stall to the counter (anything
+can be dragged or tapped back) and taps Done. "One crate and five
+oranges.": once those are handed over, "How many oranges is that?", and
+the child taps numerals into two slots under the counter, tens under the
+crates and ones under the loose oranges. "A customer wants 20 oranges.":
+no loose ones at all. Wrong is just "Count again…", as often as they
+like; nothing turns red. Each Done, and each number, is saved as a row in
+`attempts` (`lib/attempts.js`) with what was handed over and, if it was
+wrong, the first step that broke: `crates`, `loose` or `total`. Nothing
+shows those yet; they are for the teacher dashboard. Only what the
+customer takes is ever counted; the stock on the stall never is.
+
+*The end of Chapter 1.* Finishing it the first time (after Stage C) is
+saved at once as a `fruit-stall-chapter-1` row in `stall_progress`, which
+earns the straw hat and the tally stick (`data/rewards.js`: every reward
+comes from the place that gave it). A card shows them, says Grandma gives
+them, and that the market is opening up: the map comes next. They show
+on the child's card on "Who's playing?" and on the dashboard, as item
+cards drawn in SVG: the hat isn't worn on the Zizi picture, whose seven
+looks are painted with their heads in different places. It opens no lock. Mum's
 locks are one per place in the market (`LOCK_STALLS` in
 `data/market.js`: for now just the tutorial's `fruit-stall`), so a
 chapter's row is progress, not a lock. A child coming back after
@@ -656,6 +677,6 @@ drags onto, at its own depth.
 
 Parallax runs from slowest to fastest: sky, far, palms, ground, near. The
 stall barely moves, because it is the subject. The empty sand on the right
-is for the fruit seller and Blob. The layers are in place as a still
+is for Grandma (the fruit seller) and Blob. The layers are in place as a still
 picture (`components/StallBackdrop.css`); the parallax and the living
 effects aren't built yet.

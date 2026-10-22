@@ -273,3 +273,18 @@
     display: none;
   }
 }
+
+/* Stage C's numeral tray: 0 to 9 in two rows of five, smaller, still
+   white with a lavender edge (never orange). */
+.pm-dialogue__choices--tray {
+  display: grid;
+  grid-template-columns: repeat(5, 52px);
+  gap: 8px;
+  justify-content: center;
+}
+
+.pm-dialogue__choices--tray .pm-dialogue__choice {
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
+}

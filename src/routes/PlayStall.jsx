@@ -7,6 +7,7 @@ import DialogueBox from "../components/DialogueBox";
 import HintButton from "../components/HintButton";
 import LockChain from "../components/LockChain";
 import PlayHud from "../components/PlayHud";
+import RewardItems from "../components/RewardItems";
 import Sparkles, { SPARKLES_LAND_MS } from "../components/Sparkles";
 import StallBackdrop from "../components/StallBackdrop";
 import {
@@ -22,18 +23,22 @@ import {
   lockWords,
   numberName,
   orderWords,
+  readOrderWords,
 } from "../data/dialogue";
 import {
   BASKET_HOLDS,
   CHAPTER_ONE_ID,
   CHAPTER_ONE_ROUNDS,
   FIRST_ORDER_ROUND,
+  FIRST_TEST_ROUND,
   ROUND_COUNT,
   setUpChapterRound,
   setUpRound,
 } from "../data/fruitStall";
 import { LOCK_COUNT, LOCK_STALLS, MUM_FACE, ORANGE } from "../data/market";
+import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
+import { recordAttempt } from "../lib/attempts";
 import { clearStall } from "../lib/progress";
 import { playCorrect, playCrack, playMeterFull, primeSound } from "../lib/sound";
 import { speak, useReadAloud } from "../lib/speech";
@@ -41,6 +46,9 @@ import { recordRound } from "../lib/stallLog";
 import "./PlayStall.css";
 
 const STALL_ID = "fruit-stall";
+
+// The numeral tray for Stage C's reading round.
+const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 
 // How long the full meter glows before the lock opens.
 const GLOW_MS = 800;
@@ -109,9 +117,24 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               whenever the child likes.)
     done      the order glows and the customer takes it
     summary   Blob: "One crate… and seven loose. Seventeen."
-  The first time Chapter 1 is finished it is saved (a
-  "fruit-stall-chapter-1" row), and a card says the market is opening up:
-  the map is next. It opens no lock: the stall's lock is the tutorial's.
+  Stage C is three test rounds, with nothing to help: no outlines, no
+  hint, no Blob, no counting aloud, and the basket put away. Grandma's
+  order stays up with a Done button; the counter starts empty.
+    play      carry crates and loose oranges from the stall to the
+              counter (anything can be taken back). Done checks it: the
+              crates, then the loose ones. Wrong: "Count again…", and they
+              try again, as often as they like. Every answer is saved
+              (lib/attempts.js) with the step that broke.
+              In the reading round, once the right oranges are handed
+              over, Grandma asks how many that is, and the child taps
+              numerals into two slots under the counter: tens under the
+              crates, ones under the loose oranges.
+    done      the counter glows and the customer takes it
+  The first time Chapter 1 is finished (after Stage C) it is saved (a
+  "fruit-stall-chapter-1" row), which earns the straw hat and the tally
+  stick (data/rewards.js), and a card says so and that the market is
+  opening up: the map is next. It opens no lock: the stall's lock is the
+  tutorial's.
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
@@ -147,6 +170,9 @@ export default function PlayStall() {
   const [orderTaken, setOrderTaken] = useState(false);
   const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID);
   const [chapterJustCleared, setChapterJustCleared] = useState(false);
+  // Stage C's reading round: handed over, and the number going in.
+  const [handed, setHanded] = useState(false);
+  const [entry, setEntry] = useState(null); // { tens, ones, active }
   const [inBasket, setInBasket] = useState(() => round.prefilled);
   const [counted, setCounted] = useState([]);
   const [phase, setPhase] = useState(newcomer ? "award" : clearedBefore ? "welcome" : "ask");
@@ -220,6 +246,7 @@ export default function PlayStall() {
   const placed = inBasket.length - round.prefilled.length;
   const onTable = round.oranges.length - placed;
   const stageB = round.stage === "B";
+  const stageC = round.stage === "C";
   // Stage B: the loose oranges still here (on the table or, once a crate
   // is cracked, in the basket), and how many more the order wants.
   const looseHere = round.oranges.length + inBasket.length - delivered.loose.length;
@@ -236,6 +263,8 @@ export default function PlayStall() {
     loose: NUMBER_WORDS[loose],
     sum: capitalise(numberName(crates.length * BASKET_HOLDS + loose) ?? ""),
     order: stageB ? orderWords(round.order) : "",
+    want: round.want ?? "",
+    readOrder: round.read ? readOrderWords({ crates: Math.floor(round.want / 10), loose: round.want % 10 }) : "",
   };
   // The lines Blob says one step at a time, by phase.
   const stepped =
@@ -284,6 +313,8 @@ export default function PlayStall() {
     setWall(false);
     setCrackReady(false);
     setOrderTaken(false);
+    setHanded(false);
+    setEntry(null);
     clearRoundState();
     setTrayed(false);
     setLineStep(0);
@@ -356,19 +387,122 @@ export default function PlayStall() {
   // Stage B: something carried to the customer's order. It goes in while
   // the order still wants one; otherwise it springs back.
   const deliver = (id, kind) => {
-    if (!stageB || phase !== "play") return false;
+    if (!(stageB || stageC) || phase !== "play" || handed) return false;
     if (kind === "crate") {
-      if (delivered.crates.length >= round.order.crates) return false;
+      if (stageB && delivered.crates.length >= round.order.crates) return false;
       setCrates((list) => list.filter((x) => x !== id));
       setDelivered((now) => ({ ...now, crates: [...now.crates, id] }));
     } else {
-      if (delivered.loose.length >= round.order.loose) return false;
+      if (stageB && delivered.loose.length >= round.order.loose) return false;
       setDelivered((now) => ({ ...now, loose: [...now.loose, id] }));
       setCounted((list) => list.filter((x) => x !== id));
     }
     primeSound(); // from this drop, for the "yes" when the order is complete
     return true;
   };
+
+  // Stage C: something taken back off the counter, to the stall.
+  const takeBack = (id, kind) => {
+    if (!stageC || phase !== "play" || handed) return false;
+    if (kind === "crate") {
+      setDelivered((now) => ({ ...now, crates: now.crates.filter((x) => x !== id) }));
+      setCrates((list) => [...list, id]);
+    } else {
+      setDelivered((now) => ({ ...now, loose: now.loose.filter((x) => x !== id) }));
+    }
+    return true;
+  };
+
+  // Chapter 1 cleared: saved the moment it happens, so a child who closes
+  // the game now still has their rewards.
+  const clearChapter = () => {
+    if (chapterDoneBefore || chapterJustCleared) return;
+    setChapterJustCleared(true);
+    clearStall(player.id, CHAPTER_ONE_ID)
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save that Chapter 1 was cleared.", error);
+      })
+      .catch((error) => console.warn("Couldn't save that Chapter 1 was cleared.", error));
+  };
+
+  // Stage C: every answer is saved, right or wrong, with the first step
+  // that broke: the crates, then the loose ones, then the number.
+  const logAttempt = (fields) => {
+    recordAttempt({
+      playerId: player.id,
+      stallId: CHAPTER_ONE_ID,
+      stage: "C",
+      round: round.index - FIRST_TEST_ROUND + 1,
+      asked: round.want,
+      crates: delivered.crates.length,
+      loose: delivered.loose.length,
+      ...fields,
+    })
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save that answer.", error);
+      })
+      .catch((error) => console.warn("Couldn't save that answer.", error));
+  };
+
+  // Wrong: "Count again…", and nothing else. No hint, nothing red.
+  const tryAgain = () => {
+    tally.current.wrong += 1;
+    setWrongTaps((n) => n + 1);
+  };
+
+  const finishTest = () => {
+    recordRound({
+      playerId: player.id,
+      stallId: CHAPTER_ONE_ID,
+      round: round.number,
+      hintsUsed: 0,
+      wrongAnswers: tally.current.wrong,
+    });
+    setPhase("done");
+    fillMeter(null, gameRef.current?.order());
+    if (round.index === roundCount - 1) clearChapter();
+  };
+
+  // Stage C: "Done". The crates, then the loose ones, against the order.
+  const handOver = () => {
+    if (!stageC || phase !== "play" || handed) return;
+    primeSound(); // from this tap, for the "yes"
+    const tens = Math.floor(round.want / 10);
+    const ones = round.want % 10;
+    const failedStep = delivered.crates.length !== tens ? "crates" : delivered.loose.length !== ones ? "loose" : null;
+    logAttempt({ failedStep });
+    if (failedStep) {
+      tryAgain();
+      return;
+    }
+    setWrongTaps(0);
+    if (round.read) {
+      setHanded(true);
+      setEntry({ tens: null, ones: null, active: "tens" });
+    } else finishTest();
+  };
+
+  // The reading round's number: a numeral goes into the slot being filled
+  // (tens first, then ones); with both in, it is checked.
+  const putDigit = (digit) => {
+    if (!entry || !entry.active) return;
+    const next = { ...entry, [entry.active]: digit };
+    const other = entry.active === "tens" ? "ones" : "tens";
+    if (next[other] == null) {
+      setEntry({ ...next, active: other });
+      return;
+    }
+    const total = next.tens * 10 + next.ones;
+    logAttempt({ total, failedStep: total === round.want ? null : "total" });
+    if (total === round.want) {
+      setEntry({ ...next, active: null });
+      finishTest();
+    } else {
+      setEntry({ tens: null, ones: null, active: "tens" });
+      tryAgain();
+    }
+  };
+  const pickSlot = (place) => setEntry((now) => (now && now.active ? { ...now, active: place } : now));
 
   // Stage B: a crate split open. Its ten oranges go into the basket, loose.
   const crackOpen = (id, ids) => {
@@ -424,6 +558,8 @@ export default function PlayStall() {
     let next = null;
     if (stageB) {
       if (delivered.crates.length === round.order.crates && delivered.loose.length === round.order.loose) next = "done";
+    } else if (stageC) {
+      // Answered with "Done" (handOver), not by filling something.
     } else if (round.practice) {
       if (inBasket.length === round.target) next = "won";
     } else if (inBasket.length >= BASKET_HOLDS) next = "closing";
@@ -447,15 +583,8 @@ export default function PlayStall() {
         // afterRound.)
         if (next === "done") fillMeter(null, gameRef.current?.order());
         else if (next !== "puzzled") fillMeter();
-        // Chapter 1's last order: the chapter is cleared, and saved now.
-        if (stageB && round.index === roundCount - 1 && !chapterDoneBefore && !chapterJustCleared) {
-          setChapterJustCleared(true);
-          clearStall(player.id, CHAPTER_ONE_ID)
-            .then(({ error }) => {
-              if (error) console.warn("Couldn't save that Chapter 1 was cleared.", error);
-            })
-            .catch((error) => console.warn("Couldn't save that Chapter 1 was cleared.", error));
-        }
+        // Chapter 1's last round: the chapter is cleared, and saved now.
+        if (stageB && round.index === roundCount - 1) clearChapter();
         // Round 5 done: the stall is cleared. Saved the moment it happens,
         // so a child who closes the game now still finds the lock open.
         if (!chapterOne && round.index === ROUND_COUNT - 1 && !cleared) {
@@ -497,12 +626,16 @@ export default function PlayStall() {
     };
   }, [phase]);
 
-  // Stage B: the order glows, the customer takes it, then Blob says what
-  // is left.
+  // Stages B and C: the order glows and the customer takes it. In Stage B
+  // Blob then says what is left; Stage C just goes on.
   useEffect(() => {
     if (phase !== "done") return undefined;
     const take = window.setTimeout(() => setOrderTaken(true), 900);
     const say = window.setTimeout(() => {
+      if (stageC) {
+        afterRound();
+        return;
+      }
       setLineStep(1);
       setPhase("summary");
     }, 1600);
@@ -605,16 +738,17 @@ export default function PlayStall() {
           inBasket={inBasket}
           counted={counted}
           canDrag={phase === "play" || trying}
-          canTap={phase !== "award" && phase !== "tutorial"}
-          // The basket appears when the tutorial introduces it.
-          basketHidden={phase === "award" || (phase === "tutorial" && beat < 2)}
+          canTap={phase !== "award" && phase !== "tutorial" && !stageC}
+          // The basket appears when the tutorial introduces it, and is put
+          // away for Stage C's tests.
+          basketHidden={phase === "award" || (phase === "tutorial" && beat < 2) || stageC}
           dim={phase === "tutorial" && beat === 0}
           gapsUpTo={showGaps ? round.target : 0}
           gapsPulse={hintStep >= 2 && !gapShown}
           closed={(phase === "closing" && !packed) || (phase === "summary" && !round.practice && !chapterOne)}
           trayed={trayed}
           crates={crates}
-          crateRoom={chapterOne ? (round.crateIds?.length ?? 0) + (stageB ? 0 : 1) : 0}
+          crateRoom={chapterOne ? (round.crateIds?.length ?? 0) + (round.stage === "A" ? 1 : 0) : 0}
           emptied={packed}
           away={delivered.loose}
           order={
@@ -626,7 +760,18 @@ export default function PlayStall() {
                   done: phase === "done",
                   taken: orderTaken,
                 }
-              : null
+              : stageC
+                ? {
+                    mode: "counter",
+                    room: { crates: round.crateIds.length, loose: round.oranges.length },
+                    deliveredCrates: delivered.crates,
+                    deliveredLoose: delivered.loose,
+                    done: phase === "done",
+                    taken: orderTaken,
+                    slots: round.read,
+                    entry,
+                  }
+                : null
           }
           canCrack={canCrack}
           inviteCrack={wallLine}
@@ -638,6 +783,8 @@ export default function PlayStall() {
           onLeave={leave}
           onDeliver={deliver}
           onCrack={crackOpen}
+          onReturn={takeBack}
+          onSlot={pickSlot}
         />
 
         {blobSays && phase !== "reward" && (
@@ -661,7 +808,7 @@ export default function PlayStall() {
         <div className="pm-stall__top">
           {round.practice && phase !== "award" && <p className="pm-stall__practice">{FRUIT_STALL.practice}</p>}
 
-          {phase === "play" && !wallLine && (
+          {phase === "play" && !wallLine && !stageC && (
             <p className="pm-stall__goal" role="status">
               {round.practice ? (
                 <>
@@ -696,6 +843,23 @@ export default function PlayStall() {
             />
           )}
 
+          {/* Stage C: Grandma's order, and Done. In the reading round, once
+              it is handed over, the numerals for the two slots. */}
+          {stageC && phase === "play" && (
+            <DialogueBox
+              line={entry ? CHAPTER_ONE.test.total : round.read ? CHAPTER_ONE.test.read : CHAPTER_ONE.test.build}
+              values={values}
+              ziziPortrait={zizi}
+              choices={entry ? DIGITS : null}
+              tray
+              onChoose={putDigit}
+              note={wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
+              noteKey={wrongTaps}
+              buttonLabel={CHAPTER_ONE.test.done}
+              onNext={entry ? null : handOver}
+            />
+          )}
+
           {blobSays && (
             <DialogueBox
               line={blobSays}
@@ -712,7 +876,7 @@ export default function PlayStall() {
           )}
         </div>
 
-        {playing && !stageB && (
+        {playing && !stageB && !stageC && (
           <HintButton
             message={hintShown && hintStep > 0 ? HINTS[hintStep - 1] : null}
             shownKey={hintTaps}
@@ -800,14 +964,15 @@ function LocksCard({ open, finished = false, onDone }) {
 }
 
 /**
- * The first time Chapter 1 is finished: the market is opening up. The map
- * comes next; for now, this card says so.
+ * The first time Chapter 1 is finished: what Grandma gives (the straw hat
+ * and the tally stick, from the fruit stall), and that the market is
+ * opening up. The map comes next; for now, this card says so.
  */
 function OpeningCard({ onDone }) {
   const buttonRef = useRef(null);
-  const { title, text, button } = CHAPTER_ONE.opening;
+  const { title, gift, text, button } = CHAPTER_ONE.opening;
 
-  useReadAloud(`${title} ${text}`, SPEAKERS.blob.voice);
+  useReadAloud(`${title} ${gift} ${text}`, SPEAKERS.blob.voice);
 
   useEffect(() => {
     buttonRef.current?.focus({ preventScroll: true });
@@ -819,7 +984,9 @@ function OpeningCard({ onDone }) {
         <h2 id="pm-opening-title" className="pm-stall__end-title">
           {title}
         </h2>
-        <p className="pm-stall__end-text">{text}</p>
+        <p className="pm-stall__end-text">{gift}</p>
+        <RewardItems items={REWARDS} />
+        <p className="pm-stall__end-quiet">{text}</p>
         <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
           {button}
         </button>

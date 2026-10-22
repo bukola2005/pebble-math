@@ -1,0 +1,93 @@
+/* Item cards for what a child has earned: white, a lavender edge, the
+   picture and its name. Never orange: they aren't buttons. */
+.pm-rewards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-reward {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-white);
+  box-shadow: inset 0 0 0 2px var(--pm-line-purple);
+}
+
+.pm-reward__picture {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--pm-purple-50);
+}
+
+.pm-reward__picture svg {
+  width: 40px;
+  height: 40px;
+}
+
+.pm-reward__words {
+  display: grid;
+  text-align: left;
+}
+
+.pm-reward__name {
+  font-family: var(--pm-font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-reward__from {
+  font-size: var(--pm-micro);
+  color: var(--pm-ink-muted);
+}
+
+/* Compact, under a child's name on a card. */
+.pm-rewards--sm {
+  gap: 6px;
+}
+
+.pm-rewards--sm .pm-reward {
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border-radius: var(--pm-r-pill);
+}
+
+.pm-rewards--sm .pm-reward__picture {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.pm-rewards--sm .pm-reward__picture svg {
+  width: 26px;
+  height: 26px;
+}
+
+.pm-rewards--sm .pm-reward__name {
+  font-family: var(--pm-font);
+  font-size: var(--pm-micro);
+  font-weight: 600;
+}
+
+/* A short screen (a phone on its side): side by side, without the
+   "From…" line, so a card that shows them still fits. */
+@media (max-height: 480px) {
+  .pm-rewards--md {
+    flex-wrap: nowrap;
+  }
+
+  .pm-rewards--md .pm-reward__from {
+    display: none;
+  }
+}

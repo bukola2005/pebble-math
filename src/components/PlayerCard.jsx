@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import CTAButton from "./CTAButton";
 import PlayerAvatar from "./PlayerAvatar";
+import RewardItems from "./RewardItems";
 import { getAgeBandLabel, getClassLevelLabel } from "../data/players";
+import { rewardsFor } from "../data/rewards";
 import { deletePlayer, playerErrorMessage } from "../lib/players";
 import "./PlayerCard.css";
 
@@ -63,6 +65,9 @@ export default function PlayerCard({ player, onDeleted }) {
       <div className="pm-player__info">
         <p className="pm-player__name">{player.display_name}</p>
         {meta && <p className="pm-player__meta">{meta}</p>}
+        <div className="pm-player__rewards">
+          <RewardItems items={rewardsFor(player.cleared_stalls)} size="sm" />
+        </div>
       </div>
 
       {!confirming && (

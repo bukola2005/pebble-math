@@ -9,12 +9,57 @@ import "./PlayHud.css";
  * the right the child's game name (the one place it is shown) with the
  * sound switch: reading aloud and the game's few sounds.
  *
- * At a stall, `meter` adds the progress meter beside the name: one segment
- * per round, outlined until it is answered, then solid lavender.
+ * At a stall, `meter` adds the progress meter: a ring around the child's
+ * face, one segment per round with small gaps between, filling clockwise
+ * from the top in solid lavender as each is answered.
  *   { total, filled, glow, ref }   `glow` while the last one has just
  *                                  filled; `ref` for the sparkles to aim at
  * It only ever says how far through the child is: no number, no score.
  */
+
+// The ring, in its own 44-unit box: its middle, radius and width.
+const RING = { c: 22, r: 19.5, w: 4, gap: 3 };
+
+function MeterRing({ total, filled }) {
+  const around = 2 * Math.PI * RING.r;
+  const each = around / total;
+  const gap = total > 1 ? RING.gap : 0;
+  return (
+    <svg className="pm-hud__ring" viewBox="0 0 44 44" aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <circle
+          key={i}
+          className={`pm-hud__segment${i < filled ? " is-on" : ""}`}
+          cx={RING.c}
+          cy={RING.c}
+          r={RING.r}
+          strokeWidth={RING.w}
+          strokeDasharray={`${each - gap} ${around - each + gap}`}
+          strokeDashoffset={-(i * each + gap / 2)}
+          transform={`rotate(-90 ${RING.c} ${RING.c})`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Where each segment's middle is, for the sparkles that fly into it. */
+function SegmentMarks({ total }) {
+  return Array.from({ length: total }, (_, i) => {
+    const angle = -Math.PI / 2 + ((i + 0.5) * 2 * Math.PI) / total;
+    return (
+      <span
+        key={i}
+        className="pm-hud__mark"
+        data-segment={i}
+        style={{
+          left: `${((RING.c + RING.r * Math.cos(angle)) / 44) * 100}%`,
+          top: `${((RING.c + RING.r * Math.sin(angle)) / 44) * 100}%`,
+        }}
+      />
+    );
+  });
+}
 export default function PlayHud({ player, meter = null }) {
   const navigate = useNavigate();
   const muted = useMuted();
@@ -40,36 +85,32 @@ export default function PlayHud({ player, meter = null }) {
         </svg>
       </button>
 
-      <div className={`pm-hud__right${meter ? " pm-hud__right--meter" : ""}`}>
-        {meter && (
-          <div
-            ref={meter.ref}
-            className={`pm-hud__meter${meter.glow ? " pm-hud__meter--glow" : ""}`}
-            role="progressbar"
-            aria-label="How far through"
-            aria-valuemin={0}
-            aria-valuemax={meter.total}
-            aria-valuenow={meter.filled}
-            aria-valuetext={
-              meter.filled >= meter.total
-                ? "All done"
-                : `${capitalise(NUMBER_WORDS[meter.filled])} done, ${NUMBER_WORDS[meter.total - meter.filled]} to go`
-            }
-          >
-            {Array.from({ length: meter.total }, (_, i) => (
-              <span
-                key={i}
-                data-segment={i}
-                className={`pm-hud__segment${i < meter.filled ? " pm-hud__segment--on" : ""}`}
-              />
-            ))}
-          </div>
-        )}
-
+      <div className="pm-hud__right">
         {player.game_name && (
           <p className="pm-hud__name">
-            <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
-            <span>{player.game_name}</span>
+            {meter ? (
+              <span
+                ref={meter.ref}
+                className={`pm-hud__face${meter.glow ? " is-glowing" : ""}`}
+                role="progressbar"
+                aria-label="How far through"
+                aria-valuemin={0}
+                aria-valuemax={meter.total}
+                aria-valuenow={meter.filled}
+                aria-valuetext={
+                  meter.filled >= meter.total
+                    ? "All done"
+                    : `${capitalise(NUMBER_WORDS[meter.filled])} done, ${NUMBER_WORDS[meter.total - meter.filled]} to go`
+                }
+              >
+                <MeterRing total={meter.total} filled={meter.filled} />
+                <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
+                <SegmentMarks total={meter.total} />
+              </span>
+            ) : (
+              <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
+            )}
+            <span className="pm-hud__game-name">{player.game_name}</span>
           </p>
         )}
 

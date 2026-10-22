@@ -6,6 +6,7 @@ import PlayerCard from "../components/PlayerCard";
 import PlayerForm from "../components/PlayerForm";
 import { useAuth } from "../context/AuthContext";
 import { listPlayers } from "../lib/players";
+import { listClearedByPlayer } from "../lib/progress";
 import { supabase } from "../lib/supabase";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import "./Dashboard.css";
@@ -49,8 +50,10 @@ export default function Dashboard() {
         .eq("id", user.id)
         .maybeSingle(),
       listPlayers(),
+      // What each child has earned; if it can't be read, none is shown.
+      listClearedByPlayer().catch((error) => ({ data: {}, error })),
     ])
-      .then(([profile, players]) => {
+      .then(([profile, players, cleared]) => {
         if (!active) return;
         if (profile.error || players.error) {
           setData({ status: "error", profile: null, players: [] });
@@ -58,7 +61,7 @@ export default function Dashboard() {
           setData({
             status: "ready",
             profile: profile.data,
-            players: players.data,
+            players: players.data.map((p) => ({ ...p, cleared_stalls: cleared.data[p.id] ?? [] })),
           });
         }
       })

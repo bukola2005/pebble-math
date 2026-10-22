@@ -17,12 +17,13 @@
 
 /**
  * Who can speak. The child's Zizi is labelled with their game name, never
- * "Zizi".
+ * "Zizi". The fruit seller is the child's grandmother: the child helps her
+ * sell, and the orders come from her.
  */
 export const SPEAKERS = {
   zizi: { label: "{name}", voice: "zizi" },
   blob: { label: "Blob", voice: "blob", portrait: "/characters/purple.webp" },
-  seller: { label: "Fruit seller", voice: "seller", portrait: "/stall/seller-portrait.webp" },
+  seller: { label: "Grandma", voice: "seller", portrait: "/stall/seller-portrait.webp" },
 };
 
 /** Scene 1, the dim market, as written in the handoff. Blob is the friend. */
@@ -136,23 +137,43 @@ export const CHAPTER_ONE = {
     { show: "{crates} and {loose} loose.", say: "and {loose} loose." },
     { show: "{crates} and {loose} loose. {sum}.", say: "{sum}." },
   ],
-  // Stage B. The seller gives each order; `{order}` is "one crate and five
+  // Stage B. Grandma gives each order; `{order}` is "one crate and five
   // loose oranges". The order itself waits on a cloth beside the basket.
-  orderFirst: { speaker: "seller", text: "Here come the customers, {name}! This one wants {order}." },
-  orderNext: { speaker: "seller", text: "Next customer! They want {order}." },
+  orderFirst: { speaker: "seller", text: "{name}, I need {order}. Can you get them ready?" },
+  orderNext: { speaker: "seller", text: "Now I need {order}." },
   orderGoal: "Fill the order",
   // Only once the child has run out of loose oranges and reached for more.
   // Then (and in round 1 of Stage B, only then) a tapped crate opens.
   wall: { speaker: "blob", text: "Hmm. Not enough loose ones. What's inside a crate?" },
   // Said under Blob's errand at the end, when Chapter 1 is being replayed.
   endLine: "That's all at the fruit stall for now. More of the market is coming.",
-  // The first time Chapter 1 is finished: the map is next.
+  // Stage C, three test rounds: Grandma's order and an empty counter, and
+  // nothing else. No hint, no Blob, no counting aloud. `{want}` is the
+  // number ("33"); `{readOrder}` is "One crate and five oranges".
+  test: {
+    build: { speaker: "seller", text: "A customer wants {want} oranges." },
+    read: { speaker: "seller", text: "{readOrder}." },
+    // After the right oranges are handed over in the reading round.
+    total: { speaker: "seller", text: "How many oranges is that?" },
+    done: "Done",
+  },
+  // The first time Chapter 1 is finished: what Grandma gives, and the map
+  // is next.
   opening: {
     title: "The market is opening up!",
+    gift: "Grandma gives you a straw hat and a tally stick.",
     text: "Soon you can visit the rest of the market.",
     button: "Next",
   },
 };
+
+/** "One crate and five oranges", for Stage C's reading round. */
+export function readOrderWords({ crates, loose }) {
+  const parts = [];
+  if (crates) parts.push(`${NUMBER_WORDS[crates]} ${crates === 1 ? "crate" : "crates"}`);
+  if (loose) parts.push(`${NUMBER_WORDS[loose]} ${loose === 1 ? "orange" : "oranges"}`);
+  return capitalise(parts.join(" and "));
+}
 
 /** "one crate and five loose oranges", for an order. */
 export function orderWords({ crates, loose }) {

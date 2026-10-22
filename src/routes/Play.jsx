@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CTAButton from "../components/CTAButton";
 import PlayerAvatar from "../components/PlayerAvatar";
+import RewardItems from "../components/RewardItems";
+import { rewardsFor } from "../data/rewards";
 import { listPlayers } from "../lib/players";
+import { listClearedByPlayer } from "../lib/progress";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import "./Play.css";
 
@@ -24,11 +27,19 @@ export default function Play() {
   useEffect(() => {
     let active = true;
 
-    // Row Level Security returns only this account's children.
-    listPlayers()
-      .then(({ data: players, error }) => {
+    // Row Level Security returns only this account's children. What each
+    // has earned comes from their cleared stalls; if those can't be read,
+    // the cards just show none.
+    const cleared = listClearedByPlayer().catch((error) => ({ data: {}, error }));
+    Promise.all([listPlayers(), cleared])
+      .then(([{ data: players, error }, stalls]) => {
         if (!active) return;
-        setData(error ? { status: "error", players: [] } : { status: "ready", players });
+        if (stalls.error) console.warn("Couldn't read which stalls are cleared.", stalls.error);
+        setData(
+          error
+            ? { status: "error", players: [] }
+            : { status: "ready", players: players.map((p) => ({ ...p, cleared_stalls: stalls.data[p.id] ?? [] })) }
+        );
       })
       .catch(() => {
         if (active) setData({ status: "error", players: [] });
@@ -89,6 +100,7 @@ export default function Play() {
                 <Link className="pm-pick" to={`/play/${player.id}`}>
                   <PlayerAvatar player={player} className="pm-pick__avatar" eager />
                   <span className="pm-pick__name">{player.display_name}</span>
+                  <RewardItems items={rewardsFor(player.cleared_stalls)} size="sm" />
                 </Link>
               </li>
             ))}
