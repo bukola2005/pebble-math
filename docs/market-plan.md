@@ -32,12 +32,18 @@ Passengers get on and off. How many on the bus now? The shortest, most repeatabl
 
 *Brings back:* making ten, as a full bus.
 
-### 3. Provision Store — subtraction
+### 3. Provision Store — subtraction, by cracking a crate
 **Year:** Primary 1 to 2 · **Objects:** tins, sachets, bread, soap
 
-A customer takes things off the shelf. What's left? Two kinds of subtraction a child needs to meet separately: taking away, and finding the difference between two shelves.
+A customer takes things off the shelf. What's left?
 
-*Brings back:* counting on from a number rather than from one.
+**The mechanic: crack the crate.** A child has 3 crates of ten and 2 loose tins, and a customer wants 15. There aren't enough loose ones. So the child **taps a crate and it breaks open** into ten loose tins, and now there are enough.
+
+This is the tutorial's make-a-ten running backwards, which is why it belongs here: a child who filled a basket to make a crate already knows what a crate is worth. Nothing new has to be explained. It is also, quietly, regrouping — the thing most children meet as a borrowing rule they do not understand.
+
+Two kinds of subtraction worth meeting separately: taking away, and finding the difference between two shelves.
+
+*Brings back:* the crate itself, from the fruit stall.
 
 ### 4. Bookshop — multiplication as equal groups
 **Year:** Primary 2 to 3 · **Objects:** pencils in packs, exercise books in bundles
@@ -71,6 +77,10 @@ This is also where measurement lives, and it has its own order:
 **Year:** Primary 2 to 3 · **Objects:** coins, notes, a wallet, a savings pot
 
 Pay for something. Work out the change. Compare two prices. Save towards something you want. This is where every earlier operation gets a consequence, and where the game's name finally pays off.
+
+**Change by counting up, never by borrowing.** Something costs ₦68 and the customer pays ₦100. Instead of 100 − 68 with its row of borrowed zeros, the child counts forward: ₦2 to reach a friendly ₦70, then ₦30 to reach ₦100. Change is ₦32.
+
+This is worth insisting on because it is what market traders actually do. A child who learns it here is learning the real-world method, not the classroom one, and it rests on making a ten again.
 
 *Brings back:* all of it.
 

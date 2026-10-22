@@ -12,7 +12,9 @@ import "./DialogueBox.css";
  *   values        what fills `{name}` and `{n}` in the text
  *   ziziPortrait  the child's Zizi look (data/zizi.js), for her lines
  *   buttonLabel   "Next" unless the line ends something ("Let's go")
- *   onNext        the button, or Enter / Space, since it takes the focus
+ *   onNext        the button, or Enter / Space, since it takes the focus.
+ *                 Without it (and without choices) there is no button: a
+ *                 line that stays while the child does something
  *   choices       numbers to tap instead of Next, for a question
  *   onChoose(n)   a number was tapped
  *   silent        don't read the line aloud: the caller does, its own way
@@ -131,7 +133,7 @@ export default function DialogueBox({
               </button>
             ))}
           </div>
-        ) : (
+        ) : onNext ? (
           <button ref={buttonRef} type="button" className="pm-dialogue__next" onClick={onNext}>
             <span>{buttonLabel}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -145,7 +147,7 @@ export default function DialogueBox({
               />
             </svg>
           </button>
-        )}
+        ) : null}
       </div>
     </section>
   );

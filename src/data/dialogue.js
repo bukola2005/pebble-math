@@ -121,6 +121,8 @@ export const FRUIT_STALL = {
 /**
  * Chapter 1, the Fruit Stall proper, for a child who has finished the
  * tutorial. Stage A: adding past ten, with full crates on the table.
+ * Stage B: customers' orders, taking away, and cracking a crate open when
+ * there aren't enough loose oranges.
  */
 export const CHAPTER_ONE = {
   // The first thing said, once, as the chapter starts.
@@ -134,9 +136,31 @@ export const CHAPTER_ONE = {
     { show: "{crates} and {loose} loose.", say: "and {loose} loose." },
     { show: "{crates} and {loose} loose. {sum}.", say: "{sum}." },
   ],
-  // Said under Blob's errand at the end.
+  // Stage B. The seller gives each order; `{order}` is "one crate and five
+  // loose oranges". The order itself waits on a cloth beside the basket.
+  orderFirst: { speaker: "seller", text: "Here come the customers, {name}! This one wants {order}." },
+  orderNext: { speaker: "seller", text: "Next customer! They want {order}." },
+  orderGoal: "Fill the order",
+  // Only once the child has run out of loose oranges and reached for more.
+  // Then (and in round 1 of Stage B, only then) a tapped crate opens.
+  wall: { speaker: "blob", text: "Hmm. Not enough loose ones. What's inside a crate?" },
+  // Said under Blob's errand at the end, when Chapter 1 is being replayed.
   endLine: "That's all at the fruit stall for now. More of the market is coming.",
+  // The first time Chapter 1 is finished: the map is next.
+  opening: {
+    title: "The market is opening up!",
+    text: "Soon you can visit the rest of the market.",
+    button: "Next",
+  },
 };
+
+/** "one crate and five loose oranges", for an order. */
+export function orderWords({ crates, loose }) {
+  const parts = [];
+  if (crates) parts.push(`${NUMBER_WORDS[crates]} ${crates === 1 ? "crate" : "crates"}`);
+  if (loose) parts.push(`${NUMBER_WORDS[loose]} loose ${loose === 1 ? "orange" : "oranges"}`);
+  return parts.join(" and ");
+}
 
 /**
  * Blob's errand at the end of a session: one small thing to try away from

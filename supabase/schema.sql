@@ -152,9 +152,11 @@ create policy "players_delete_own" on public.players
 
 
 -- ----------------------------------------------------------------------
--- stall_progress: one row per market stall a child has cleared. The
--- number of rows is how many locks on the map are open. Adding a stall
--- is one more id in the check.
+-- stall_progress: one row per market stall, or stall chapter, a child has
+-- cleared. Only a place's own row opens one of Mum's locks (LOCK_STALLS
+-- in src/data/market.js); a chapter's row ('fruit-stall-chapter-1')
+-- records progress without opening another. Adding one is one more id in
+-- the check.
 --
 -- It has no profile_id of its own, so its policies check that the player
 -- the row is for belongs to the caller. There is no update or delete:

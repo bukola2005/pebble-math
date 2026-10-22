@@ -101,20 +101,35 @@ export function setUpRound(index, ageBand) {
 }
 
 /**
- * Chapter 1, Stage A: adding past ten. Each round is a sum like 28 + 6:
- * full crates already on the table (the tens), loose oranges in the
- * basket with its empty spaces outlined, so a child can see how many more
- * it needs without counting, and more loose oranges on the stall. A full
- * basket shuts into one more crate; what is left stays loose.
+ * Chapter 1, in order.
+ *
+ * Stage A: adding past ten. Each round is a sum like 28 + 6: full crates
+ * already on the table (the tens), loose oranges in the basket with its
+ * empty spaces outlined, so a child can see how many more it needs
+ * without counting, and more loose oranges on the stall. A full basket
+ * shuts into one more crate; what is left stays loose.
+ *
+ * Stage B: taking away, like 32 - 15. Crates and a few loose oranges on
+ * the table, an empty basket, and a customer's order. Each needs more
+ * loose oranges than there are, so one crate has to be cracked open (its
+ * ten go into the basket); each round has a different shape of order.
+ *
  *   crates    full crates on the table when the round starts
  *   inBasket  loose oranges already in the basket
  *   onStall   loose oranges on the stall's table
+ *   order     what the customer wants (Stage B)
  */
 export const CHAPTER_ONE_ROUNDS = [
-  { crates: 2, inBasket: 8, onStall: 6 }, // 28 + 6 = 34
-  { crates: 1, inBasket: 7, onStall: 5 }, // 17 + 5 = 22
-  { crates: 3, inBasket: 9, onStall: 4 }, // 39 + 4 = 43
+  { stage: "A", crates: 2, inBasket: 8, onStall: 6 }, // 28 + 6 = 34
+  { stage: "A", crates: 1, inBasket: 7, onStall: 5 }, // 17 + 5 = 22
+  { stage: "A", crates: 3, inBasket: 9, onStall: 4 }, // 39 + 4 = 43
+  { stage: "B", crates: 3, onStall: 2, order: { crates: 1, loose: 5 } }, // 32 - 15 = 17
+  { stage: "B", crates: 4, onStall: 1, order: { crates: 2, loose: 3 } }, // 41 - 23 = 18
+  { stage: "B", crates: 2, onStall: 3, order: { crates: 0, loose: 8 } }, // 23 - 8 = 15
 ];
+
+/** The first Stage B round, where a crate opens only after the child needs one. */
+export const FIRST_ORDER_ROUND = CHAPTER_ONE_ROUNDS.findIndex((round) => round.stage === "B");
 
 /** Chapter 1's row in stall_progress, once it is cleared. */
 export const CHAPTER_ONE_ID = "fruit-stall-chapter-1";
@@ -128,14 +143,16 @@ export function setUpChapterRound(index) {
     index,
     number: index + 1,
     chapter: 1,
+    stage: round.stage,
     practice: false,
-    crates: round.crates,
+    crateIds: ids("crate", round.crates),
     target: BASKET_HOLDS,
-    prefilled: ids("basket", round.inBasket),
+    prefilled: ids("basket", round.inBasket ?? 0),
     oranges: ids("orange", round.onStall),
+    order: round.order ?? null,
     ask: false,
     choices: [],
-    outlines: true,
+    outlines: round.stage === "A",
     seed,
   };
 }

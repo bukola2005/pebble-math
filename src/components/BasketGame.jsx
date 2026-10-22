@@ -25,6 +25,12 @@ import "./BasketGame.css";
   a full basket shuts, its crate flies up to join them and the basket is
   empty again (`emptied`).
 
+  Stage B adds a customer's order (`order`), on a cloth beside the
+  basket, what it wants drawn as outlines until it comes. Oranges, from
+  the table or the basket, and crates are dragged there instead. A tapped
+  crate, once cracking is allowed (`canCrack`), splits open and its ten
+  oranges spill into the basket.
+
   Everything is placed from where the stall picture is on screen, so the
   oranges sit on its table at any screen size. The parent owns the state
   (which oranges are counted, which are in the basket); this component
@@ -51,7 +57,7 @@ function seeded(seed) {
 }
 
 /** Where the table, the basket and the stall are on screen right now. */
-function measure(stall) {
+function measure(stall, withOrder = false) {
   const s = stall.getBoundingClientRect();
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -70,6 +76,19 @@ function measure(stall) {
   const bottom = vh - 8;
   const h = Math.max(110, Math.min(s.height * 0.48, (bottom - geo.face) / 0.72));
   const w = (h * BASKET.w) / BASKET.h;
+  if (withOrder) {
+    // Stage B: the basket steps left, and a little smaller, to make room
+    // for the customer's order on its right.
+    const scale = Math.min(0.85, (vw * 0.46) / w);
+    const bw = w * scale;
+    const ow = Math.min(vw * 0.46, 280);
+    const whole = bw + ORDER_GAP + ow;
+    const left = Math.max(8, Math.min(geo.cx - whole / 2, vw - 8 - whole));
+    geo.basket = { left, top: bottom - h * scale, width: bw, height: h * scale };
+    // The order stays on the ground, below the table's front edge.
+    geo.order = { left: left + bw + ORDER_GAP, width: ow, bottom, maxHeight: Math.max(110, bottom - geo.face + 12) };
+    return geo;
+  }
   geo.basket = { left: Math.min(Math.max(geo.cx - w / 2, 8), vw - w - 8), top: bottom - h, width: w, height: h };
   return geo;
 }
@@ -219,8 +238,68 @@ function closedCrate(b) {
   return { left: b.left + b.width / 2 - width / 2, top: b.top + b.height - height, width, height };
 }
 
+/*
+  Stage B: the customer's order, on a cloth beside the basket. Crates
+  along the top, loose oranges below, four to a row: outlines until they
+  come, so the child can see what is still wanted without counting.
+*/
+const ORDER_GAP = 14;
+
+function orderLayout(o, wants) {
+  const pad = 14;
+  const gap = 6;
+  const perRow = 4;
+  const room = o.width - pad * 2;
+  const rows = Math.ceil(wants.loose / perRow);
+  let crateWidth = wants.crates ? Math.min((room - (wants.crates - 1) * gap) / wants.crates, room * 0.62, 120) : 0;
+  let size = Math.min((room - (perRow - 1) * gap) / perRow, 46);
+  // Shrunk to fit the ground in front of the table, if it has to be.
+  const fixed = pad * 2 + (wants.crates ? 10 : 0) + Math.max(rows - 1, 0) * gap;
+  const grows = (crateWidth * CRATE.h) / CRATE.w + rows * size;
+  const k = Math.min(1, Math.max(0.4, (o.maxHeight - fixed) / grows));
+  crateWidth *= k;
+  size *= k;
+  const crateHeight = (crateWidth * CRATE.h) / CRATE.w;
+  const looseTop = pad + (wants.crates ? crateHeight + 10 : 0);
+  const height = looseTop + rows * size + Math.max(rows - 1, 0) * gap + pad;
+  const cratesWidth = wants.crates * crateWidth + Math.max(wants.crates - 1, 0) * gap;
+  const across = Math.min(wants.loose, perRow);
+  const inner = Math.max(cratesWidth, across * size + Math.max(across - 1, 0) * gap);
+  return {
+    left: o.left,
+    top: o.bottom - height,
+    width: inner + pad * 2,
+    height,
+    // Both relative to the cloth.
+    crate: (i) => ({ left: pad + (inner - cratesWidth) / 2 + i * (crateWidth + gap), top: pad, width: crateWidth }),
+    orange: (i) => {
+      const row = Math.floor(i / perRow);
+      const inRow = Math.min(perRow, wants.loose - row * perRow);
+      const start = pad + (inner - (inRow * size + (inRow - 1) * gap)) / 2;
+      return { left: start + (i % perRow) * (size + gap), top: looseTop + row * (size + gap), width: size, height: size };
+    },
+  };
+}
+
+/** A crate of ten, as drawn on the table and in an order. */
+function CrateOfTen() {
+  return (
+    <>
+      <img className="pm-crate__art" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
+      {CRATE_SLOTS.map((slot, k) => (
+        <span key={k} className="pm-stack-crate__orange" style={{ left: `${slot.x - 8}%`, top: `${slot.y - 12}%` }}>
+          <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+        </span>
+      ))}
+      <span className="pm-stack-crate__tag" aria-hidden="true">
+        10
+      </span>
+    </>
+  );
+}
+
 /** Plays an element's move from where it was (`from`) to where it is now. */
-function flyIn(el, from, duration) {
+function flyIn(el, from, duration, delay = 0) {
   if (!from || !el || reducedMotion()) return;
   const to = el.getBoundingClientRect();
   if (!to.width) return;
@@ -229,7 +308,7 @@ function flyIn(el, from, duration) {
   const scale = from.width / to.width;
   el.animate(
     [{ transform: `translate(${dx}px, ${dy}px) scale(${scale})` }, { transform: "translate(0, 0) scale(1)" }],
-    { duration, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" }
+    { duration, delay, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)", fill: "backwards" }
   );
 }
 
@@ -248,15 +327,21 @@ export default function BasketGame({
   gapsPulse = false,
   closed = false,
   trayed = false,
-  crates = 0,
+  crates = [],
   crateRoom = 0,
   emptied = false,
+  away = [],
+  order = null,
+  canCrack = false,
+  inviteCrack = false,
   spotlight = null,
   total = 0,
   demoKey = 0,
   onTap,
   onDrop,
   onLeave,
+  onDeliver,
+  onCrack,
 }) {
   const basketRef = useRef(null);
   const [geo, setGeo] = useState(null);
@@ -265,16 +350,20 @@ export default function BasketGame({
   const justPlaced = useRef(null); // the orange that just went in, for its sparkles
   const drag = useRef(null);
   const suppressClick = useRef(false);
-  const flights = useRef(new Map()); // id → the rect it is flying from
+  const flights = useRef(new Map()); // id → { from: the rect it is flying from, duration, delay }
   const tableEls = useRef(new Map());
   const basketEls = useRef(new Map());
   const crateEls = useRef(new Map());
-  const cratesShown = useRef(crates);
+  const crateSpots = useRef(new Map()); // where each crate was last drawn
+  const orderRef = useRef(null);
+  const orderEls = useRef(new Map());
+  const [breaking, setBreaking] = useState(null); // a crate splitting open
+  const withOrder = Boolean(order);
 
   // Follow the stall picture as the screen changes.
   useLayoutEffect(() => {
     if (!stall) return undefined;
-    const update = () => setGeo(measure(stall));
+    const update = () => setGeo(measure(stall, withOrder));
     update();
     const observer = new ResizeObserver(update);
     observer.observe(stall);
@@ -283,10 +372,12 @@ export default function BasketGame({
       observer.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [stall]);
+  }, [stall, withOrder]);
 
   const stack = geo && crateRoom ? crateStack(geo, crateRoom) : null;
   const layout = geo ? arrange(oranges, seed, stack ? { ...geo, left: geo.left + stack.width + 12 } : geo) : null;
+  const spotsNow = new Map(stack ? crates.map((id, i) => [id, stack.spot(i)]) : []);
+  const box = geo?.order && order ? orderLayout(geo.order, order) : null;
 
   const nearestOrange = () => {
     const b = basketRef.current?.getBoundingClientRect();
@@ -302,11 +393,12 @@ export default function BasketGame({
 
   useImperativeHandle(ref, () => ({
     basket: () => basketRef.current,
+    order: () => orderRef.current,
     nearestOrange,
     // Sends an orange from the basket back to its place on the table.
     flyBack: (id) => {
       const el = basketEls.current.get(id);
-      if (el) flights.current.set(id, el.getBoundingClientRect());
+      if (el) flights.current.set(id, { from: el.getBoundingClientRect() });
       onLeave(id);
     },
   }));
@@ -336,7 +428,7 @@ export default function BasketGame({
   }, [demoKey]);
 
   // --- dragging ---------------------------------------------------------------
-  const start = (event, id) => {
+  const start = (event, id, kind = "orange") => {
     suppressClick.current = false;
     if (!canDrag || drag.current) return; // one orange at a time
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -344,6 +436,7 @@ export default function BasketGame({
     el.setPointerCapture?.(event.pointerId);
     drag.current = {
       id,
+      kind,
       el,
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -373,9 +466,12 @@ export default function BasketGame({
       d.lift = d.touch ? home.height * 0.5 : 0;
       d.el.style.setProperty("--lift", `${d.lift}px`);
       d.el.classList.add("is-dragging");
-      // Generous: anywhere over the basket, a little beside it, or just
-      // above its mouth counts.
-      const b = basketRef.current.getBoundingClientRect();
+      // An orange taken out of the basket rides above everything else.
+      if (d.el.closest(".pm-basket")) basketRef.current.classList.add("is-carrying");
+      // Generous: anywhere over the basket (in Stage B, the order), a
+      // little beside it, or just above its mouth counts.
+      d.target = order ? orderRef.current : basketRef.current;
+      const b = d.target.getBoundingClientRect();
       d.zone = {
         left: b.left - b.width * 0.2,
         right: b.right + b.width * 0.2,
@@ -390,7 +486,7 @@ export default function BasketGame({
     const over = x >= d.zone.left && x <= d.zone.right && y >= d.zone.top && y <= d.zone.bottom;
     if (over !== d.over) {
       d.over = over;
-      basketRef.current.classList.toggle("is-ready", over);
+      d.target.classList.toggle("is-ready", over);
     }
   };
 
@@ -407,26 +503,58 @@ export default function BasketGame({
     const d = drag.current;
     if (!d || event.pointerId !== d.pointerId) return;
     drag.current = null;
-    basketRef.current?.classList.remove("is-ready");
-    if (!d.dragging) return; // a tap: the click that follows counts it
+    d.target?.classList.remove("is-ready");
+    basketRef.current?.classList.remove("is-carrying");
+    if (!d.dragging) return; // a tap: the click that follows counts it (or opens a crate)
 
     if (!cancelled && d.over) {
-      flights.current.set(d.id, d.el.querySelector(".pm-orange__body").getBoundingClientRect());
-      suppressClick.current = false; // the orange is about to leave; no click follows
-      if (onDrop(d.id)) {
-        justPlaced.current = d.id;
+      const body = d.el.querySelector(".pm-orange__body, .pm-crate__art") ?? d.el;
+      flights.current.set(d.id, { from: body.getBoundingClientRect() });
+      suppressClick.current = false; // it is about to leave; no click follows
+      if (order ? onDeliver(d.id, d.kind) : onDrop(d.id)) {
+        if (!order) justPlaced.current = d.id;
         return;
       }
       flights.current.delete(d.id);
+      // Not wanted there: it springs back, and the click that follows the
+      // drag is not a tap (it would count an orange, or open a crate).
+      suppressClick.current = true;
     }
     springHome(d.el);
   };
 
-  const dropByKey = (id, el) => {
+  const dropByKey = (id, el, kind = "orange") => {
     if (!canDrag) return;
-    flights.current.set(id, el.getBoundingClientRect());
-    if (onDrop(id)) justPlaced.current = id;
-    else flights.current.delete(id);
+    flights.current.set(id, { from: el.getBoundingClientRect() });
+    if (order ? onDeliver(id, kind) : onDrop(id)) {
+      if (!order) justPlaced.current = id;
+    } else flights.current.delete(id);
+  };
+
+  // Stage B: a crate splits open. Its two halves fall apart while its ten
+  // oranges spill, one after another, into the basket's ten spaces.
+  const crack = (id) => {
+    const el = crateEls.current.get(id);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const ids = CRATE_SLOTS.map((_, k) => `${id}-loose-${k}`);
+    ids.forEach((orangeId, k) => {
+      const slot = CRATE_SLOTS[k];
+      const width = r.width * 0.16;
+      flights.current.set(orangeId, {
+        from: {
+          left: r.left + (r.width * (slot.x - 8)) / 100,
+          top: r.top + (r.height * (slot.y - 12)) / 100,
+          width,
+          height: (width * ORANGE.h) / ORANGE.w,
+        },
+        duration: 420,
+        delay: 120 + k * 35,
+      });
+    });
+    setBreaking({ key: id, left: r.left, top: r.top, width: r.width });
+    window.setTimeout(() => setBreaking((now) => (now?.key === id ? null : now)), 700);
+    onCrack(id, ids);
   };
 
   // --- landing, both ways ---------------------------------------------------------
@@ -456,27 +584,43 @@ export default function BasketGame({
         window.setTimeout(() => setSparkles((list) => list.filter((s) => s.key !== key)), 700);
       }
     }
-    for (const [id, from] of flights.current) {
-      const el = basketEls.current.get(id) ?? tableEls.current.get(id);
+    for (const [id, flight] of flights.current) {
+      const el = basketEls.current.get(id) ?? tableEls.current.get(id) ?? orderEls.current.get(id);
       if (!el) continue;
-      flyIn(el, from, 300);
+      flyIn(el, flight.from, flight.duration ?? 300, flight.delay ?? 0);
       flights.current.delete(id);
     }
-    // A full basket's crate, up onto the table with the others.
-    if (crates > cratesShown.current && geo) flyIn(crateEls.current.get(crates - 1), closedCrate(geo.basket), 650);
-    cratesShown.current = crates;
+    // Crates: a full basket's goes up onto the table with the others, and
+    // when one leaves the stack the rest settle into their new places.
+    for (const [id, at] of spotsNow) {
+      const was = crateSpots.current.get(id);
+      const el = crateEls.current.get(id);
+      if (!was) {
+        if (id.startsWith("packed") && geo) flyIn(el, closedCrate(geo.basket), 650);
+      } else if (was.left !== at.left || was.top !== at.top) {
+        flyIn(el, { ...was, height: (was.width * CRATE.h) / CRATE.w }, 350);
+      }
+    }
+    crateSpots.current = spotsNow;
   });
 
   if (!layout) return <div className="pm-game" />;
 
-  const onTable = oranges.filter((id) => !inBasket.includes(id));
+  const onTable = oranges.filter((id) => !inBasket.includes(id) && !away.includes(id));
   const asideAt = new Map(onTable.map((id, i) => [id, i]));
   const aside = trayed && onTable.length ? setAside(geo, onTable.length, layout.size) : null;
   // Rows further back first, so the front row is drawn over them.
   onTable.sort((a, b) => layout.spots[b].row - layout.spots[a].row);
 
-  const inSlots = emptied ? [] : inBasket.slice(0, SLOTS.length).map((id, i) => ({ id, ...SLOTS[i] }));
-  const held = emptied ? 0 : inBasket.length;
+  // Each orange keeps its space in the basket, so taking one out (Stage B)
+  // doesn't move the others.
+  const inSlots = emptied
+    ? []
+    : inBasket
+        .slice(0, SLOTS.length)
+        .map((id, i) => ({ id, ...SLOTS[i] }))
+        .filter((slot) => !away.includes(slot.id));
+  const held = inSlots.length;
   inSlots.sort((a, b) => a.layer - b.layer);
   const gaps = SLOTS.slice(inBasket.length, Math.min(gapsUpTo, SLOTS.length));
   const b = geo.basket;
@@ -484,37 +628,101 @@ export default function BasketGame({
   return (
     <div className={`pm-game${dim ? " is-dim" : ""}${spotlight ? ` pm-game--spot-${spotlight}` : ""}`}>
       <p id="pm-orange-help" className="pm-sr-only">
-        Press Enter to count it. Press B to put it in the basket.
+        {order ? "Press B to put it in the order." : "Press Enter to count it. Press B to put it in the basket."}
       </p>
+      {order && (
+        <p id="pm-crate-help" className="pm-sr-only">
+          Press B to put it in the order. Press Enter to open it.
+        </p>
+      )}
 
       {/* Everything but what Blob is naming goes dim. */}
       {spotlight && <div className="pm-game__dim" aria-hidden="true" />}
 
-      {/* Chapter 1: the full crates on the table, the tens. */}
+      {/* Chapter 1: the full crates on the table, the tens. In Stage B
+          they can be carried to the order, or tapped open. */}
       {stack &&
-        Array.from({ length: crates }, (_, i) => {
-          const at = stack.spot(i);
+        crates.map((id) => {
+          const at = spotsNow.get(id);
+          const style = { left: at.left, top: at.top, width: at.width };
+          if (!order) {
+            return (
+              <div key={id} ref={keep(crateEls, id)} className="pm-stack-crate" style={style} role="img" aria-label="A crate of ten oranges">
+                <CrateOfTen />
+              </div>
+            );
+          }
           return (
-            <div
-              key={i}
-              ref={keep(crateEls, i)}
-              className="pm-stack-crate"
-              style={{ left: at.left, top: at.top, width: at.width }}
-              role="img"
+            <button
+              key={id}
+              ref={keep(crateEls, id)}
+              type="button"
+              className={`pm-stack-crate is-movable${inviteCrack ? " is-inviting" : ""}`}
+              style={style}
+              data-id={id}
               aria-label="A crate of ten oranges"
+              aria-describedby="pm-crate-help"
+              onPointerDown={(event) => start(event, id, "crate")}
+              onPointerMove={move}
+              onPointerUp={(event) => end(event)}
+              onPointerCancel={(event) => end(event, true)}
+              onLostPointerCapture={(event) => end(event, true)}
+              onClick={() => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  return;
+                }
+                if (canCrack) crack(id);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "b" || event.key === "B") {
+                  event.preventDefault();
+                  dropByKey(id, event.currentTarget, "crate");
+                }
+              }}
             >
-              <img className="pm-crate__art" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
-              {CRATE_SLOTS.map((slot, k) => (
-                <span key={k} className="pm-stack-crate__orange" style={{ left: `${slot.x - 8}%`, top: `${slot.y - 12}%` }}>
-                  <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
-                </span>
-              ))}
-              <span className="pm-stack-crate__tag" aria-hidden="true">
-                10
-              </span>
-            </div>
+              <CrateOfTen />
+            </button>
           );
         })}
+
+      {/* Stage B: the customer's order, on a cloth. What it still wants is
+          an outline; what has come is the real thing. */}
+      {box && (
+        <div
+          ref={orderRef}
+          className={`pm-order${order.done ? " is-done" : ""}${order.taken ? " is-taken" : ""}`}
+          style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+          role="group"
+          aria-label="The customer's order"
+        >
+          {Array.from({ length: order.crates }, (_, i) => {
+            const at = box.crate(i);
+            const id = order.deliveredCrates[i];
+            return id ? (
+              <div key={id} ref={keep(orderEls, id)} className="pm-order__crate" style={at}>
+                <CrateOfTen />
+              </div>
+            ) : (
+              <span key={`crate-gap-${i}`} className="pm-order__crate-gap" style={at} aria-hidden="true" />
+            );
+          })}
+          {Array.from({ length: order.loose }, (_, i) => {
+            const at = box.orange(i);
+            const id = order.deliveredLoose[i];
+            return id ? (
+              <span key={id} ref={keep(orderEls, id)} className="pm-order__orange" style={at}>
+                <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+              </span>
+            ) : (
+              <span key={`gap-${i}`} className="pm-order__gap" style={at} aria-hidden="true" />
+            );
+          })}
+          <p className="pm-sr-only" aria-live="polite">
+            {`In the order: ${order.deliveredCrates.length} of ${order.crates} crates, ${order.deliveredLoose.length} of ${order.loose} loose oranges.`}
+          </p>
+        </div>
+      )}
 
       {/* The cloth the leftovers go on, with how many there are. */}
       {aside && (
@@ -578,21 +786,48 @@ export default function BasketGame({
 
       {/* Hidden until the child is given it; then it arrives with a pop. */}
       <div
-        className={`pm-basket${basketHidden ? " is-hidden" : ""}${closed ? " is-closed" : ""}`}
+        className={`pm-basket${basketHidden ? " is-hidden" : ""}${closed ? " is-closed" : ""}${order && held ? " has-loose" : ""}`}
         ref={basketRef}
         style={{ left: b.left, top: b.top, width: b.width, height: b.height }}
       >
         <img className="pm-basket__art" src={BASKET.src} width={BASKET.w} height={BASKET.h} alt="" draggable={false} />
-        {inSlots.map((slot) => (
-          <span
-            key={slot.id}
-            ref={keep(basketEls, slot.id)}
-            className="pm-basket__orange"
-            style={{ left: `${slot.x - 11}%`, top: `${slot.y - 13}%` }}
-          >
-            <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
-          </span>
-        ))}
+        {inSlots.map((slot) =>
+          order ? (
+            // Stage B: oranges can be taken back out, to the order.
+            <span
+              key={slot.id}
+              ref={keep(basketEls, slot.id)}
+              className="pm-basket__orange is-movable"
+              style={{ left: `${slot.x - 11}%`, top: `${slot.y - 13}%` }}
+              role="button"
+              tabIndex={0}
+              aria-label="Orange in the basket"
+              aria-describedby="pm-orange-help"
+              onPointerDown={(event) => start(event, slot.id)}
+              onPointerMove={move}
+              onPointerUp={(event) => end(event)}
+              onPointerCancel={(event) => end(event, true)}
+              onLostPointerCapture={(event) => end(event, true)}
+              onKeyDown={(event) => {
+                if (event.key === "b" || event.key === "B") {
+                  event.preventDefault();
+                  dropByKey(slot.id, event.currentTarget);
+                }
+              }}
+            >
+              <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+            </span>
+          ) : (
+            <span
+              key={slot.id}
+              ref={keep(basketEls, slot.id)}
+              className="pm-basket__orange"
+              style={{ left: `${slot.x - 11}%`, top: `${slot.y - 13}%` }}
+            >
+              <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+            </span>
+          )
+        )}
         {/* The basket's front wall again, over the oranges, so they sit in it. */}
         <img
           className="pm-basket__art pm-basket__front"
@@ -645,11 +880,27 @@ export default function BasketGame({
         </div>
       )}
 
+      {/* A crate splitting open: its two halves fall apart. */}
+      {breaking && (
+        <div
+          key={breaking.key}
+          className="pm-crack"
+          style={{ left: breaking.left, top: breaking.top, width: breaking.width }}
+          aria-hidden="true"
+        >
+          <img className="pm-crack__half pm-crack__half--left" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
+          <img className="pm-crack__half pm-crack__half--right" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
+        </div>
+      )}
+
       {/* Chapter 1: the crates and the loose oranges together, and how many. */}
       {stack && spotlight === "both" && (
         <span
           className="pm-game__total"
-          style={{ left: geo.left + stack.width + 6, top: Math.min(...Array.from({ length: crates }, (_, i) => stack.spot(i).top)) - 8 }}
+          style={{
+            left: geo.left + stack.width + 6,
+            top: (crates.length ? Math.min(...crates.map((id) => spotsNow.get(id).top)) : geo.rest - 60) - 8,
+          }}
           aria-hidden="true"
         >
           {total}

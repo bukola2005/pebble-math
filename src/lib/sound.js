@@ -2,8 +2,8 @@ import { isMuted } from "./speech";
 
 /*
   The game's few small sounds, made in the browser (Web Audio) so there
-  are no sound files to download: a lock opening, a correct answer, and
-  the progress meter filling. The speaker switch in the corner mutes them
+  are no sound files to download: a lock opening, a correct answer, the
+  progress meter filling, and a crate cracking open. The speaker switch in the corner mutes them
   along with reading aloud.
 
   A browser only plays sound after the child has tapped something on the
@@ -124,4 +124,37 @@ export function playMeterFull() {
     note(ctx, soft, { at: t + i * 0.08, type: "triangle", from: frequency, peak: 0.05 - i * 0.005, length: 0.26 });
   });
   note(ctx, ctx.destination, { at: t, from: 261.63, peak: 0.03, length: 0.5 });
+}
+
+/**
+ * A crate cracking open: a short wooden crack, 140 ms. A burst of white
+ * noise through a band-pass at 1800 Hz (Q 1.5) that is gone in 35 ms, for
+ * the split; a second, quieter one 25 ms later at 3200 Hz (Q 2) for a
+ * splinter; and under them a triangle wave falling from 220 to 110 Hz in
+ * 80 ms and fading by 140 ms, for the knock of the wood.
+ */
+export function playCrack() {
+  if (isMuted()) return;
+  const ctx = audio();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.01;
+  const burst = (at, frequency, q, peak, length) => {
+    const count = Math.floor(ctx.sampleRate * length);
+    const buffer = ctx.createBuffer(1, count, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < count; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / count) ** 4;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = frequency;
+    band.Q.value = q;
+    const gain = ctx.createGain();
+    gain.gain.value = peak;
+    noise.connect(band).connect(gain).connect(ctx.destination);
+    noise.start(at);
+  };
+  burst(t, 1800, 1.5, 0.4, 0.035);
+  burst(t + 0.025, 3200, 2, 0.2, 0.03);
+  note(ctx, ctx.destination, { at: t, type: "triangle", from: 220, to: 110, glide: 0.08, peak: 0.09, length: 0.14 });
 }

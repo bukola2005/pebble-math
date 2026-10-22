@@ -60,7 +60,8 @@ src/
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
     sound.js                the game's sounds, made in the browser (no files): the
-                            lock, a correct answer, the progress meter filling
+                            lock, a correct answer, the progress meter filling,
+                            a crate cracking open
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     account.js              "Delete my account" (calls delete_my_account() in the database)
@@ -374,8 +375,8 @@ MORE?" gets the rising sound too. It is not a score: no number, no
 percentage, nothing to compare; it only shows how far through the child
 is. Without motion the segments simply light, with the same sounds.
 
-The two sounds are made in `lib/sound.js`, and the corner switch mutes
-them:
+The sounds are made in `lib/sound.js`, and the corner switch mutes them
+(reduced motion doesn't: it is about movement, not sound):
 
 - **A correct answer** (240 ms): two sine notes a fifth apart, the second
   70 ms after the first, each gliding up a whole tone in 60 ms (660 to
@@ -384,6 +385,10 @@ them:
 - **The meter full** (half a second): four triangle-wave notes rising C5,
   E5, G5, C6 (523, 659, 784, 1047 Hz), 80 ms apart, through a 2400 Hz
   low-pass, each fading over 260 ms, over a quiet sine at C4 (262 Hz).
+- **A crate cracking open** (140 ms): a burst of white noise through a
+  1800 Hz band-pass (Q 1.5), gone in 35 ms; a second, quieter one 25 ms
+  later at 3200 Hz (Q 2); under them a triangle wave falling from 220 to
+  110 Hz in 80 ms.
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row. The first time, Blob says "You did it!
@@ -410,9 +415,36 @@ onto the table with the others, and four loose oranges are left. Then
 Blob, one step at a time: "Three crates…" (the crates light), "…and four
 loose." (the loose oranges light), "Thirty-four." (both, and only now the
 number). Objects first, the number second. The seller asks the child to
-pack the new oranges once, at the start. Stage B, subtraction by cracking
-a crate, comes next. Clearing Chapter 1 will be saved as a
-`fruit-stall-chapter-1` row in `stall_progress`.
+pack the new oranges once, at the start.
+
+*Chapter 1, Stage B: taking away, by cracking a crate.* Three orders
+(32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
+the table and an empty basket, stepped left to make room for the
+customer's order: a cloth beside it with the order drawn as dotted
+outlines, a crate shape for each crate, a circle for each loose orange.
+The child carries crates and loose oranges to it, by touch or mouse.
+Each order needs more loose oranges than there are. In the first, nothing
+warns the child and nothing is greyed out: they carry the two loose ones
+across, run out, and reach for another, and only then does Blob ask
+"Hmm. Not enough loose ones. What's inside a crate?" (his line stays up,
+with no button, and the crates breathe a little light). A tap on a crate
+splits it open with a short wooden crack; its ten oranges spill into the
+basket's ten spaces, and from there they can be carried to the order. A
+crate tapped before that does nothing. In the next two orders the child
+can open one whenever they like, and Blob asks again only if they run
+out. Anything the order doesn't want springs back. When the order is
+full it glows, its segment of the meter fills, the customer takes it,
+and Blob names what is left the same way: "One crate…" (lights the
+crate), "…and seven loose." (lights the loose ones, in the basket),
+"Seventeen." No hint button in Stage B yet.
+
+*The end of Chapter 1.* Finishing it the first time is saved at once as
+a `fruit-stall-chapter-1` row in `stall_progress`, and a card says "The
+market is opening up!": the map comes next. It opens no lock. Mum's
+locks are one per place in the market (`LOCK_STALLS` in
+`data/market.js`: for now just the tutorial's `fruit-stall`), so a
+chapter's row is progress, not a lock. A child coming back after
+Chapter 1 plays it again, ending on Blob's errand.
 
 *The end of a session.* After round 5 Blob gives the child one small thing
 to try away from the screen, picked at random from `ERRANDS` in
