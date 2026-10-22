@@ -26,19 +26,22 @@ export const SPEAKERS = {
   seller: { label: "Grandma", voice: "seller", portrait: "/stall/seller-portrait.webp" },
 };
 
-/** Scene 1, the dim market, as written in the handoff. Blob is the friend. */
+/**
+ * Scene 1, the dim market (docs/story.md). Blob is lost too: not a guide,
+ * a friend in the same trouble, who knows one useful thing. He never
+ * knows the answer to anything; when he wonders, he wonders out loud.
+ */
 export const SCENE_1 = [
   { speaker: "zizi", text: "Mommy..." },
   { speaker: "blob", text: "Psst! Over here. You are not alone." },
   { speaker: "zizi", text: "Who are you?" },
-  { speaker: "blob", text: "I'm Blob! I'm here to help you." },
-  { speaker: "blob", text: "I'm your friend! I saw what happened." },
-  { speaker: "blob", text: "The haze mixed up the whole market and took your mom to the tower." },
-  { speaker: "zizi", text: "Can we get her back?" },
-  { speaker: "blob", text: "Yes! Count and fix things right, and the haze goes away." },
-  { speaker: "blob", text: "Every fix opens a lock on her chain. Open them all, and she is free!" },
+  { speaker: "blob", text: "I'm Blob. I'm lost too." },
+  { speaker: "blob", text: "But I have friends in this market. They will help us look." },
+  { speaker: "zizi", text: "Where is my mommy?" },
+  { speaker: "blob", text: "I don't know. The traders see everyone, but they can't leave their stalls." },
+  { speaker: "blob", text: "Hmm. What if we mind a stall, so a trader can go and ask?" },
   { speaker: "zizi", text: "Okay. I will try." },
-  { speaker: "blob", text: "I'll help you. Let's start at the fruit stall!" },
+  { speaker: "blob", text: "There's a fruit stall over there. Let's ask!" },
 ];
 
 /** The button on Scene 1's last line. */
@@ -72,7 +75,7 @@ export const FRUIT_STALL = {
 
   // Rounds 2 to 5: fill the basket to ten.
   fillGoal: "Fill the basket",
-  howManyMore: { speaker: "blob", text: "How many MORE to fill the basket?" },
+  howManyMore: { speaker: "blob", text: "Hmm. How many MORE to fill the basket?" },
   // A wrong number. Never "wrong".
   countAgain: "Count again…",
   // A full basket, as a crate of ten, and what is left over, on a cloth
@@ -192,7 +195,7 @@ export const ERRANDS = {
   "fruit-stall": [
     "Next time someone buys something, see if you can fill a ten.",
     "Count out ten of anything at home. What's left over?",
-    "Make a pile of ten stones or bottle tops. How many more does a pile of seven need?",
+    "Make a pile of seven stones or bottle tops. I wonder how many more would make ten?",
     "Next time fruit goes into a bag, count to ten. How many are left?",
   ],
 };
@@ -205,14 +208,15 @@ export function lockWords(open, total) {
 
 /**
  * Blob's hint button: each tap gives the next step, never the answer.
+ * Blob doesn't know it either: he thinks out loud, and then tries.
  *   1  a question that points at the thinking
  *   2  a stronger nudge, while the basket's empty spaces are outlined
- *   3  the move, shown slowly, once (and again on later taps)
+ *   3  the move, Blob trying it slowly, once (and again on later taps)
  */
 export const HINTS = [
   "How many does the basket still need?",
-  "Look at the empty spaces.",
-  "Watch.",
+  "Hmm. What about those empty spaces?",
+  "Let me try one…",
 ];
 
 /** Number words for the end of a round: "Ten and three. Thirteen." */

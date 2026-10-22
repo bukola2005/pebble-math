@@ -2,10 +2,12 @@
  * The Pebble monsters. They are NOT player characters: in the game every
  * child plays as Zizi (data/zizi.js), in the look they choose.
  *
- *   - purple is Blob, the guide. Never pickable, by anyone.
+ *   - purple is Blob, lost in the market like the child (docs/story.md).
+ *     Never pickable, by anyone.
  *   - the others are what a grown-up picks on the dashboard so they can
- *     tell their children apart (players.monster). Much later they become
- *     companions, earned chapter by chapter.
+ *     tell their children apart (players.monster). In the game, six of
+ *     them are Blob's friends, who join the search one place at a time
+ *     (data/friends.js); lavender is not one of them.
  *
  * Labels are colours; Blob is the only one with a name so far. Who may
  * pick what is in data/monsters.js, kept apart from this file so the

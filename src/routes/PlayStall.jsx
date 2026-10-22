@@ -39,6 +39,7 @@ import { LOCK_COUNT, LOCK_STALLS, MUM_FACE, ORANGE } from "../data/market";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
+import { earnLantern } from "../lib/lanterns";
 import { after, cancel, isPaused, usePaused } from "../lib/pause";
 import { clearStall } from "../lib/progress";
 import { playCorrect, playCrack, playMeterFull, primeSound } from "../lib/sound";
@@ -171,6 +172,7 @@ export default function PlayStall() {
   const [orderTaken, setOrderTaken] = useState(false);
   const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID);
   const [chapterJustCleared, setChapterJustCleared] = useState(false);
+  const [lanternsToday, setLanternsToday] = useState(0); // earned this visit (data/lanterns.js)
   // Stage C's reading round: handed over, and the number going in.
   const [handed, setHanded] = useState(false);
   const [entry, setEntry] = useState(null); // { tens, ones, active }
@@ -428,6 +430,18 @@ export default function PlayStall() {
       .catch((error) => console.warn("Couldn't save that Chapter 1 was cleared.", error));
   };
 
+  // A lantern (data/lanterns.js): for the teaching chapter (Stages A and
+  // B, once), and for the test rounds (Stage C), again each time a child
+  // comes back and does them. Counted once it is saved.
+  const earnChapterLantern = (reason) => {
+    earnLantern(player.id, CHAPTER_ONE_ID, reason)
+      .then(({ earned, error }) => {
+        if (error) console.warn("Couldn't save the lantern.", error);
+        if (earned) setLanternsToday((n) => n + 1);
+      })
+      .catch((error) => console.warn("Couldn't save the lantern.", error));
+  };
+
   // Stage C: every answer is saved, right or wrong, with the first step
   // that broke: the crates, then the loose ones, then the number.
   const logAttempt = (fields) => {
@@ -463,7 +477,10 @@ export default function PlayStall() {
     });
     setPhase("done");
     fillMeter(null, gameRef.current?.order());
-    if (round.index === roundCount - 1) clearChapter();
+    if (round.index === roundCount - 1) {
+      clearChapter();
+      earnChapterLantern(chapterDoneBefore ? "replay" : "test");
+    }
   };
 
   // Stage C: "Done". The crates, then the loose ones, against the order.
@@ -591,6 +608,8 @@ export default function PlayStall() {
         else if (next !== "puzzled") fillMeter();
         // Chapter 1's last round: the chapter is cleared, and saved now.
         if (stageB && round.index === roundCount - 1) clearChapter();
+        // Stage B's last order: the teaching is done.
+        if (stageB && round.index === FIRST_TEST_ROUND - 1) earnChapterLantern("teaching");
         // Round 5 done: the stall is cleared. Saved the moment it happens,
         // so a child who closes the game now still finds the lock open.
         if (!chapterOne && round.index === ROUND_COUNT - 1 && !cleared) {
@@ -744,6 +763,7 @@ export default function PlayStall() {
       <PlayHud
         player={player}
         earned={earned}
+        lanterns={player.lanterns == null ? null : player.lanterns + lanternsToday}
         meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }}
       />
 

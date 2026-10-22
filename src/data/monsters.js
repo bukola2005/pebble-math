@@ -1,6 +1,6 @@
 import { CHARACTERS } from "./characters";
 
-/** Blob, the guide: the purple monster. Never pickable, by anyone. */
+/** Blob: the purple monster, lost in the market like the child. Never pickable, by anyone. */
 export const GUIDE = { name: "Blob", character: CHARACTERS[0] };
 
 /**

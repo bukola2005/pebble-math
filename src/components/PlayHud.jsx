@@ -13,7 +13,8 @@ import "./PlayHud.css";
  *
  * Tapping the name opens the child's profile over the game, which pauses
  * until it closes (ProfilePanel). `earned` is what it shows them as
- * having: the stall_progress ids they have cleared, today's included.
+ * having: the stall_progress ids they have cleared, today's included;
+ * `lanterns` how many lanterns, today's included (null if unknown).
  *
  * At a stall, `meter` adds the progress meter: a ring around the child's
  * face, one segment per round with small gaps between, filling clockwise
@@ -66,7 +67,12 @@ function SegmentMarks({ total }) {
     );
   });
 }
-export default function PlayHud({ player, meter = null, earned = player.cleared_stalls ?? [] }) {
+export default function PlayHud({
+  player,
+  meter = null,
+  earned = player.cleared_stalls ?? [],
+  lanterns = player.lanterns ?? null,
+}) {
   const navigate = useNavigate();
   const muted = useMuted();
   const zizi = getZiziLook(player.character);
@@ -171,7 +177,9 @@ export default function PlayHud({ player, meter = null, earned = player.cleared_
         )}
       </div>
 
-      {profileOpen && <ProfilePanel player={player} zizi={zizi} earned={earned} onClose={closeProfile} />}
+      {profileOpen && (
+        <ProfilePanel player={player} zizi={zizi} earned={earned} lanterns={lanterns} onClose={closeProfile} />
+      )}
     </div>
   );
 }

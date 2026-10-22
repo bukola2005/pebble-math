@@ -236,6 +236,55 @@ create policy "attempts_insert_own" on public.attempts
 
 
 -- ----------------------------------------------------------------------
+-- lanterns: one row per lantern a child has earned (docs/story.md and
+-- src/data/lanterns.js), where and why:
+--   'teaching'  finishing a place's teaching chapter, once per place
+--   'test'      finishing its test rounds, once per place
+--   'replay'    coming back and doing the test rounds again, each time
+-- Never for speed or for being right first time. Like stall_progress,
+-- its policies check that the player belongs to the caller, and it has
+-- no update or delete; deleting the player removes it.
+-- ----------------------------------------------------------------------
+create table if not exists public.lanterns (
+  id         uuid primary key default gen_random_uuid(),
+  player_id  uuid not null references public.players (id) on delete cascade,
+  stall_id   text not null,
+  reason     text not null check (reason in ('teaching', 'test', 'replay')),
+  earned_at  timestamptz not null default now()
+);
+
+-- The teaching and test lanterns come once per place; replays every time.
+create unique index if not exists lanterns_once
+  on public.lanterns (player_id, stall_id, reason) where reason in ('teaching', 'test');
+create index if not exists lanterns_player_idx on public.lanterns (player_id);
+
+alter table public.lanterns enable row level security;
+revoke all on public.lanterns from anon;
+grant select, insert on public.lanterns to authenticated;
+
+drop policy if exists "lanterns_select_own" on public.lanterns;
+create policy "lanterns_select_own" on public.lanterns
+  for select to authenticated
+  using (exists (select 1 from public.players p
+                 where p.id = player_id and p.profile_id = (select auth.uid())));
+
+drop policy if exists "lanterns_insert_own" on public.lanterns;
+create policy "lanterns_insert_own" on public.lanterns
+  for insert to authenticated
+  with check (exists (select 1 from public.players p
+                      where p.id = player_id and p.profile_id = (select auth.uid())));
+
+-- Children who finished Chapter 1 before there were lanterns: the two it
+-- earns. (Running this again adds nothing.)
+insert into public.lanterns (player_id, stall_id, reason)
+select progress.player_id, progress.stall_id, earned.reason
+from public.stall_progress progress
+cross join (values ('teaching'), ('test')) as earned (reason)
+where progress.stall_id = 'fruit-stall-chapter-1'
+on conflict do nothing;
+
+
+-- ----------------------------------------------------------------------
 -- Create the profile row automatically when someone signs up.
 --
 -- The sign-up form sends role and full_name as user metadata; that
@@ -277,7 +326,7 @@ create trigger on_auth_user_created
 
 -- ----------------------------------------------------------------------
 -- "Delete my account" on the dashboard. Deletes the caller's own sign-in;
--- their profile, players, stall_progress and attempts rows go with it (each table
+-- their profile, players, stall_progress, attempts and lanterns rows go with it (each table
 -- references the one above it on delete cascade). It can only ever delete
 -- the account that calls it: there is no argument to point it elsewhere.
 --

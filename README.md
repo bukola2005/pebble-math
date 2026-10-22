@@ -59,6 +59,7 @@ src/
     speech.js               reads lines aloud with on-device voices only, with the mute switch
     pause.js                pausing the game while the child's profile is open: waits,
                             movement and reading aloud all hold
+    lanterns.js             lanterns: how many a child has, and saving one earned
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
     sound.js                the game's sounds, made in the browser (no files): the
@@ -87,8 +88,8 @@ src/
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
     PlayHud.jsx             the play screens' corners: a way out, game name, mute,
                             and at a stall the progress meter; the name opens the profile
-    ProfilePanel.jsx        the child's profile over the paused game: Zizi, game name,
-                            their things and the empty spaces still to fill
+    ProfilePanel.jsx        the child's profile over the paused game: friends,
+                            lanterns and keepsakes
     Sparkles.jsx            the small stars that fly to the basket's count and the meter
     BasketGame.jsx          oranges on the table, the basket and its crate of ten:
                             tap to count, drag to move
@@ -115,7 +116,9 @@ src/
     CTAButton.jsx           the only button (primary / secondary)
     GlassPanel.jsx          the translucent surface
   data/characters.js        the eight monsters, with intrinsic sizes
-  data/monsters.js          Blob the guide, and the seven a grown-up can pick
+  data/monsters.js          Blob, and the seven a grown-up can pick
+  data/friends.js           Blob's seven friends, who join the search one place at a time
+  data/lanterns.js          how lanterns are earned and spent, and their two pictures
   data/zizi.js              Zizi's six looks and her original look
   data/gameNames.js         the two word lists game names are built from
   data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
@@ -144,6 +147,9 @@ public/stall/*.webp         the Fruit Stall's six layers (sky, far, palms, groun
                             fruit-stall, near), the basket, orange and crate, and
                             the seller (seller.webp, seller-portrait.webp)
 public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogue box
+public/ui/lantern-*.webp    the lantern, lit and unlit (the same lamp, cut to one box)
+public/friends/*.webp       dark silhouettes of the six friends still to join, made
+                            from their art (a few KB each instead of the full pictures)
 public/art/*.webp           market map (day, misty), not used yet; the blank
                             storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
@@ -279,10 +285,13 @@ student sign-up: a child can't own an account, so the grown-up creates one
 and adds the child from the dashboard.
 
 **Who is who.** Every child plays as **Zizi**, in the look they choose.
-The purple monster is **Blob**, the guide, and nobody can pick it. The other
+The purple monster is **Blob**, and nobody can pick it. He is not a guide:
+he is lost in the market too ([docs/story.md](docs/story.md)). The other
 seven monsters are on the grown-up's side: a grown-up picks one for each
 child when adding them (`players.monster`), so the cards on the dashboard
-and on "Who's playing?" are easy to tell apart. Children added before
+and on "Who's playing?" are easy to tell apart. In the game, six of them
+(green, blue, orange, pink, yellow, teal) are Blob's friends, who join the
+search one place at a time; lavender is not one of them. Children added before
 monsters came back show a neutral circle with their initial.
 
 **"Who's playing?"** is built for a child: one big card per child (their
@@ -331,9 +340,12 @@ a Shuffle button. It starts on a random pair. There is no text box: a child
 never types anything, so they can't put a real name in. "That's my name!"
 saves it.
 
-**Scene 1** (until `players.scene1_done`): the dim market, as written in the
-handoff. The child's Zizi hides behind toppled crates while purple haze
-drifts past, and Blob finds her. Her lines are labelled with the child's
+**Scene 1** (until `players.scene1_done`): the dim market. The child's Zizi
+hides behind toppled crates while purple haze drifts past, and Blob finds
+her. He is lost too, and he knows one useful thing: he has friends in this
+market, and they will help them look. He doesn't know where her mother is;
+the traders see everyone but can't leave their stalls, so the two of them
+will mind a stall while a trader goes and asks. Her lines are labelled with the child's
 game name, never "Zizi". "Let's go" saves `scene1_done` and goes straight to
 the Fruit Stall.
 
@@ -354,8 +366,8 @@ at the right number.
 
 *Rounds 2 to 5* fill the basket to ten (`data/fruitStall.js`, and
 [docs/learning-rules.md](docs/learning-rules.md) for why). The basket
-starts part full; in rounds 2 and 3 Blob first asks "How many MORE to fill
-the basket?" with three numbers to tap, and a wrong one gets "Count
+starts part full; in rounds 2 and 3 Blob first wonders "Hmm. How many MORE
+to fill the basket?" with three numbers to tap, and a wrong one gets "Count
 again…". When the basket fills it closes into a crate of ten, and what is
 left on the stall moves onto a woven cloth beside it, so the leftovers
 can't be mistaken for the stall's stock. Then Blob says what is there one
@@ -493,8 +505,10 @@ over?"), with a quiet word that this is as far as the market goes for now
 and a way back to "Who's playing?".
 
 *Blob's hint button*, bottom left: each tap gives the next step (a
-question, then the empty spaces outlined, then the move shown slowly
-once), never the answer, and it resets each round. How many hints a child
+question, then the empty spaces outlined, then Blob trying the move
+slowly, once), never the answer, and it resets each round. Blob thinks out
+loud ("Hmm. What about those empty spaces?"): he doesn't know the answer
+either, and never sounds as if he is keeping one back. How many hints a child
 used, and how many wrong numbers they tapped, is noted per round in
 `lib/stallLog.js`, in memory only, shaped to be saved later.
 
@@ -523,15 +537,32 @@ label in the dialogue box, and in the child's profile, and nowhere else.
 
 **The profile.** The name in the top corner (Zizi's face and the game
 name) is a button: it opens the child's profile over the game. Their
-Zizi, large; their game name; and their things as item cards, under the
-place each came from ("From the Fruit Stall"), with an empty space (a
-grey dashed outline and a small question mark) for each thing still to
-find, and the places not open yet ("From the Bakery") locked with their
-spaces empty. A child with two filled and four empty can see there is
-more to come. Which places and how many spaces: `SHELF` in
-`data/rewards.js` (the Bakery's four are a guess until it is built). It
-is a native `<dialog>`: the close button, Escape or a tap outside closes
+face and game name, then what the story counts
+([docs/story.md](docs/story.md)):
+
+- **Friends**, first and with the most room: seven spaces, Blob in colour
+  and the six still to join as dark silhouettes of their own shapes, under
+  "Blob's friends are helping us look." One joins at each new place
+  (`data/friends.js`); for now that is only Blob. It is how close the
+  child is to finding their mother.
+- **Lanterns**: the lit lamp for each one they have, the unlit lamp for
+  each one still needed to open the next place (two).
+- **Keepsakes**: the straw hat and the tally stick, once Grandma has given
+  them, and no empty spaces beside them, ever: they are gifts, not a set.
+
+It is a native `<dialog>`: the close button, Escape or a tap outside closes
 it, and the focus goes back to the name.
+
+**Lanterns** (`data/lanterns.js`, `lib/lanterns.js`). One for finishing a
+place's teaching chapter (at the Fruit Stall, Chapter 1's Stages A and B),
+one for finishing its test rounds (Stage C), and one more every time the
+child comes back and does the test rounds again: only for coming back,
+never for being fast or right first time. Two open the next place on the
+main path; extras will open optional places off the main road. Neither is
+built, so none are spent yet, and finishing a chapter once always earns
+the two needed to go on. Each lantern earned is a row in `lanterns`
+(`teaching` and `test` once per place, `replay` each time), saved the
+moment it is earned and counted when a session starts.
 
 While it is open the game is paused (`lib/pause.js`), and closing it goes
 on exactly where it was. Nothing is against the clock, so nothing is

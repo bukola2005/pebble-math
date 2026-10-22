@@ -1,16 +1,27 @@
 import { useEffect, useRef } from "react";
-import { shelfFor } from "../data/rewards";
+import { friendsFor } from "../data/friends";
+import { LANTERN, lanternsShown } from "../data/lanterns";
+import { rewardsFor } from "../data/rewards";
 import { setPaused } from "../lib/pause";
 import { RewardPicture } from "./RewardItems";
 import "./ProfilePanel.css";
 
 /*
   The child's profile, over the game: opened by tapping their name in the
-  top corner (PlayHud). Their Zizi, large, their game name, and their
-  things, under the place each came from, with an empty space, a grey
-  outline and a question mark, for each thing still to find, and the
-  places not open yet locked. Seeing two filled and four empty, a child
-  knows there is more to come: that is what this screen is for.
+  top corner (PlayHud). Their face and game name, then the three things
+  the story counts (docs/story.md):
+
+    Friends    seven, Blob first, the rest dark silhouettes until they
+               join. First and biggest: it is how close the child is to
+               finding their mother.
+    Lanterns   lit for the ones they have, dark for the ones still needed
+               to open the next place.
+    Keepsakes  Grandma's gifts, only the ones they have. Not a set: never
+               an empty space.
+
+  `earned` is the stall_progress ids they have; `lanterns` how many
+  lanterns (null when that couldn't be read: the section is left out
+  rather than show none).
 
   The game pauses while it is open (lib/pause.js) and goes on exactly
   where it was when it closes: with the close button, Escape, or a tap
@@ -18,14 +29,7 @@ import "./ProfilePanel.css";
   the focus stays inside it.
 */
 
-const LOCK = (
-  <svg className="pm-profile__lock" viewBox="0 0 24 24" aria-hidden="true">
-    <rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor" />
-    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
-  </svg>
-);
-
-export default function ProfilePanel({ player, zizi, earned, onClose }) {
+export default function ProfilePanel({ player, zizi, earned, lanterns, onClose }) {
   const ref = useRef(null);
 
   // The panel's own entrance goes on while the game holds.
@@ -44,7 +48,9 @@ export default function ProfilePanel({ player, zizi, earned, onClose }) {
     else onClose();
   };
 
-  const shelf = shelfFor(earned);
+  const friends = friendsFor(earned);
+  const lamps = lanterns == null ? null : lanternsShown(lanterns);
+  const keepsakes = rewardsFor(earned);
 
   return (
     <dialog
@@ -65,47 +71,74 @@ export default function ProfilePanel({ player, zizi, earned, onClose }) {
         </button>
 
         <div className="pm-profile__who">
-          <div className="pm-profile__figure">
-            <img src={zizi.src} width={zizi.w} height={zizi.h} alt="" draggable={false} />
-          </div>
+          <img className="pm-profile__face" src={zizi.src} alt="" draggable={false} />
           <h2 id="pm-profile-name" className="pm-profile__name">
             {player.game_name}
           </h2>
         </div>
 
-        <div className="pm-profile__things">
-          {shelf.map((place, p) => (
-            <section
-              key={place.place}
-              className={`pm-profile__place${place.locked ? " is-locked" : ""}`}
-              aria-labelledby={`pm-profile-place-${p}`}
-            >
-              <h3 id={`pm-profile-place-${p}`} className="pm-profile__from">
-                {place.locked && LOCK}
-                From {place.place}
-                {place.locked && <span className="pm-sr-only"> (not open yet)</span>}
+        <section className="pm-profile__friends" aria-labelledby="pm-profile-friends">
+          <h3 id="pm-profile-friends" className="pm-profile__heading">
+            Friends
+          </h3>
+          <ul className="pm-profile__friend-row">
+            {friends.map((friend) =>
+              friend.joined ? (
+                <li key={friend.id} className="pm-profile__friend is-here">
+                  <img src={friend.art.src} width={friend.art.w} height={friend.art.h} alt="" draggable={false} />
+                  <span className="pm-profile__friend-name">{friend.name}</span>
+                </li>
+              ) : (
+                <li key={friend.id} className="pm-profile__friend is-coming">
+                  <img src={friend.unknown.src} alt="" draggable={false} />
+                  <span className="pm-sr-only">Not met yet</span>
+                </li>
+              )
+            )}
+          </ul>
+          <p className="pm-profile__caption">Blob’s friends are helping us look.</p>
+        </section>
+
+        <div className="pm-profile__pair">
+          {lamps && (
+            <section className="pm-profile__lanterns" aria-labelledby="pm-profile-lanterns">
+              <h3 id="pm-profile-lanterns" className="pm-profile__heading">
+                Lanterns
               </h3>
-              <ul className="pm-profile__spaces">
-                {place.spaces.map((item, i) =>
-                  item ? (
-                    <li key={item.id} className="pm-profile__item">
-                      <span className="pm-profile__picture">
-                        <RewardPicture id={item.id} />
-                      </span>
-                      <span className="pm-profile__item-name">{item.name}</span>
-                    </li>
-                  ) : (
-                    <li key={`empty-${i}`} className="pm-profile__item is-empty">
-                      <span className="pm-profile__question" aria-hidden="true">
-                        ?
-                      </span>
-                      <span className="pm-sr-only">Still to find</span>
-                    </li>
-                  )
-                )}
+              <ul className="pm-profile__lantern-row">
+                {Array.from({ length: lamps.lit }, (_, i) => (
+                  <li key={`lit-${i}`} className="pm-profile__lantern is-lit">
+                    <img src={LANTERN.lit.src} width={LANTERN.lit.w} height={LANTERN.lit.h} alt="" draggable={false} />
+                    <span className="pm-sr-only">Lit</span>
+                  </li>
+                ))}
+                {Array.from({ length: lamps.dark }, (_, i) => (
+                  <li key={`dark-${i}`} className="pm-profile__lantern is-dark">
+                    <img src={LANTERN.unlit.src} width={LANTERN.unlit.w} height={LANTERN.unlit.h} alt="" draggable={false} />
+                    <span className="pm-sr-only">Not lit yet</span>
+                  </li>
+                ))}
               </ul>
             </section>
-          ))}
+          )}
+
+          {keepsakes.length > 0 && (
+            <section className="pm-profile__keepsakes" aria-labelledby="pm-profile-keepsakes">
+              <h3 id="pm-profile-keepsakes" className="pm-profile__heading">
+                Keepsakes
+              </h3>
+              <ul className="pm-profile__keepsake-row">
+                {keepsakes.map((item) => (
+                  <li key={item.id} className="pm-profile__item">
+                    <span className="pm-profile__picture">
+                      <RewardPicture id={item.id} />
+                    </span>
+                    <span className="pm-profile__item-name">{item.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </div>
     </dialog>
