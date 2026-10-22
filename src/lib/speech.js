@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { isPaused, onPauseChange, usePaused } from "./pause";
 
 /*
   Reads the game's lines aloud with the browser's own voice
@@ -92,17 +93,21 @@ if (canSpeak) {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopSpeaking();
   });
+  // Nor while the game is paused, with the child's profile open over it.
+  onPauseChange((paused) => {
+    if (paused) stopSpeaking();
+  });
 }
 
 /**
  * Says `text` in `speaker`'s voice, cutting off whatever was being said.
  * `onEnd` runs when the line has been said (or the browser gave up on it).
- * Returns false when nothing will be said at all (muted, or no voice on
- * the device), so a caller pacing things to the voice knows to wait for a
- * tap instead.
+ * Returns false when nothing will be said at all (muted, no voice on the
+ * device, or the game paused), so a caller pacing things to the voice
+ * knows to wait for a tap instead.
  */
 export function speak(text, speaker = "narrator", { onEnd } = {}) {
-  if (!canSpeak || muted || !text) return false;
+  if (!canSpeak || muted || isPaused() || !text) return false;
   stopSpeaking();
   // No voice on the device (or the list hasn't arrived yet): say nothing.
   // Speaking without a voice set would let the browser pick its default,
@@ -139,13 +144,15 @@ export function stopSpeaking() {
 
 /**
  * Reads `text` aloud when it appears or changes, and again when reading
- * aloud is switched back on; stops when the component goes away.
+ * aloud is switched back on or the game goes on after a pause; stops when
+ * the component goes away.
  */
 export function useReadAloud(text, speaker) {
   const quiet = useMuted();
+  const paused = usePaused();
   useEffect(() => {
-    if (quiet || !text) return undefined;
+    if (quiet || paused || !text) return undefined;
     speak(text, speaker);
     return () => stopSpeaking();
-  }, [text, speaker, quiet]);
+  }, [text, speaker, quiet, paused]);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { BASKET, CRATE, ORANGE } from "../data/market";
+import { after, cancel } from "../lib/pause";
 import Sparkles from "./Sparkles";
 import "./BasketGame.css";
 
@@ -520,8 +521,8 @@ export default function BasketGame({
     });
     // Gone once it has played (a timer rather than animationend, so it
     // also goes when motion is reduced and nothing animates).
-    const id = window.setTimeout(() => setDemo(null), 2900);
-    return () => window.clearTimeout(id);
+    const id = after(() => setDemo(null), 2900);
+    return () => cancel(id);
     // Only a new hint tap starts it again.
   }, [demoKey]);
 
@@ -598,7 +599,7 @@ export default function BasketGame({
     el.style.transform = "";
     const done = () => el.classList.remove("is-returning");
     el.addEventListener("transitionend", done, { once: true });
-    window.setTimeout(done, 600);
+    after(done, 600);
   };
 
   const end = (event, cancelled = false) => {
@@ -677,7 +678,7 @@ export default function BasketGame({
       });
     });
     setBreaking({ key: id, left: r.left, top: r.top, width: r.width });
-    window.setTimeout(() => setBreaking((now) => (now?.key === id ? null : now)), 700);
+    after(() => setBreaking((now) => (now?.key === id ? null : now)), 700);
     onCrack(id, ids);
   };
 
@@ -705,7 +706,7 @@ export default function BasketGame({
           ...list,
           { key, x, y, dx: tag.left + tag.width / 2 - x, dy: tag.top + tag.height / 2 - y },
         ]);
-        window.setTimeout(() => setSparkles((list) => list.filter((s) => s.key !== key)), 700);
+        after(() => setSparkles((list) => list.filter((s) => s.key !== key)), 700);
       }
     }
     for (const [id, flight] of flights.current) {

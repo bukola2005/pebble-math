@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { after, cancel } from "../lib/pause";
 import { playLockOpen } from "../lib/sound";
 import "./LockChain.css";
 
@@ -89,12 +90,12 @@ export default function LockChain({ total = 7, open = 0, opening = -1, small = f
       [3500, "gone"],
     ];
     const timers = steps.map(([ms, next]) =>
-      window.setTimeout(() => {
+      after(() => {
         setStage(next);
         if (next === "open") playLockOpen();
       }, ms)
     );
-    return () => timers.forEach(window.clearTimeout);
+    return () => timers.forEach(cancel);
   }, [opening]);
 
   const width = 520;

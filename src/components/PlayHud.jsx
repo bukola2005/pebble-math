@@ -1,13 +1,19 @@
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NUMBER_WORDS, capitalise } from "../data/dialogue";
 import { getZiziLook } from "../data/zizi";
 import { canSpeak, setMuted, useMuted } from "../lib/speech";
+import ProfilePanel from "./ProfilePanel";
 import "./PlayHud.css";
 
 /**
  * The corners of every play screen: a small way out on the left, and on
  * the right the child's game name (the one place it is shown) with the
  * sound switch: reading aloud and the game's few sounds.
+ *
+ * Tapping the name opens the child's profile over the game, which pauses
+ * until it closes (ProfilePanel). `earned` is what it shows them as
+ * having: the stall_progress ids they have cleared, today's included.
  *
  * At a stall, `meter` adds the progress meter: a ring around the child's
  * face, one segment per round with small gaps between, filling clockwise
@@ -60,10 +66,18 @@ function SegmentMarks({ total }) {
     );
   });
 }
-export default function PlayHud({ player, meter = null }) {
+export default function PlayHud({ player, meter = null, earned = player.cleared_stalls ?? [] }) {
   const navigate = useNavigate();
   const muted = useMuted();
   const zizi = getZiziLook(player.character);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const nameRef = useRef(null);
+
+  const closeProfile = () => {
+    setProfileOpen(false);
+    // The dialog gives the focus back itself; where it can't, the name has it.
+    if (document.activeElement === document.body) nameRef.current?.focus({ preventScroll: true });
+  };
 
   return (
     <div className="pm-hud">
@@ -87,7 +101,7 @@ export default function PlayHud({ player, meter = null }) {
 
       <div className="pm-hud__right">
         {player.game_name && (
-          <p className="pm-hud__name">
+          <div className="pm-hud__name">
             {meter ? (
               <span
                 ref={meter.ref}
@@ -111,7 +125,17 @@ export default function PlayHud({ player, meter = null }) {
               <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
             )}
             <span className="pm-hud__game-name">{player.game_name}</span>
-          </p>
+            {/* Over the whole chip, so the meter inside it stays a meter. */}
+            <button
+              ref={nameRef}
+              type="button"
+              className="pm-hud__open"
+              aria-label={`${player.game_name}: open profile`}
+              aria-haspopup="dialog"
+              aria-expanded={profileOpen}
+              onClick={() => setProfileOpen(true)}
+            />
+          </div>
         )}
 
         {/* Only where the browser can actually read aloud. */}
@@ -146,6 +170,8 @@ export default function PlayHud({ player, meter = null }) {
           </button>
         )}
       </div>
+
+      {profileOpen && <ProfilePanel player={player} zizi={zizi} earned={earned} onClose={closeProfile} />}
     </div>
   );
 }

@@ -196,12 +196,14 @@ create policy "stall_progress_insert_own" on public.stall_progress
 -- data is there when the teacher dashboard is built; nothing shows it yet.
 -- Like stall_progress, its policies check that the player belongs to the
 -- caller, and it has no update or delete; deleting the player removes it.
+-- stall_id and stage are not checked against a list: every new chapter
+-- brings new ones, and a list would need altering each time.
 -- ----------------------------------------------------------------------
 create table if not exists public.attempts (
   id          uuid primary key default gen_random_uuid(),
   player_id   uuid not null references public.players (id) on delete cascade,
-  stall_id    text not null check (stall_id in ('fruit-stall-chapter-1')),
-  stage       text not null check (stage in ('C')),
+  stall_id    text not null,
+  stage       text not null,
   round       smallint not null check (round between 1 and 20),
   asked       smallint not null check (asked between 0 and 99),
   crates      smallint not null check (crates between 0 and 20),
@@ -212,6 +214,9 @@ create table if not exists public.attempts (
 );
 
 create index if not exists attempts_player_idx on public.attempts (player_id, created_at);
+
+-- For a database made with those two checks.
+alter table public.attempts drop constraint if exists attempts_stall_id_check, drop constraint if exists attempts_stage_check;
 
 alter table public.attempts enable row level security;
 revoke all on public.attempts from anon;

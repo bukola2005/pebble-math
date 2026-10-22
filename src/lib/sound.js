@@ -3,8 +3,9 @@ import { isMuted } from "./speech";
 /*
   The game's few small sounds, made in the browser (Web Audio) so there
   are no sound files to download: a lock opening, a correct answer, the
-  progress meter filling, and a crate cracking open. The speaker switch in the corner mutes them
-  along with reading aloud.
+  progress meter filling, a crate cracking open, and a child choosing
+  who is playing. The speaker switch in the corner mutes them along with
+  reading aloud.
 
   A browser only plays sound after the child has tapped something on the
   page, so `primeSound()` is called from the tap that leads to a sound,
@@ -157,4 +158,22 @@ export function playCrack() {
   burst(t, 1800, 1.5, 0.4, 0.035);
   burst(t + 0.025, 3200, 2, 0.2, 0.03);
   note(ctx, ctx.destination, { at: t, type: "triangle", from: 220, to: 110, glide: 0.08, peak: 0.09, length: 0.14 });
+}
+
+/**
+ * Choosing who is playing, with the card's hop (routes/Play.css): short
+ * and bright, done by 450 ms, well inside the 600 ms celebration. A soft
+ * pop as the hop starts, 60 ms in: a sine falling from 900 to 300 Hz in
+ * 40 ms, gone by 70 ms. Then, as it lands, two sine notes rising a fourth:
+ * G5 (784 Hz) at 270 ms, fading over 100 ms, and C6 (1047 Hz) 50 ms
+ * later, fading over 130 ms.
+ */
+export function playPick() {
+  if (isMuted()) return;
+  const ctx = audio();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.01;
+  note(ctx, ctx.destination, { at: t + 0.06, from: 900, to: 300, glide: 0.04, peak: 0.07, length: 0.07 });
+  note(ctx, ctx.destination, { at: t + 0.27, from: 783.99, peak: 0.05, length: 0.1 });
+  note(ctx, ctx.destination, { at: t + 0.32, from: 1046.5, peak: 0.045, length: 0.13 });
 }

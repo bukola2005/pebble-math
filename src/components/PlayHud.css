@@ -48,6 +48,7 @@
 }
 
 .pm-hud__name {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -64,6 +65,31 @@
   font-size: 1rem;
   font-weight: 400;
   color: var(--pm-ink);
+  transition: transform 0.15s var(--pm-ease-pop);
+}
+
+/* The whole chip is the button that opens the child's profile. */
+.pm-hud__open {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-hud__open:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.pm-hud__open:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
+}
+
+.pm-hud__name:has(.pm-hud__open:active) {
+  transform: scale(0.96);
 }
 
 .pm-hud__game-name {

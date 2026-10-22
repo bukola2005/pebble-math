@@ -41,7 +41,7 @@ src/
     EmailConfirmed.jsx      /confirmed, where the sign-up confirmation link lands
     ResetPassword.jsx       where the reset link lands: choose a new password
     Dashboard.jsx           greeting, email, the account's players: add, delete, Play
-    Play.jsx                "Who's playing?" — the child picks their own card
+    Play.jsx                "Who's playing?" — the child picks their own card, which hops
     PlaySessionShell.jsx    /play/:id and below: fetches the player, hands it to each step
     PlayHub.jsx             /play/:id: the loading screen, then the next step
     PlayIntro.jsx           /play/:id/intro: the opening film
@@ -57,11 +57,13 @@ src/
     players.js              every query on the players table, and its error messages
     playFlow.js             the order of the play steps, and what each one loads
     speech.js               reads lines aloud with on-device voices only, with the mute switch
+    pause.js                pausing the game while the child's profile is open: waits,
+                            movement and reading aloud all hold
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
     sound.js                the game's sounds, made in the browser (no files): the
                             lock, a correct answer, the progress meter filling,
-                            a crate cracking open
+                            a crate cracking open, choosing who is playing
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     account.js              "Delete my account" (calls delete_my_account() in the database)
@@ -84,7 +86,9 @@ src/
     DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
     PlayHud.jsx             the play screens' corners: a way out, game name, mute,
-                            and at a stall the progress meter
+                            and at a stall the progress meter; the name opens the profile
+    ProfilePanel.jsx        the child's profile over the paused game: Zizi, game name,
+                            their things and the empty spaces still to fill
     Sparkles.jsx            the small stars that fly to the basket's count and the meter
     BasketGame.jsx          oranges on the table, the basket and its crate of ten:
                             tap to count, drag to move
@@ -284,7 +288,17 @@ monsters came back show a neutral circle with their initial.
 **"Who's playing?"** is built for a child: one big card per child (their
 monster and their name), nothing to type, no sign-out, no settings. The
 device stays signed in as the grown-up. A small link in the corner goes
-back to the dashboard.
+back to the dashboard. What a child has earned isn't shown here: this
+screen is only for choosing who is playing.
+
+The cards sit still. Tapping one is like picking a player in a game: that
+monster squashes, hops with a small lean on the way up, lands level with a
+burst of lavender sparkles behind it, and its card turns to its chosen
+look (a lavender edge and wash), all in 600 ms of CSS keyframes on the
+picture that was already there; then the game starts. Taps after the
+first do nothing. A sound goes with it (below). With reduced motion there
+is no hop, lean or sparkle: the card fades to its chosen look, and the
+sound still plays.
 
 **The loading screen** shows `public/loading/hands-apart.webp` full screen,
 with a slim bar low down that fills only as files actually arrive
@@ -389,6 +403,10 @@ The sounds are made in `lib/sound.js`, and the corner switch mutes them
   1800 Hz band-pass (Q 1.5), gone in 35 ms; a second, quieter one 25 ms
   later at 3200 Hz (Q 2); under them a triangle wave falling from 220 to
   110 Hz in 80 ms.
+- **Choosing who is playing** (done by 450 ms, inside the 600 ms hop): a
+  soft pop as the hop starts, 60 ms in (a sine falling from 900 to 300 Hz
+  in 40 ms, gone by 70 ms), then two sine notes rising a fourth as it
+  lands: G5 (784 Hz) at 270 ms and C6 (1047 Hz) 50 ms later.
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row. The first time, Blob says "You did it!
@@ -459,9 +477,10 @@ saved at once as a `fruit-stall-chapter-1` row in `stall_progress`, which
 earns the straw hat and the tally stick (`data/rewards.js`: every reward
 comes from the place that gave it). A card shows them, says Grandma gives
 them, and that the market is opening up: the map comes next. They show
-on the child's card on "Who's playing?" and on the dashboard, as item
-cards drawn in SVG: the hat isn't worn on the Zizi picture, whose seven
-looks are painted with their heads in different places. It opens no lock. Mum's
+in the child's profile in the game (below) and, for a parent, on the
+dashboard, as item cards drawn in SVG: the hat isn't worn on the Zizi
+picture, whose seven looks are painted with their heads in different
+places. It opens no lock. Mum's
 locks are one per place in the market (`LOCK_STALLS` in
 `data/market.js`: for now just the tutorial's `fruit-stall`), so a
 chapter's row is progress, not a lock. A child coming back after
@@ -499,8 +518,30 @@ comes first, then British, then any English. Chrome stays silent until the
 child has tapped something on the page, which every normal path through
 the game does.
 
-**The game name** appears in the top corner of the play screens and as Zizi's
-label in the dialogue box, and nowhere else.
+**The game name** appears in the top corner of the play screens, as Zizi's
+label in the dialogue box, and in the child's profile, and nowhere else.
+
+**The profile.** The name in the top corner (Zizi's face and the game
+name) is a button: it opens the child's profile over the game. Their
+Zizi, large; their game name; and their things as item cards, under the
+place each came from ("From the Fruit Stall"), with an empty space (a
+grey dashed outline and a small question mark) for each thing still to
+find, and the places not open yet ("From the Bakery") locked with their
+spaces empty. A child with two filled and four empty can see there is
+more to come. Which places and how many spaces: `SHELF` in
+`data/rewards.js` (the Bakery's four are a guess until it is built). It
+is a native `<dialog>`: the close button, Escape or a tap outside closes
+it, and the focus goes back to the name.
+
+While it is open the game is paused (`lib/pause.js`), and closing it goes
+on exactly where it was. Nothing is against the clock, so nothing is
+lost: the game's waits (`after()` instead of `setTimeout`: a full basket
+becoming a crate, an order being taken, Blob's two seconds at the wall,
+his steps) stop counting and go on with the time they had left;
+everything moving on screen stops mid-way (`document.getAnimations()`);
+and reading aloud stops, with the line it was on said again on closing.
+A touch on the corners (the name, the sound) doesn't count as reaching for
+another orange at the wall.
 
 `prefers-reduced-motion` turns off the little pops, the bar's glide, the
 haze drifting, the bobbing arrow and the tutorial's moving demonstration

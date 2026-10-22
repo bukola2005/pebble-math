@@ -88,7 +88,7 @@
   box-shadow: var(--pm-shadow-md);
   cursor: pointer;
   transition: transform 0.2s var(--pm-ease-pop), border-color 0.2s var(--pm-ease),
-    box-shadow 0.2s var(--pm-ease);
+    background-color 0.2s var(--pm-ease), box-shadow 0.2s var(--pm-ease);
 }
 
 .pm-pick:hover {
@@ -119,4 +119,130 @@
   line-height: 1.2;
   color: var(--pm-ink);
   overflow-wrap: anywhere;
+}
+
+/* --- choosing ---------------------------------------------------------
+   The cards sit still: six monsters moving at once would be noise. The
+   one a child taps celebrates, 600ms in all (PICK_MS in Play.jsx): it
+   squashes, hops with a small lean on the way up, lands level, and a
+   burst of sparkles goes off behind it; then the game starts. The card
+   itself turns to its chosen look: a lavender edge and wash, never
+   orange. */
+.pm-pick.is-chosen {
+  border-color: var(--pm-purple);
+  background-color: var(--pm-purple-50);
+  box-shadow: 0 0 0 4px rgba(153, 166, 249, 0.35), var(--pm-shadow-md);
+}
+
+.pm-pick__hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.pm-pick__hero .pm-pick__avatar {
+  position: relative;
+  z-index: 1;
+  transform-origin: 50% 100%;
+}
+
+.pm-pick.is-chosen .pm-pick__avatar {
+  animation: pm-pick-hop 0.6s linear both;
+}
+
+/* Squash (0 to 60ms), up with a lean (to 200ms), down level (to 270ms,
+   when the sound's two notes start), a small bounce, still by 430ms. */
+@keyframes pm-pick-hop {
+  0% {
+    transform: none;
+    animation-timing-function: ease-out;
+  }
+  10% {
+    transform: scale(1.14, 0.84);
+    animation-timing-function: ease-out;
+  }
+  22% {
+    transform: translateY(-16px) rotate(-5deg) scale(0.93, 1.09);
+    animation-timing-function: ease-out;
+  }
+  33% {
+    transform: translateY(-30px) rotate(-7deg) scale(1);
+    animation-timing-function: ease-in;
+  }
+  45% {
+    transform: translateY(0) rotate(0) scale(1.1, 0.9);
+    animation-timing-function: ease-out;
+  }
+  58% {
+    transform: translateY(-5px) scale(0.97, 1.04);
+    animation-timing-function: ease-in-out;
+  }
+  72%,
+  100% {
+    transform: none;
+  }
+}
+
+/* The burst, behind the monster: eight stars fly out from under it as it
+   lands. Lavender, two shades, so they show on the white card. */
+.pm-pick__burst {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  --reach: clamp(76px, 17vw, 104px);
+}
+
+.pm-pick__star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  fill: var(--pm-purple);
+  filter: drop-shadow(0 0 3px rgba(153, 166, 249, 0.7));
+  opacity: 0;
+  animation: pm-pick-star 0.32s cubic-bezier(0.2, 0.7, 0.3, 1) 0.26s both;
+}
+
+.pm-pick__star--deep {
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  fill: var(--pm-purple-600);
+}
+
+@keyframes pm-pick-star {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(calc(var(--reach) * -0.45)) scale(0.4);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(calc(var(--reach) * -1)) scale(1) rotate(80deg);
+  }
+}
+
+/* Without motion: no hop, no lean, no sparkles. The card fades to its
+   chosen look, and the sound still plays. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-pick.is-chosen .pm-pick__avatar {
+    animation: none;
+  }
+
+  .pm-pick__burst {
+    display: none;
+  }
+
+  /* (base.css cuts every transition short here; a fade isn't movement,
+     so this one is let through.) */
+  .pm-pick {
+    transition-property: border-color, background-color, box-shadow;
+    transition-duration: 0.3s !important;
+    transition-timing-function: var(--pm-ease);
+  }
 }

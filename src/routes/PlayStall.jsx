@@ -39,6 +39,7 @@ import { LOCK_COUNT, LOCK_STALLS, MUM_FACE, ORANGE } from "../data/market";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
+import { after, cancel, isPaused, usePaused } from "../lib/pause";
 import { clearStall } from "../lib/progress";
 import { playCorrect, playCrack, playMeterFull, primeSound } from "../lib/sound";
 import { speak, useReadAloud } from "../lib/speech";
@@ -188,13 +189,15 @@ export default function PlayStall() {
   const [lineStep, setLineStep] = useState(0);
   const [stall, setStall] = useState(null); // the stall picture, once it's in the page
   const navigate = useNavigate();
+  const paused = usePaused(); // the child's profile is open over the game
   const gameRef = useRef(null);
   const tally = useRef({ hints: 0, wrong: 0 });
   const timers = useRef([]);
   const zizi = getZiziLook(player.character);
 
-  const later = (fn, ms) => timers.current.push(window.setTimeout(fn, ms));
-  useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
+  // Every wait here holds while the game is paused (lib/pause.js).
+  const later = (fn, ms) => timers.current.push(after(fn, ms));
+  useEffect(() => () => timers.current.forEach(cancel), []);
 
   // The progress meter (see above).
   const [meterTotal] = useState(() => roundCount);
@@ -521,14 +524,17 @@ export default function PlayStall() {
 
   // Blob waits until the child reaches for another (any touch) or sits
   // still for two seconds (longer feels like the game has frozen), and
-  // only then asks.
+  // only then asks. A touch on the corners (the name, the sound, the
+  // profile it opens) isn't reaching for one.
   useEffect(() => {
     if (!atWall || wall) return undefined;
-    const ask = () => setWall(true);
-    const id = window.setTimeout(ask, 2000);
-    window.addEventListener("pointerdown", ask, { capture: true, once: true });
+    const ask = (event) => {
+      if (!event?.target?.closest?.(".pm-hud")) setWall(true);
+    };
+    const id = after(ask, 2000);
+    window.addEventListener("pointerdown", ask, { capture: true });
     return () => {
-      window.clearTimeout(id);
+      cancel(id);
       window.removeEventListener("pointerdown", ask, { capture: true });
     };
   }, [atWall, wall]);
@@ -537,8 +543,8 @@ export default function PlayStall() {
   // ask doesn't open one too.
   useEffect(() => {
     if (!wall) return undefined;
-    const id = window.setTimeout(() => setCrackReady(true), 600);
-    return () => window.clearTimeout(id);
+    const id = after(() => setCrackReady(true), 600);
+    return () => cancel(id);
   }, [wall]);
 
   // One step of help per tap: a question, then the empty spaces, then
@@ -566,7 +572,7 @@ export default function PlayStall() {
     else if (onTable === 0) next = "puzzled";
     if (!next) return undefined;
 
-    const id = window.setTimeout(
+    const id = after(
       () => {
         recordRound({
           playerId: player.id,
@@ -601,14 +607,14 @@ export default function PlayStall() {
       },
       next === "puzzled" ? 900 : 500
     );
-    return () => window.clearTimeout(id);
+    return () => cancel(id);
   }, [phase, inBasket.length, onTable, round, player.id, cleared, delivered]);
 
   // The crate closes; the leftovers move to their cloth; then Blob says
   // what is there.
   useEffect(() => {
     if (phase !== "closing") return undefined;
-    const aside = window.setTimeout(() => {
+    const aside = after(() => {
       if (chapterOne) {
         // The new crate goes up onto the table with the others, and the
         // basket is empty again.
@@ -616,13 +622,13 @@ export default function PlayStall() {
         setPacked(true);
       } else setTrayed(true);
     }, 900);
-    const say = window.setTimeout(() => {
+    const say = after(() => {
       setLineStep(1);
       setPhase("summary");
     }, 1900);
     return () => {
-      window.clearTimeout(aside);
-      window.clearTimeout(say);
+      cancel(aside);
+      cancel(say);
     };
   }, [phase]);
 
@@ -630,8 +636,8 @@ export default function PlayStall() {
   // Blob then says what is left; Stage C just goes on.
   useEffect(() => {
     if (phase !== "done") return undefined;
-    const take = window.setTimeout(() => setOrderTaken(true), 900);
-    const say = window.setTimeout(() => {
+    const take = after(() => setOrderTaken(true), 900);
+    const say = after(() => {
       if (stageC) {
         afterRound();
         return;
@@ -640,17 +646,19 @@ export default function PlayStall() {
       setPhase("summary");
     }, 1600);
     return () => {
-      window.clearTimeout(take);
-      window.clearTimeout(say);
+      cancel(take);
+      cancel(say);
     };
   }, [phase]);
 
   // "Ten… and three. Thirteen." and round 5's lines, one step at a time,
   // each step paced by the voice: the next one comes about a second later,
   // or just after the words if they take longer. With nothing to hear
-  // (muted, or no voice), the child taps their way through instead.
+  // (muted, or no voice), the child taps their way through instead. While
+  // the game is paused nothing is said; when it goes on, the line is said
+  // again.
   useEffect(() => {
-    if (!stepped || lineStep < 1) return undefined;
+    if (!stepped || lineStep < 1 || paused) return undefined;
     const steps = stepped;
     const words = fillLine(steps[lineStep - 1].say, values);
     const last = lineStep >= steps.length;
@@ -659,19 +667,20 @@ export default function PlayStall() {
     const timers = [];
     const startedAt = performance.now();
     const moveOn = () => {
-      if (gone || moved || last) return;
+      // (Cut off by the pause: not finished.)
+      if (gone || moved || last || isPaused()) return;
       moved = true;
       const wait = Math.max(250, 1000 - (performance.now() - startedAt));
-      timers.push(window.setTimeout(() => !gone && setLineStep((n) => n + 1), wait));
+      timers.push(after(() => !gone && setLineStep((n) => n + 1), wait));
     };
     // In case a voice never says it has finished.
-    if (speak(words, SPEAKERS.blob.voice, { onEnd: moveOn })) timers.push(window.setTimeout(moveOn, 4000));
+    if (speak(words, SPEAKERS.blob.voice, { onEnd: moveOn })) timers.push(after(moveOn, 4000));
     return () => {
       gone = true;
-      timers.forEach(window.clearTimeout);
+      timers.forEach(cancel);
     };
     // `values` belongs to the round, which doesn't change during it.
-  }, [phase, lineStep]);
+  }, [phase, lineStep, paused]);
 
   // --- what is on screen ---------------------------------------------------------------
   const playing = phase === "question" || phase === "play";
@@ -710,6 +719,13 @@ export default function PlayStall() {
   const locksOpen = new Set(
     [...(player.cleared_stalls ?? []), ...(cleared ? [STALL_ID] : [])].filter((id) => LOCK_STALLS.includes(id))
   ).size;
+  // What the child has earned, for their profile: what was saved before,
+  // and what they have cleared today.
+  const earned = [
+    ...(player.cleared_stalls ?? []),
+    ...(cleared ? [STALL_ID] : []),
+    ...(chapterJustCleared ? [CHAPTER_ONE_ID] : []),
+  ];
 
   return (
     <div
@@ -725,7 +741,11 @@ export default function PlayStall() {
       }}
     >
       <StallBackdrop close seller stallRef={setStall} />
-      <PlayHud player={player} meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }} />
+      <PlayHud
+        player={player}
+        earned={earned}
+        meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }}
+      />
 
       <main id="main" className="pm-stall__stage">
         <h1 className="pm-sr-only">The Fruit Stall</h1>

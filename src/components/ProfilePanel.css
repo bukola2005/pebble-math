@@ -1,0 +1,303 @@
+/* The child's profile, over the paused game: a white card with lavender
+   edges, and never orange. The only thing in it to press is the close
+   button, and it looks like the game's corner buttons. */
+.pm-profile {
+  /* The dialog is only the card's frame: the card fills it. */
+  width: min(760px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pm-r-lg);
+  background: transparent;
+  color: var(--pm-ink);
+  overflow: visible;
+  animation: pm-profile-in 0.22s var(--pm-ease) both;
+}
+
+/* Just dimmed, not blurred: a blur over the whole game is slow to draw
+   on a cheap phone. */
+.pm-profile::backdrop {
+  background: rgba(30, 30, 50, 0.5);
+}
+
+@keyframes pm-profile-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+
+.pm-profile__card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(170px, 230px) 1fr;
+  align-items: center;
+  gap: clamp(18px, 4vw, 36px);
+  max-height: calc(100dvh - 24px);
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  box-shadow: inset 0 0 0 2px var(--pm-line-purple), var(--pm-shadow-lg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Like the corner buttons of the game. */
+.pm-profile__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pm-purple-50);
+  box-shadow: inset 0 0 0 1.5px var(--pm-line-purple);
+  color: var(--pm-purple-700);
+  cursor: pointer;
+}
+
+.pm-profile__close svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pm-profile__close:hover {
+  background: var(--pm-purple-100);
+}
+
+.pm-profile__close:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
+}
+
+/* --- the child --------------------------------------------------------------- */
+.pm-profile__who {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+/* Zizi standing on a soft lavender pool of light. */
+.pm-profile__figure {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  max-width: 100%;
+  padding-bottom: 6px;
+  background: radial-gradient(50% 9% at 50% 96%, var(--pm-purple-200) 0%, transparent 100%);
+}
+
+.pm-profile__figure img {
+  display: block;
+  width: auto;
+  height: min(46vh, 340px);
+  max-width: 100%;
+  object-fit: contain;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.pm-profile__name {
+  max-width: 100%;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.5rem, 3.6vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* --- their things, by the place each came from ----------------------------------- */
+.pm-profile__things {
+  display: grid;
+  align-content: center;
+  gap: 22px;
+  /* Clear of the close button. */
+  padding-top: 8px;
+}
+
+.pm-profile__from {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-family: var(--pm-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-profile__place.is-locked .pm-profile__from {
+  color: var(--pm-ink-muted);
+}
+
+.pm-profile__lock {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--pm-ink-soft);
+}
+
+.pm-profile__spaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One space: an item card, or an empty outline. Always the same size, so
+   a filled space and an empty one line up. */
+.pm-profile__item {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+  width: 92px;
+  height: 104px;
+  padding: 8px 6px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-purple-50);
+  box-shadow: inset 0 0 0 2px var(--pm-line-purple);
+}
+
+.pm-profile__picture {
+  display: grid;
+  place-items: center;
+}
+
+.pm-profile__picture svg {
+  width: 56px;
+  height: 56px;
+}
+
+.pm-profile__item-name {
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--pm-ink);
+}
+
+/* Still to find: a grey dashed outline and a small question mark. */
+.pm-profile__item.is-empty {
+  grid-template-rows: 1fr;
+  background: rgba(30, 30, 50, 0.03);
+  box-shadow: none;
+  border: 2px dashed rgba(30, 30, 50, 0.2);
+}
+
+.pm-profile__question {
+  font-family: var(--pm-font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: rgba(30, 30, 50, 0.3);
+}
+
+/* A place not open yet: its spaces fainter still. */
+.pm-profile__place.is-locked .pm-profile__item.is-empty {
+  border-color: rgba(30, 30, 50, 0.13);
+  background: rgba(30, 30, 50, 0.02);
+}
+
+.pm-profile__place.is-locked .pm-profile__question {
+  color: rgba(30, 30, 50, 0.2);
+}
+
+/* A phone held upright: the child above, their things below. */
+@media (max-width: 600px) {
+  .pm-profile__card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .pm-profile__figure img {
+    height: min(30vh, 230px);
+  }
+
+  .pm-profile__things {
+    padding-top: 0;
+  }
+
+  .pm-profile__from,
+  .pm-profile__spaces {
+    justify-content: center;
+  }
+
+  .pm-profile__spaces {
+    gap: 8px;
+  }
+
+  /* Four to a row on any phone, so a place's spaces stay together. */
+  .pm-profile__item {
+    width: clamp(56px, 17vw, 80px);
+    height: auto;
+    min-height: 88px;
+    padding: 6px 4px;
+  }
+
+  .pm-profile__picture svg {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* A phone on its side: side by side, and the child as tall as fits. */
+@media (max-height: 480px) and (min-width: 601px) {
+  .pm-profile__card {
+    grid-template-columns: minmax(130px, 190px) 1fr;
+    padding: 16px 20px;
+  }
+
+  .pm-profile__figure img {
+    height: calc(100dvh - 120px);
+  }
+
+  .pm-profile__name {
+    font-size: 1.375rem;
+  }
+
+  .pm-profile__things {
+    gap: 12px;
+  }
+
+  .pm-profile__from {
+    margin-bottom: 6px;
+    font-size: 1rem;
+  }
+
+  .pm-profile__spaces {
+    gap: 8px;
+  }
+
+  .pm-profile__item {
+    width: 76px;
+    height: 88px;
+    padding: 6px 4px;
+  }
+
+  .pm-profile__picture svg {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-profile {
+    animation-name: pm-profile-fade;
+  }
+
+  @keyframes pm-profile-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

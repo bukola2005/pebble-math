@@ -39,6 +39,9 @@ const PICTURES = {
   ),
 };
 
+/** One reward's picture, by its id (for the profile's item cards too). */
+export const RewardPicture = ({ id }) => PICTURES[id] ?? null;
+
 /** `size`: "md" with where each came from, "sm" for a compact row. */
 export default function RewardItems({ items, size = "md" }) {
   if (!items?.length) return null;
@@ -46,7 +49,9 @@ export default function RewardItems({ items, size = "md" }) {
     <ul className={`pm-rewards pm-rewards--${size}`} aria-label="Earned">
       {items.map((item) => (
         <li key={item.id} className="pm-reward">
-          <span className="pm-reward__picture">{PICTURES[item.id]}</span>
+          <span className="pm-reward__picture">
+            <RewardPicture id={item.id} />
+          </span>
           <span className="pm-reward__words">
             <span className="pm-reward__name">{item.name}</span>
             {size === "md" && <span className="pm-reward__from">From {item.place}</span>}
