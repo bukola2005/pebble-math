@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import CTAButton from "../components/CTAButton";
 import PageLoading from "../components/PageLoading";
@@ -8,52 +9,74 @@ import { authLink } from "../lib/authRedirect";
 // What Supabase puts in `type` when a sign-up confirmation link worked.
 const CONFIRMATION = ["signup", "email"];
 
-const LINK_FAILED = {
-  title: "This confirmation link didn’t work.",
-  sub: "Confirmation links work once, and only for a limited time. If you’ve confirmed your email already, sign in. If not, sign up again with the same email and we’ll send a new link.",
-};
-
 /**
  * Where the link in the sign-up confirmation email lands (emailRedirectTo
  * in context/AuthContext.jsx).
  *
- * Supabase checks the link before sending people here and puts the outcome
- * in the address (lib/authRedirect.js): a sign-in when it worked, an error
- * when the link was too old or had been used. Opening a good link also
- * signs the grown-up in on this device, so "Sign in" goes straight on to
- * the dashboard; anywhere else it asks for the password as usual.
+ * Nothing here ever looks like a failure: no error styling, no status
+ * codes, nothing from Supabase on screen. A parent who sees one assumes
+ * they broke something and stops. Every case is one calm sentence and one
+ * button:
  *
- * However the page is reached, it says what happened and offers the
- * sign-in button. It is never blank.
+ *   good link, signed in   "Your email is confirmed."           Continue
+ *   good link, the sign-in
+ *     didn't stick here    "Your email is confirmed."           Sign in
+ *   used or expired link   "This account is already confirmed." Sign in
+ *   no link at all         "You can sign in below."             Sign in
+ *
+ * A good link signs the parent in, so Continue goes straight to the
+ * dashboard: they aren't asked for a password they've only just set.
+ *
+ * "Sign in" carries the parent's address across when it can be read (from
+ * the session, or from the link's own sign-in), in router state rather
+ * than the address bar, which ends up in browser history and server logs.
+ * The sign-in page fills it in and puts the cursor in the password box.
+ * When it can't be read, usually after a used link, the form is empty.
  */
 export default function EmailConfirmed() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const page = (title, sub) => (
+  // Once Supabase has read the link, take its details (tokens, or its
+  // "invalid or has expired" note) out of the address bar.
+  useEffect(() => {
+    if (!loading && (location.hash || location.search)) navigate("/confirmed", { replace: true });
+  }, [loading, location.hash, location.search, navigate]);
+
+  if (loading) return <PageLoading />;
+
+  const fromLink = CONFIRMATION.includes(authLink.type);
+
+  const page = (title, sub, label, onClick) => (
     <AuthLayout title={title} sub={sub}>
       <div className="pm-auth__form">
-        <CTAButton className="pm-auth__submit" onClick={() => navigate("/signin")}>
-          Sign in
+        <CTAButton className="pm-auth__submit" onClick={onClick}>
+          {label}
         </CTAButton>
       </div>
     </AuthLayout>
   );
 
-  if (authLink.errorCode) return page(LINK_FAILED.title, LINK_FAILED.sub);
-
-  if (!CONFIRMATION.includes(authLink.type)) {
-    return page(
-      "There’s no confirmation link here.",
-      "This page is for the link in the email we send when you sign up. If you’ve confirmed your email already, you can sign in."
+  if (fromLink && session) {
+    return page("Your email is confirmed.", "Your Pebble Math account is ready.", "Continue", () =>
+      navigate("/dashboard", { replace: true })
     );
   }
 
-  if (loading) return <PageLoading />;
+  const email = session?.user?.email ?? authLink.email;
+  const signIn = () => navigate("/signin", { state: email ? { email } : null });
 
-  // Came from a confirmation link, but Supabase couldn't sign anyone in
-  // with it.
-  if (!session) return page(LINK_FAILED.title, LINK_FAILED.sub);
+  if (fromLink) return page("Your email is confirmed.", "Sign in to carry on.", "Sign in", signIn);
 
-  return page("Your email is confirmed.", "Your Pebble Math account is ready.");
+  if (authLink.errorCode) {
+    return page(
+      "This account is already confirmed.",
+      "Sign in with your email and password. If it asks you to confirm your email first, sign up again with the same email for a new link.",
+      "Sign in",
+      signIn
+    );
+  }
+
+  return page("You can sign in below.", undefined, "Sign in", signIn);
 }

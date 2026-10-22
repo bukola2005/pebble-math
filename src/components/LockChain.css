@@ -1,4 +1,5 @@
-/* Mum's chain and its padlocks. Calm: no bounce, no sparkle. */
+/* Mum's chain and its padlocks. Calm: no bounce; one small burst of
+   sparkles as a lock springs open. */
 .pm-chain {
   display: block;
   width: 100%;
@@ -81,6 +82,49 @@
 .pm-lock--gone .pm-lock__swing {
   transform: translateY(150px) rotate(24deg);
   opacity: 0;
+}
+
+/* --- sparkles as the lock springs open --------------------------------------------
+   The basket's sparkles (BasketGame.css), a little bigger, sent outwards
+   from the shackle: up to 50ms of stagger, then 420ms of flight. They stay
+   bright for most of it and fade at the end. Each star turns about its own
+   middle. */
+.pm-lock-sparkle {
+  fill: var(--pm-white);
+  filter: drop-shadow(0 0 3px rgba(153, 166, 249, 0.95));
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: pm-lock-sparkle 0.42s cubic-bezier(0.3, 0.7, 0.4, 1) both;
+}
+
+.pm-lock-sparkle--lavender {
+  fill: var(--pm-purple);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.95));
+}
+
+@keyframes pm-lock-sparkle {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(var(--mx), var(--my)) scale(1) rotate(45deg);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(140deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-lock-sparkle {
+    display: none;
+  }
 }
 
 /* --- the card version: locks in a row, the open ones lighter ---------------------- */

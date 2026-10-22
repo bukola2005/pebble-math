@@ -13,14 +13,48 @@ import "./LockChain.css";
               away. -1 for none.
     small     the card version: no sagging chain, locks in a row
 
-  An open lock is drawn open; one that has just fallen away is gone.
-  Without motion (prefers-reduced-motion) the same steps happen, just
-  without anything moving.
+  An open lock is drawn open; one that has just fallen away is gone. As
+  the shackle springs, a handful of sparkles fly out from it, the same
+  ones the basket sends (BasketGame.jsx). Without motion
+  (prefers-reduced-motion) the same steps happen, just without anything
+  moving, and without the sparkles.
 */
 
 const LINK_GAP = 22;
 
-function Padlock({ x, y, state }) {
+/*
+  Six four-point stars, alternately white and lavender (never orange),
+  that scatter a little from the shackle and then fly outwards, all within
+  half a second. [direction x, direction y] for each.
+*/
+const SPARKLE_DIRECTIONS = [
+  [-1, -0.55],
+  [-0.4, -1],
+  [0.35, -1],
+  [1, -0.6],
+  [-0.95, 0.35],
+  [0.9, 0.4],
+];
+const STAR = "M0 -14 L3.3 -3.3 L14 0 L3.3 3.3 L0 14 L-3.3 3.3 L-14 0 L-3.3 -3.3 Z";
+
+function Sparkles() {
+  return SPARKLE_DIRECTIONS.map(([x, y], i) => (
+    <path
+      key={i}
+      className={`pm-lock-sparkle${i % 2 ? " pm-lock-sparkle--lavender" : ""}`}
+      d={STAR}
+      style={{
+        "--mx": `${x * 22}px`,
+        "--my": `${y * 22}px`,
+        "--dx": `${x * 95}px`,
+        "--dy": `${y * 95}px`,
+        animationDelay: `${i * 10}ms`,
+      }}
+    />
+  ));
+}
+
+function Padlock({ x, y, state, sparkle }) {
   return (
     <g className={`pm-lock pm-lock--${state}`} transform={`translate(${x} ${y})`}>
       <g className="pm-lock__swing">
@@ -32,6 +66,12 @@ function Padlock({ x, y, state }) {
         <circle className="pm-lock__hole" cx="0" cy="42" r="5" />
         <rect className="pm-lock__hole pm-lock__slot" x="-2" y="44" width="4" height="10" rx="2" />
       </g>
+      {/* Outside the swing, so they don't fall with the lock. */}
+      {sparkle && (
+        <g transform="translate(0 16)" aria-hidden="true">
+          <Sparkles />
+        </g>
+      )}
     </g>
   );
 }
@@ -98,7 +138,13 @@ export default function LockChain({ total = 7, open = 0, opening = -1, small = f
         ))}
 
       {xs.map((x, i) => (
-        <Padlock key={i} x={x} y={small ? 8 : chainY(x) - 6} state={stateOf(i)} />
+        <Padlock
+          key={i}
+          x={x}
+          y={small ? 8 : chainY(x) - 6}
+          state={stateOf(i)}
+          sparkle={i === opening && stage === "open"}
+        />
       ))}
     </svg>
   );

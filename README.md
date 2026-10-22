@@ -124,7 +124,8 @@ public/characters/*.webp    the eight monsters, halos cleaned up
 public/characters/mother-sheet.svg
                             Zizi's mother; story artwork only, never playable
 public/characters/mum-face.webp
-                            her face, cut from that sheet, behind her chain
+                            her face, smiling, from the opening film (2.5 s),
+                            behind her chain
 public/zizi/*.webp          Zizi: six looks (zizi-headband, -cornrows, -afro, -puffs,
                             -twists, -braids) and the original, zizi-default
 public/video/pre-intro.*    the opening film (webm + mp4 + poster)
@@ -361,7 +362,9 @@ at once as a `stall_progress` row. The first time, Blob says "You did it!
 Look, the first lock is open!" over Mum's face and her chain of seven
 padlocks (one for the tutorial, one for each of the six stalls): the first lock's key turns, it springs open with a soft sound
 (made in the browser, `lib/sound.js`; the corner switch mutes it with the
-voice), and it falls away. No confetti, stars or score. A card then shows
+voice), and it falls away. As it springs, a handful of sparkles fly out
+from the shackle, the basket's sparkles a little bigger, in under half a
+second (none with reduced motion). No confetti, star ratings or score. A card then shows
 the seven locks, one open and six closed. A child who has cleared the stall
 before sees that card first when they come back, then starts at round 2:
 no tutorial, no practice. If `stall_progress` can't be read, the game
@@ -459,7 +462,9 @@ sections of `docs/privacy-and-terms-draft.md`, word for word, read at build
 time: edit the draft and the pages follow. The draft's own preamble and its
 notes for reviewers aren't shown. Every `[BRACKETED]` placeholder is
 highlighted until it's filled in. The landing page's footer links to both,
-and the sign-up form says that creating an account means agreeing to them.
+and the sign-up form has a checkbox, "I agree to the Terms of Use and the
+Privacy Notice", with both linked (they open in a new tab). Create account
+stays disabled until it is ticked.
 
 **Delete my account**, at the foot of the dashboard, asks the grown-up to
 type DELETE. It then calls `delete_my_account()` (in `supabase/schema.sql`),
@@ -478,11 +483,22 @@ confirmation email again and keeps its first password; the "check your
 email" screen says so.
 
 **The confirmation link** in the sign-up email lands on `/confirmed`, which
-says "Your email is confirmed." with a button to sign in. Opening the link
-also signs the grown-up in on that device, so the button goes straight on
-to the dashboard there. A link that had expired or been used, or a visit
-with no link at all, gets a plain sentence saying so and the same button;
-the page is never blank.
+never shows an error: no red, no status codes, nothing from Supabase, and
+the link's details are taken out of the address bar once read. One calm
+sentence and one button:
+
+| Arriving with | Says | Button |
+|---|---|---|
+| a good link (which also signs them in) | Your email is confirmed. | Continue, to the dashboard |
+| a good link, but the sign-in didn't stick on this device | Your email is confirmed. | Sign in |
+| a link that had been used or had run out | This account is already confirmed. | Sign in |
+| no link at all | You can sign in below. | Sign in |
+
+"Sign in" carries the parent's address to `/signin` in router state (never
+the address bar, which ends up in browser history and server logs), from
+the session or from the link's own sign-in. The sign-in page fills it in
+and puts the cursor in the password box. When the address can't be read,
+usually after a used link, the form is simply empty.
 
 **Forgotten passwords.** "Forgot your password?" on sign-in →
 `/forgot-password` emails a reset link → `/reset-password` sets the new one.

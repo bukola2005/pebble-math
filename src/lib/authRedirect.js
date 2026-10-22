@@ -26,12 +26,29 @@ const read = () => {
 
 const params = read();
 
+// The address inside a link's sign-in (the access token's "email" claim).
+// Only decoded, never checked: it is used to fill in the sign-in form, not
+// to sign anyone in. Kept in memory, never stored.
+function emailIn(token) {
+  try {
+    const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(part.padEnd(Math.ceil(part.length / 4) * 4, "=")), (c) => c.charCodeAt(0));
+    const email = JSON.parse(new TextDecoder().decode(bytes)).email;
+    return typeof email === "string" && email ? email : null;
+  } catch {
+    return null;
+  }
+}
+
 export const authLink = {
   // "recovery" for a password-reset link, "signup" for a confirmation link,
   // null when the page wasn't opened from an emailed link.
   type: params.get("type"),
   // e.g. "otp_expired" when the link was too old or already used.
   errorCode: params.get("error_code") ?? params.get("error"),
+  // The parent's address, when the link carried a sign-in. /confirmed
+  // passes it to the sign-in form if this device couldn't keep the sign-in.
+  email: params.get("access_token") ? emailIn(params.get("access_token")) : null,
 };
 
 /**
