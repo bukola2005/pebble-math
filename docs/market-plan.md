@@ -132,9 +132,9 @@ A rough map of what a child should be able to do, to aim each stall at. **Not ch
 ## Open questions
 
 - **Side views.** Every stall currently faces front. A market where some stalls sit left and right would feel like a place rather than a backdrop. Worth one experiment before committing to seven front-facing scenes.
-- **The dashboard.** It is bare because nothing has been played yet. Once stalls produce data, it needs: which children, when they last played, which locks are open, and — the useful part — where a child keeps getting stuck. Streaks, a store, pets and loot are all possible later, but none of them should arrive before the dashboard answers "is my child learning anything".
+- **The dashboard.** It is bare because nothing has been played yet. Once stalls produce data, it needs: which children, when they last played, which places are open, and — the useful part — where a child keeps getting stuck. Streaks, a store, pets and loot are all possible later, but none of them should arrive before the dashboard answers "is my child learning anything".
 - **Avatar outfits.** All six Zizi looks currently wear the same clothes. Six distinct outfits, including the parasol one, would make the picker feel like a choice rather than a hairstyle menu.
-- **Animation.** The game is still. Sparkles travelling from a correct object to the counter, a meter that fills, a lock that turns — small motions that tell a child something happened.
+- **Animation.** The game is still. Sparkles travelling from a correct object to the counter, a meter that fills, a lantern that lights — small motions that tell a child something happened.
 
 ---
 

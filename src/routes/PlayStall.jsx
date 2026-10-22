@@ -5,7 +5,6 @@ import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
 import DialogueBox from "../components/DialogueBox";
 import HintButton from "../components/HintButton";
-import LockChain from "../components/LockChain";
 import PlayHud from "../components/PlayHud";
 import RewardItems from "../components/RewardItems";
 import Sparkles, { SPARKLES_LAND_MS } from "../components/Sparkles";
@@ -20,7 +19,6 @@ import {
   CHAPTER_ONE,
   capitalise,
   fillLine,
-  lockWords,
   numberName,
   orderWords,
   readOrderWords,
@@ -35,7 +33,8 @@ import {
   setUpChapterRound,
   setUpRound,
 } from "../data/fruitStall";
-import { LOCK_COUNT, LOCK_STALLS, MUM_FACE, ORANGE } from "../data/market";
+import { LANTERN } from "../data/lanterns";
+import { ORANGE, SELLER_PORTRAIT } from "../data/market";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
@@ -52,7 +51,7 @@ const STALL_ID = "fruit-stall";
 // The numeral tray for Stage C's reading round.
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 
-// How long the full meter glows before the lock opens.
+// How long the full meter glows before the end.
 const GLOW_MS = 800;
 
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -86,20 +85,18 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               stall_progress gets its row now.
     finishing after round 5's Next: its segment of the meter fills and the
               whole meter glows
-  The first time the stall is cleared:
-    reward    Blob: "You did it! Look, the first lock is open!" One lock
-              on Mum's chain turns, falls away, and a soft sound plays.
-    locks     a card: how many of Mum's locks are open, how many closed,
-              and that the tutorial is finished
-  And always, last:
-    end       Blob's errand, something to try away from the screen (and,
-              if the locks card didn't just say so, that the tutorial is
-              finished and more of the market is coming)
+  And last:
+    end       Blob's errand, something to try away from the screen, and
+              that the tutorial is finished and more of the market is
+              coming
 
-  A child who has finished the tutorial plays Chapter 1 instead, after
-  the locks card ("welcome"): the same stall, with full crates on the
-  table. Stage A adds past ten (data/fruitStall.js, CHAPTER_ONE_ROUNDS):
-    ask       the seller asks the child to pack the new oranges (once)
+  A child who has finished the tutorial plays Chapter 1 instead: the same
+  stall, with full crates on the table. Stage A adds past ten
+  (data/fruitStall.js, CHAPTER_ONE_ROUNDS):
+    ask       Grandma asks the child to pack the new oranges and mind the
+              stall, and goes along the row to ask about their mother
+              (once): she walks out of the picture. From here the child
+              serves the customers alone.
     play      fill the basket; its empty spaces are outlined
     closing   it shuts into a crate, which goes up onto the table with
               the others (the basket is empty again)
@@ -108,8 +105,8 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               both, and only then the number
   Stage B takes away, cracking a crate open when there aren't enough
   loose oranges:
-    ask       the seller gives a customer's order ("one crate and five
-              loose oranges"), which waits on a cloth beside the basket
+    ask       a customer gives their order ("one crate and five loose
+              oranges"), which waits on a cloth beside the basket
     play      carry crates and loose oranges to it. In the first round
               there aren't enough loose ones, and nothing says so: the
               child runs out, reaches for another, and only then does
@@ -120,23 +117,29 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
     done      the order glows and the customer takes it
     summary   Blob: "One crate… and seven loose. Seventeen."
   Stage C is three test rounds, with nothing to help: no outlines, no
-  hint, no Blob, no counting aloud, and the basket put away. Grandma's
-  order stays up with a Done button; the counter starts empty.
+  hint, no Blob, no counting aloud, and the basket put away. The
+  customer's order stays up with a Done button; the counter starts empty.
     play      carry crates and loose oranges from the stall to the
               counter (anything can be taken back). Done checks it: the
               crates, then the loose ones. Wrong: "Count again…", and they
               try again, as often as they like. Every answer is saved
               (lib/attempts.js) with the step that broke.
               In the reading round, once the right oranges are handed
-              over, Grandma asks how many that is, and the child taps
+              over, the customer asks how many that is, and the child taps
               numerals into two slots under the counter: tens under the
               crates, ones under the loose oranges.
     done      the counter glows and the customer takes it
-  The first time Chapter 1 is finished (after Stage C) it is saved (a
-  "fruit-stall-chapter-1" row), which earns the straw hat and the tally
-  stick (data/rewards.js), and a card says so and that the market is
-  opening up: the map is next. It opens no lock: the stall's lock is the
-  tutorial's.
+  At the end of Chapter 1:
+    back      Grandma comes back (into the picture, and on a card): no
+              news yet. Her lantern arrives, and the first time one more,
+              for serving the customers alone; after that, one for coming
+              back (data/lanterns.js). She points at the next part of the
+              market.
+    opening   the first time only: Chapter 1 is saved (a
+              "fruit-stall-chapter-1" row), which earns the straw hat and
+              the tally stick (data/rewards.js); a card says Grandma gives
+              them, and that the market is opening up: the map is next.
+    end       Blob's errand
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
@@ -147,7 +150,7 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
   and round 5 once Blob has explained it), sparkles fly from the basket's
   count into the next segment, which lights as they land, with a soft
   rising "yes". The last one makes the meter glow, with a warmer sound,
-  and then the lock opens. A right answer to "How many MORE?" gets the
+  and then the end comes. A right answer to "How many MORE?" gets the
   "yes" too. It is not a score: no number, nothing to compare, and it
   starts empty each time.
 */
@@ -173,14 +176,17 @@ export default function PlayStall() {
   const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID);
   const [chapterJustCleared, setChapterJustCleared] = useState(false);
   const [lanternsToday, setLanternsToday] = useState(0); // earned this visit (data/lanterns.js)
+  // Chapter 1: Grandma's two lines, then she goes along the row to ask,
+  // and comes back at the end.
+  const [introStep, setIntroStep] = useState(0);
+  const [grandmaAway, setGrandmaAway] = useState(false);
   // Stage C's reading round: handed over, and the number going in.
   const [handed, setHanded] = useState(false);
   const [entry, setEntry] = useState(null); // { tens, ones, active }
   const [inBasket, setInBasket] = useState(() => round.prefilled);
   const [counted, setCounted] = useState([]);
-  const [phase, setPhase] = useState(newcomer ? "award" : clearedBefore ? "welcome" : "ask");
+  const [phase, setPhase] = useState(newcomer ? "award" : "ask");
   const [cleared, setCleared] = useState(clearedBefore);
-  const [justCleared, setJustCleared] = useState(false);
   const [beat, setBeat] = useState(0);
   const [hintStep, setHintStep] = useState(0);
   const [hintTaps, setHintTaps] = useState(0);
@@ -327,15 +333,21 @@ export default function PlayStall() {
   };
 
   // After a round: on to the next. After the last: its segment of the
-  // meter fills and the meter glows, then the lock opens, if the stall has
-  // only just been cleared (or, for Chapter 1, the card that says the
-  // market is opening up), and then the end.
+  // meter fills and the meter glows, then (in Chapter 1) Grandma comes
+  // back with her lantern, and then the end.
   const afterRound = () => {
     if (round.index + 1 < roundCount) startRound(round.index + 1);
     else {
       primeSound(); // from this tap, so the sounds may play
       setPhase("finishing");
-      fillMeter(() => setPhase(justCleared ? "reward" : chapterJustCleared ? "opening" : "end"));
+      fillMeter(() => {
+        if (!chapterOne) {
+          setPhase("end");
+          return;
+        }
+        setGrandmaAway(false);
+        setPhase("back");
+      });
     }
   };
 
@@ -432,7 +444,8 @@ export default function PlayStall() {
 
   // A lantern (data/lanterns.js): for the teaching chapter (Stages A and
   // B, once), and for the test rounds (Stage C), again each time a child
-  // comes back and does them. Counted once it is saved.
+  // comes back and does them. Both are given at the end of the chapter,
+  // when Grandma is back to lend them. Counted once it is saved.
   const earnChapterLantern = (reason) => {
     earnLantern(player.id, CHAPTER_ONE_ID, reason)
       .then(({ earned, error }) => {
@@ -479,6 +492,7 @@ export default function PlayStall() {
     fillMeter(null, gameRef.current?.order());
     if (round.index === roundCount - 1) {
       clearChapter();
+      earnChapterLantern("teaching");
       earnChapterLantern(chapterDoneBefore ? "replay" : "test");
     }
   };
@@ -608,17 +622,14 @@ export default function PlayStall() {
         else if (next !== "puzzled") fillMeter();
         // Chapter 1's last round: the chapter is cleared, and saved now.
         if (stageB && round.index === roundCount - 1) clearChapter();
-        // Stage B's last order: the teaching is done.
-        if (stageB && round.index === FIRST_TEST_ROUND - 1) earnChapterLantern("teaching");
         // Round 5 done: the stall is cleared. Saved the moment it happens,
-        // so a child who closes the game now still finds the lock open.
+        // so a child who closes the game now goes on to Chapter 1 next time.
         if (!chapterOne && round.index === ROUND_COUNT - 1 && !cleared) {
           setCleared(true);
-          setJustCleared(true);
           clearStall(player.id, STALL_ID)
             .then(({ error }) => {
-              // The child sees the lock open either way; it opens again
-              // next time if this didn't save.
+              // If this didn't save, the child plays the tutorial again
+              // next time.
               if (error) console.warn("Couldn't save that the Fruit Stall was cleared.", error);
             })
             .catch((error) => console.warn("Couldn't save that the Fruit Stall was cleared.", error));
@@ -719,9 +730,7 @@ export default function PlayStall() {
         ? FRUIT_STALL.practiceWon
         : stepped
           ? steppedLine
-          : phase === "reward"
-            ? FRUIT_STALL.lockOpen
-            : null;
+          : null;
   const spotlight =
     phase === "summary"
       ? (chapterOne ? [null, "crates", "loose", "both"] : [null, "crate", "tray", "both"])[Math.min(lineStep, 3)]
@@ -730,14 +739,8 @@ export default function PlayStall() {
         : null;
   const nextStep = () => {
     if (stepped && lineStep < stepped.length) setLineStep((n) => n + 1);
-    else if (phase === "reward") setPhase("locks");
     else afterRound();
   };
-  // How many of Mum's locks are open: one for each place in the market
-  // cleared (LOCK_STALLS). Chapter 1's row isn't one of them.
-  const locksOpen = new Set(
-    [...(player.cleared_stalls ?? []), ...(cleared ? [STALL_ID] : [])].filter((id) => LOCK_STALLS.includes(id))
-  ).size;
   // What the child has earned, for their profile: what was saved before,
   // and what they have cleared today.
   const earned = [
@@ -759,7 +762,7 @@ export default function PlayStall() {
         }
       }}
     >
-      <StallBackdrop close seller stallRef={setStall} />
+      <StallBackdrop close seller sellerAway={grandmaAway} stallRef={setStall} />
       <PlayHud
         player={player}
         earned={earned}
@@ -827,21 +830,9 @@ export default function PlayStall() {
           onSlot={pickSlot}
         />
 
-        {blobSays && phase !== "reward" && (
+        {blobSays && (
           <div className="pm-stall__blob" aria-hidden="true">
             <img src={SPEAKERS.blob.portrait} width={736} height={900} alt="" draggable={false} />
-          </div>
-        )}
-
-        {/* The first lock on Mum's chain opens. */}
-        {phase === "reward" && (
-          <div className="pm-stall__reward">
-            <div className="pm-stall__mum">
-              <img src={MUM_FACE.src} width={MUM_FACE.w} height={MUM_FACE.h} alt="Zizi's mum" draggable={false} />
-            </div>
-            <div className="pm-stall__chain">
-              <LockChain total={LOCK_COUNT} open={locksOpen - 1} opening={locksOpen - 1} />
-            </div>
           </div>
         )}
 
@@ -872,19 +863,27 @@ export default function PlayStall() {
                 !chapterOne
                   ? FRUIT_STALL.ask
                   : !stageB
-                    ? CHAPTER_ONE.intro
+                    ? CHAPTER_ONE.intro[introStep]
                     : round.index === FIRST_ORDER_ROUND
                       ? CHAPTER_ONE.orderFirst
                       : CHAPTER_ONE.orderNext
               }
               values={values}
               ziziPortrait={zizi}
-              onNext={() => setPhase("play")}
+              onNext={() => {
+                // Grandma's two lines, then she goes.
+                if (chapterOne && !stageB && introStep < CHAPTER_ONE.intro.length - 1) {
+                  setIntroStep((n) => n + 1);
+                  return;
+                }
+                if (chapterOne && !stageB) setGrandmaAway(true);
+                setPhase("play");
+              }}
             />
           )}
 
-          {/* Stage C: Grandma's order, and Done. In the reading round, once
-              it is handed over, the numerals for the two slots. */}
+          {/* Stage C: the customer's order, and Done. In the reading round,
+              once it is handed over, the numerals for the two slots. */}
           {stageC && phase === "play" && (
             <DialogueBox
               line={entry ? CHAPTER_ONE.test.total : round.read ? CHAPTER_ONE.test.read : CHAPTER_ONE.test.build}
@@ -930,14 +929,13 @@ export default function PlayStall() {
         <Sparkles key={burst.key} x={burst.x} y={burst.y} dx={burst.dx} dy={burst.dy} />
       ))}
 
-      {phase === "welcome" && (
-        <LocksCard open={locksOpen} onDone={() => setPhase(chapterOne ? "ask" : round.ask ? "question" : "play")} />
+      {phase === "back" && (
+        <GrandmaBack first={chapterJustCleared} onDone={() => setPhase(chapterJustCleared ? "opening" : "end")} />
       )}
-      {phase === "locks" && <LocksCard open={locksOpen} finished onDone={() => setPhase("end")} />}
       {phase === "opening" && <OpeningCard onDone={() => setPhase("end")} />}
       {phase === "end" && (
         <EndForNow
-          sayEnd={!justCleared && !chapterJustCleared}
+          sayEnd={!chapterJustCleared}
           endLine={chapterOne ? CHAPTER_ONE.endLine : undefined}
           onDone={() => navigate("/play")}
         />
@@ -967,36 +965,60 @@ export default function PlayStall() {
 }
 
 /**
- * Mum's locks: how many are open, how many still closed, so the child sees
- * the shape of what is ahead. After the first lock opens (`finished`: it
- * also says the tutorial is done), and first thing when a child who has
- * opened it comes back.
+ * The end of Chapter 1: Grandma is back from asking along the row, with no
+ * news yet. Her lantern arrives (and the first time one more, for serving
+ * the customers alone; after that, one for coming back), each with the
+ * line that brings it, and she points at the next part of the market.
+ * In her voice. Without motion the lanterns are simply there.
  */
-function LocksCard({ open, finished = false, onDone }) {
+function GrandmaBack({ first, onDone }) {
   const buttonRef = useRef(null);
-  const words = lockWords(open, LOCK_COUNT);
-  const done = finished ? FRUIT_STALL.locks.finished : "";
+  const { title, point, button } = CHAPTER_ONE.back;
+  const lines = first ? CHAPTER_ONE.back.first : CHAPTER_ONE.back.again;
 
-  useReadAloud(`${words.open} ${words.closed} ${done}`.trim(), SPEAKERS.blob.voice);
+  useReadAloud(`${title} ${lines.join(" ")} ${point}`, SPEAKERS.seller.voice);
 
   useEffect(() => {
     buttonRef.current?.focus({ preventScroll: true });
   }, []);
 
   return (
-    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-locks-title">
-      <div className="pm-stall__end-card pm-stall__locks-card">
-        <img className="pm-stall__locks-mum" src={MUM_FACE.src} width={MUM_FACE.w} height={MUM_FACE.h} alt="" draggable={false} />
-        <div className="pm-stall__locks-row">
-          <LockChain total={LOCK_COUNT} open={open} small />
-        </div>
-        <h2 id="pm-locks-title" className="pm-stall__end-title">
-          {words.open}
+    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-back-title">
+      <div className="pm-stall__end-card pm-stall__back-card">
+        <img
+          className="pm-stall__back-grandma"
+          src={SELLER_PORTRAIT.src}
+          width={SELLER_PORTRAIT.w}
+          height={SELLER_PORTRAIT.h}
+          alt=""
+          draggable={false}
+        />
+        <h2 id="pm-back-title" className="pm-stall__end-title">
+          {title}
         </h2>
-        <p className="pm-stall__end-text">{words.closed}</p>
-        {finished && <p className="pm-stall__end-quiet">{done}</p>}
+        <ul className="pm-stall__back-lanterns">
+          {lines.map((text, i) => (
+            <li key={text} className="pm-stall__back-beat" style={{ "--beat": i }}>
+              <img
+                className="pm-stall__back-lantern"
+                src={LANTERN.lit.src}
+                width={LANTERN.lit.w}
+                height={LANTERN.lit.h}
+                alt=""
+                draggable={false}
+              />
+              <p className="pm-stall__end-text">{text}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="pm-stall__back-point">
+          {point}
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h13m-5-5 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </p>
         <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
-          {FRUIT_STALL.locks.button}
+          {button}
         </button>
       </div>
     </div>
@@ -1004,9 +1026,10 @@ function LocksCard({ open, finished = false, onDone }) {
 }
 
 /**
- * The first time Chapter 1 is finished: what Grandma gives (the straw hat
- * and the tally stick, from the fruit stall), and that the market is
- * opening up. The map comes next; for now, this card says so.
+ * The first time Chapter 1 is finished, after Grandma is back: what she
+ * gives (the straw hat and the tally stick, from the fruit stall), and
+ * that the market is opening up. The map comes next; for now, this card
+ * says so.
  */
 function OpeningCard({ onDone }) {
   const buttonRef = useRef(null);
@@ -1038,7 +1061,8 @@ function OpeningCard({ onDone }) {
 /**
  * The end of a session: Blob's errand, one small thing to try away from
  * the screen, picked at random from data/dialogue.js. `sayEnd` adds that
- * the tutorial is finished, when the locks card hasn't just said so.
+ * this is as far as the market goes for now, unless the card before just
+ * said so.
  */
 function EndForNow({ sayEnd, endLine = FRUIT_STALL.endForNow.endLine, onDone }) {
   const buttonRef = useRef(null);

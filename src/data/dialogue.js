@@ -17,13 +17,19 @@
 
 /**
  * Who can speak. The child's Zizi is labelled with their game name, never
- * "Zizi". The fruit seller is the child's grandmother: the child helps her
- * sell, and the orders come from her.
+ * "Zizi". The fruit seller is the child's grandmother. In Chapter 1 she
+ * goes along the row to ask about the child's mother, so the child minds
+ * the stall and serves the customers alone. A line with no known speaker
+ * (`narrator`) has no name above it.
+ *
+ * A line may carry its own `voice` (lib/speech.js), for a way of saying
+ * it: "blob-small" is Blob in a small voice.
  */
 export const SPEAKERS = {
   zizi: { label: "{name}", voice: "zizi" },
   blob: { label: "Blob", voice: "blob", portrait: "/characters/purple.webp" },
   seller: { label: "Grandma", voice: "seller", portrait: "/stall/seller-portrait.webp" },
+  customer: { label: "Customer", voice: "customer" },
 };
 
 /**
@@ -32,10 +38,10 @@ export const SPEAKERS = {
  * knows the answer to anything; when he wonders, he wonders out loud.
  */
 export const SCENE_1 = [
-  { speaker: "zizi", text: "Mommy..." },
-  { speaker: "blob", text: "Psst! Over here. You are not alone." },
+  { speaker: "zizi", text: "Mommy…" },
+  { speaker: "blob", text: "…I'm lost too.", voice: "blob-small" },
   { speaker: "zizi", text: "Who are you?" },
-  { speaker: "blob", text: "I'm Blob. I'm lost too." },
+  { speaker: "blob", text: "I'm Blob." },
   { speaker: "blob", text: "But I have friends in this market. They will help us look." },
   { speaker: "zizi", text: "Where is my mommy?" },
   { speaker: "blob", text: "I don't know. The traders see everyone, but they can't leave their stalls." },
@@ -98,23 +104,8 @@ export const FRUIT_STALL = {
 
   next: "Next",
 
-  // The stall is cleared (after round 5, the first time): a lock on Mum's
-  // chain opens.
-  lockOpen: { speaker: "blob", text: "You did it! Look, the first lock is open!" },
-
-  // The card after it, and the one a returning child sees first: how many
-  // of Mum's locks are open, and how many are still closed. Right after the
-  // lock opens it also says the tutorial is finished.
-  locks: {
-    open: ["No locks are open yet.", "One lock is open!", "{n} locks are open!"],
-    closed: ["Every lock is open!", "One more to open.", "{n} more to open."],
-    finished: "You've finished the tutorial. More of the market is coming.",
-    button: "Next",
-  },
-
   // The end of a session, after round 5. Blob's errand (ERRANDS, below)
-  // comes first. `endLine` is said under it when the locks card didn't
-  // just say it (a child replaying the tutorial).
+  // comes first, and `endLine` under it.
   endForNow: {
     errandLabel: "Something to try at home",
     endLine: "That's the end of the tutorial. More of the market is coming.",
@@ -129,8 +120,13 @@ export const FRUIT_STALL = {
  * there aren't enough loose oranges.
  */
 export const CHAPTER_ONE = {
-  // The first thing said, once, as the chapter starts.
-  intro: { speaker: "seller", text: "{name}! More oranges came in. Can you pack them for me?" },
+  // The first thing said, once, as the chapter starts: Grandma asks the
+  // child to mind the stall, and goes along the row to ask about their
+  // mother. From here the child serves the customers alone.
+  intro: [
+    { speaker: "seller", text: "{name}, more oranges came in. Can you pack them and mind my stall?" },
+    { speaker: "seller", text: "I'll go along the row and ask everyone about your mother." },
+  ],
   // After a full basket goes up onto the table as a crate. Like "Ten and
   // three": one step at a time, the crates lighting first, then the loose
   // oranges, then both, and only then the number. `{crates}` is "Three
@@ -140,28 +136,45 @@ export const CHAPTER_ONE = {
     { show: "{crates} and {loose} loose.", say: "and {loose} loose." },
     { show: "{crates} and {loose} loose. {sum}.", say: "{sum}." },
   ],
-  // Stage B. Grandma gives each order; `{order}` is "one crate and five
-  // loose oranges". The order itself waits on a cloth beside the basket.
-  orderFirst: { speaker: "seller", text: "{name}, I need {order}. Can you get them ready?" },
-  orderNext: { speaker: "seller", text: "Now I need {order}." },
+  // Stage B. A customer gives each order; `{order}` is "one crate and
+  // five loose oranges". The order itself waits on a cloth beside the
+  // basket.
+  orderFirst: { speaker: "customer", text: "{name}, I need {order}. Can you get them ready?" },
+  orderNext: { speaker: "customer", text: "Now I need {order}." },
   orderGoal: "Fill the order",
   // Only once the child has run out of loose oranges and reached for more.
   // Then (and in round 1 of Stage B, only then) a tapped crate opens.
   wall: { speaker: "blob", text: "Hmm. Not enough loose ones. What's inside a crate?" },
   // Said under Blob's errand at the end, when Chapter 1 is being replayed.
   endLine: "That's all at the fruit stall for now. More of the market is coming.",
-  // Stage C, three test rounds: Grandma's order and an empty counter, and
-  // nothing else. No hint, no Blob, no counting aloud. `{want}` is the
+  // Stage C, three test rounds: a customer's order and an empty counter,
+  // and nothing else. No hint, no Blob, no counting aloud. `{want}` is the
   // number ("33"); `{readOrder}` is "One crate and five oranges".
   test: {
-    build: { speaker: "seller", text: "A customer wants {want} oranges." },
-    read: { speaker: "seller", text: "{readOrder}." },
+    build: { speaker: "narrator", text: "A customer wants {want} oranges." },
+    read: { speaker: "customer", text: "{readOrder}." },
     // After the right oranges are handed over in the reading round.
-    total: { speaker: "seller", text: "How many oranges is that?" },
+    total: { speaker: "customer", text: "How many oranges is that?" },
     done: "Done",
   },
-  // The first time Chapter 1 is finished: what Grandma gives, and the map
-  // is next.
+  // The end of Chapter 1: Grandma comes back from asking along the row,
+  // with no news yet. She lends the child her lantern, so they can see
+  // further into the haze, and the first time one more, for serving the
+  // customers alone (data/lanterns.js); after that, one for coming back.
+  // Then she points at the next part of the market. Each line in `first`
+  // or `again` brings one lantern.
+  back: {
+    title: "Grandma is back!",
+    first: [
+      "No news yet. But take my lantern, so you can see further into the haze.",
+      "And this one is for serving the customers all by yourself.",
+    ],
+    again: ["No news yet. Thank you for coming back to help. Take another lantern."],
+    point: "Look, over there. More of the market!",
+    button: "Next",
+  },
+  // The first time Chapter 1 is finished, after Grandma is back: what she
+  // gives, and the map is next.
   opening: {
     title: "The market is opening up!",
     gift: "Grandma gives you a straw hat and a tally stick.",
@@ -199,12 +212,6 @@ export const ERRANDS = {
     "Next time fruit goes into a bag, count to ten. How many are left?",
   ],
 };
-
-/** "One lock is open!" / "Four more to open." for any number of locks. */
-export function lockWords(open, total) {
-  const pick = (list, count) => list[Math.min(count, 2)].replace("{n}", capitalise(NUMBER_WORDS[count] ?? String(count)));
-  return { open: pick(FRUIT_STALL.locks.open, open), closed: pick(FRUIT_STALL.locks.closed, total - open) };
-}
 
 /**
  * Blob's hint button: each tap gives the next step, never the answer.

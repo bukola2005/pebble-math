@@ -56,11 +56,14 @@ const subscribe = (listener) => {
 /** Whether reading aloud is muted, kept in step across every screen. */
 export const useMuted = () => useSyncExternalStore(subscribe, isMuted, isMuted);
 
-// One browser voice for everyone, pitched a little differently per speaker.
+// One browser voice for everyone, pitched a little differently per speaker
+// (and "blob-small", Blob in a small voice: slower and quieter).
 const STYLE = {
   zizi: { pitch: 1.3, rate: 0.95 },
   blob: { pitch: 1.12, rate: 0.95 },
+  "blob-small": { pitch: 1.08, rate: 0.82, volume: 0.6 },
   seller: { pitch: 0.92, rate: 0.92 },
+  customer: { pitch: 1.0, rate: 0.95 },
   narrator: { pitch: 1.05, rate: 0.95 },
 };
 
@@ -127,6 +130,7 @@ export function speak(text, speaker = "narrator", { onEnd } = {}) {
     const style = STYLE[speaker] ?? STYLE.narrator;
     utterance.pitch = style.pitch;
     utterance.rate = style.rate;
+    utterance.volume = style.volume ?? 1;
     if (onEnd) {
       utterance.onend = onEnd;
       utterance.onerror = onEnd;

@@ -13,7 +13,7 @@ import "./StallBackdrop.css";
  *
  * Decorative only; the screens say in words what matters.
  */
-export default function StallBackdrop({ dim = false, close = false, seller = false, stallRef }) {
+export default function StallBackdrop({ dim = false, close = false, seller = false, sellerAway = false, stallRef }) {
   return (
     <div
       className={`pm-backdrop${dim ? " pm-backdrop--dim" : ""}${close ? " pm-backdrop--close" : ""}`}
@@ -25,7 +25,7 @@ export default function StallBackdrop({ dim = false, close = false, seller = fal
           layer.id === "stall" && seller ? (
             <img
               key="seller"
-              className="pm-layer pm-layer--seller"
+              className={`pm-layer pm-layer--seller${sellerAway ? " is-away" : ""}`}
               src={SELLER.src}
               width={SELLER.w}
               height={SELLER.h}

@@ -153,9 +153,8 @@ create policy "players_delete_own" on public.players
 
 -- ----------------------------------------------------------------------
 -- stall_progress: one row per market stall, or stall chapter, a child has
--- cleared. Only a place's own row opens one of Mum's locks (LOCK_STALLS
--- in src/data/market.js); a chapter's row ('fruit-stall-chapter-1')
--- records progress without opening another. Adding one is one more id in
+-- cleared: 'fruit-stall' for the Fruit Stall's tutorial,
+-- 'fruit-stall-chapter-1' for its Chapter 1. Adding one is one more id in
 -- the check.
 --
 -- It has no profile_id of its own, so its policies check that the player

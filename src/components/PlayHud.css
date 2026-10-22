@@ -154,7 +154,7 @@
   pointer-events: none;
 }
 
-/* The last segment filled: the ring glows, briefly, before the lock. */
+/* The last segment filled: the ring glows, briefly, before the end. */
 .pm-hud__face.is-glowing {
   animation: pm-ring-glow 0.8s ease-out both;
 }

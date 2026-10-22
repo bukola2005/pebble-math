@@ -47,7 +47,7 @@ export default function DialogueBox({
 
   const [shaking, setShaking] = useState(null);
 
-  useReadAloud(silent ? null : text, speaker.voice);
+  useReadAloud(silent ? null : text, line.voice ?? speaker.voice);
 
   // The note is said each time it is given, even when it hasn't changed.
   useEffect(() => {
