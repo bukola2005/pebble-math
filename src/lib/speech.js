@@ -114,7 +114,9 @@ export function speak(text, speaker = "narrator", { onEnd } = {}) {
   pending = window.setTimeout(() => {
     // Words in capitals ("How many MORE…") are for the eye; some voices
     // would spell them out letter by letter.
-    const utterance = new SpeechSynthesisUtterance(text.replace(/\b[A-Z]{2,}\b/g, (word) => word.toLowerCase()));
+    // Non-breaking hyphens ("thirty-four" on screen) are read as plain ones.
+    const said = text.replace(/\b[A-Z]{2,}\b/g, (word) => word.toLowerCase()).replace(/\u2011/g, "-");
+    const utterance = new SpeechSynthesisUtterance(said);
     utterance.voice = chosen;
     utterance.lang = chosen.lang;
     const style = STYLE[speaker] ?? STYLE.narrator;

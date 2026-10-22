@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { NUMBER_WORDS, capitalise } from "../data/dialogue";
 import { getZiziLook } from "../data/zizi";
 import { canSpeak, setMuted, useMuted } from "../lib/speech";
 import "./PlayHud.css";
@@ -7,8 +8,14 @@ import "./PlayHud.css";
  * The corners of every play screen: a small way out on the left, and on
  * the right the child's game name (the one place it is shown) with the
  * sound switch: reading aloud and the game's few sounds.
+ *
+ * At a stall, `meter` adds the progress meter beside the name: one segment
+ * per round, outlined until it is answered, then solid lavender.
+ *   { total, filled, glow, ref }   `glow` while the last one has just
+ *                                  filled; `ref` for the sparkles to aim at
+ * It only ever says how far through the child is: no number, no score.
  */
-export default function PlayHud({ player }) {
+export default function PlayHud({ player, meter = null }) {
   const navigate = useNavigate();
   const muted = useMuted();
   const zizi = getZiziLook(player.character);
@@ -33,7 +40,32 @@ export default function PlayHud({ player }) {
         </svg>
       </button>
 
-      <div className="pm-hud__right">
+      <div className={`pm-hud__right${meter ? " pm-hud__right--meter" : ""}`}>
+        {meter && (
+          <div
+            ref={meter.ref}
+            className={`pm-hud__meter${meter.glow ? " pm-hud__meter--glow" : ""}`}
+            role="progressbar"
+            aria-label="How far through"
+            aria-valuemin={0}
+            aria-valuemax={meter.total}
+            aria-valuenow={meter.filled}
+            aria-valuetext={
+              meter.filled >= meter.total
+                ? "All done"
+                : `${capitalise(NUMBER_WORDS[meter.filled])} done, ${NUMBER_WORDS[meter.total - meter.filled]} to go`
+            }
+          >
+            {Array.from({ length: meter.total }, (_, i) => (
+              <span
+                key={i}
+                data-segment={i}
+                className={`pm-hud__segment${i < meter.filled ? " pm-hud__segment--on" : ""}`}
+              />
+            ))}
+          </div>
+        )}
+
         {player.game_name && (
           <p className="pm-hud__name">
             <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />

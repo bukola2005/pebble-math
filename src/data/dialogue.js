@@ -30,6 +30,7 @@ export const SCENE_1 = [
   { speaker: "zizi", text: "Mommy..." },
   { speaker: "blob", text: "Psst! Over here. You are not alone." },
   { speaker: "zizi", text: "Who are you?" },
+  { speaker: "blob", text: "I'm Blob! I'm here to help you." },
   { speaker: "blob", text: "I'm your friend! I saw what happened." },
   { speaker: "blob", text: "The haze mixed up the whole market and took your mom to the tower." },
   { speaker: "zizi", text: "Can we get her back?" },
@@ -118,6 +119,50 @@ export const FRUIT_STALL = {
 };
 
 /**
+ * Chapter 1, the Fruit Stall proper, for a child who has finished the
+ * tutorial. Stage A: adding past ten, with full crates on the table.
+ * Stage B: customers' orders, taking away, and cracking a crate open when
+ * there aren't enough loose oranges.
+ */
+export const CHAPTER_ONE = {
+  // The first thing said, once, as the chapter starts.
+  intro: { speaker: "seller", text: "{name}! More oranges came in. Can you pack them for me?" },
+  // After a full basket goes up onto the table as a crate. Like "Ten and
+  // three": one step at a time, the crates lighting first, then the loose
+  // oranges, then both, and only then the number. `{crates}` is "Three
+  // crates", `{loose}` "four", `{sum}` "Thirty-four".
+  cratesAnd: [
+    { show: "{crates}…", say: "{crates}…" },
+    { show: "{crates} and {loose} loose.", say: "and {loose} loose." },
+    { show: "{crates} and {loose} loose. {sum}.", say: "{sum}." },
+  ],
+  // Stage B. The seller gives each order; `{order}` is "one crate and five
+  // loose oranges". The order itself waits on a cloth beside the basket.
+  orderFirst: { speaker: "seller", text: "Here come the customers, {name}! This one wants {order}." },
+  orderNext: { speaker: "seller", text: "Next customer! They want {order}." },
+  orderGoal: "Fill the order",
+  // Only once the child has run out of loose oranges and reached for more.
+  // Then (and in round 1 of Stage B, only then) a tapped crate opens.
+  wall: { speaker: "blob", text: "Hmm. Not enough loose ones. What's inside a crate?" },
+  // Said under Blob's errand at the end, when Chapter 1 is being replayed.
+  endLine: "That's all at the fruit stall for now. More of the market is coming.",
+  // The first time Chapter 1 is finished: the map is next.
+  opening: {
+    title: "The market is opening up!",
+    text: "Soon you can visit the rest of the market.",
+    button: "Next",
+  },
+};
+
+/** "one crate and five loose oranges", for an order. */
+export function orderWords({ crates, loose }) {
+  const parts = [];
+  if (crates) parts.push(`${NUMBER_WORDS[crates]} ${crates === 1 ? "crate" : "crates"}`);
+  if (loose) parts.push(`${NUMBER_WORDS[loose]} loose ${loose === 1 ? "orange" : "oranges"}`);
+  return parts.join(" and ");
+}
+
+/**
  * Blob's errand at the end of a session: one small thing to try away from
  * the screen, so the idea goes home with the child. Plain words, nothing
  * to check. One list per stall; one line is picked at random.
@@ -155,6 +200,19 @@ export const NUMBER_WORDS = [
   "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
   "seventeen", "eighteen", "nineteen", "twenty",
 ];
+
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+/**
+ * Any number up to 99 in words: 34 → "thirty-four". The hyphen is a
+ * non-breaking one, so a line never ends on "thirty-"; lib/speech.js reads
+ * it as an ordinary hyphen.
+ */
+export function numberName(n) {
+  if (n <= 20) return NUMBER_WORDS[n];
+  const ones = n % 10;
+  return ones ? `${TENS[Math.floor(n / 10)]}\u2011${NUMBER_WORDS[ones]}` : TENS[n / 10];
+}
 
 /** "thirteen" → "Thirteen", for the start of a sentence. */
 export const capitalise = (word) => word.charAt(0).toUpperCase() + word.slice(1);

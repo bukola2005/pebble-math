@@ -81,3 +81,129 @@
   object-fit: cover;
   object-position: 50% 4%;
 }
+
+/* --- the progress meter, at a stall ----------------------------------------------
+   The same glass as the name, one segment per round: outlined until it is
+   answered, then solid lavender. Beside the name where there's room; on a
+   phone, where there isn't, a row of small segments inside the name's
+   chip, under the name. */
+.pm-hud__meter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-glass-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1.5px var(--pm-glass-border), var(--pm-shadow-sm);
+}
+
+.pm-hud__segment {
+  width: 12px;
+  height: 20px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px var(--pm-purple-500);
+  transition:
+    background-color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+}
+
+/* Lights as the sparkles land (routes/PlayStall.jsx times the two together). */
+.pm-hud__segment--on {
+  background: var(--pm-purple);
+  box-shadow:
+    inset 0 0 0 2px var(--pm-purple),
+    0 0 8px rgba(153, 166, 249, 0.9);
+}
+
+/* The last segment filled: the whole meter glows, briefly, before the lock. */
+.pm-hud__meter--glow {
+  animation: pm-meter-glow 0.8s ease-out both;
+}
+
+@keyframes pm-meter-glow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1.5px var(--pm-glass-border),
+      0 0 0 0 rgba(153, 166, 249, 0);
+  }
+  35% {
+    box-shadow:
+      inset 0 0 0 2px var(--pm-purple),
+      0 0 24px 8px rgba(153, 166, 249, 0.95);
+  }
+}
+
+@media (max-width: 599px) {
+  /* The meter and the name share one cell, so the segments sit in the
+     name's chip, under the name and beside the face. */
+  .pm-hud__right--meter {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: start;
+  }
+
+  .pm-hud__right--meter .pm-hud__name {
+    grid-area: 1 / 1;
+    min-width: 136px;
+    height: 50px;
+  }
+
+  .pm-hud__right--meter .pm-hud__name span {
+    align-self: flex-start;
+    margin-top: 6px;
+  }
+
+  .pm-hud__right--meter > .pm-hud__button {
+    grid-area: 1 / 2;
+  }
+
+  .pm-hud__right--meter .pm-hud__meter {
+    z-index: 1;
+    grid-area: 1 / 1;
+    align-self: end;
+    justify-self: start;
+    height: auto;
+    margin: 0 0 9px 52px;
+    padding: 0;
+    gap: 3px;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .pm-hud__right--meter .pm-hud__segment {
+    width: 10px;
+    height: 9px;
+    border-radius: 3px;
+  }
+
+  /* There, the whole chip glows when the last segment fills. */
+  .pm-hud__right--meter .pm-hud__meter--glow {
+    animation: none;
+  }
+
+  .pm-hud__right--meter:has(.pm-hud__meter--glow) .pm-hud__name {
+    animation: pm-meter-glow 0.8s ease-out both;
+  }
+}
+
+/* Without motion: segments simply light, and the glow is steady. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-hud__segment {
+    transition: none;
+  }
+
+  .pm-hud__meter--glow,
+  .pm-hud__right--meter:has(.pm-hud__meter--glow) .pm-hud__name {
+    animation: none;
+    box-shadow:
+      inset 0 0 0 2px var(--pm-purple),
+      0 0 20px 6px rgba(153, 166, 249, 0.9);
+  }
+}

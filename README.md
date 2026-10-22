@@ -59,7 +59,9 @@ src/
     speech.js               reads lines aloud with on-device voices only, with the mute switch
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
-    sound.js                the lock's soft sound, made in the browser (no files)
+    sound.js                the game's sounds, made in the browser (no files): the
+                            lock, a correct answer, the progress meter filling,
+                            a crate cracking open
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     account.js              "Delete my account" (calls delete_my_account() in the database)
@@ -81,7 +83,9 @@ src/
     PlayLoading.jsx         the loading screen: the art + a bar driven by real loading
     DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
-    PlayHud.jsx             the play screens' corners: a way out, game name, mute
+    PlayHud.jsx             the play screens' corners: a way out, game name, mute,
+                            and at a stall the progress meter
+    Sparkles.jsx            the small stars that fly to the basket's count and the meter
     BasketGame.jsx          oranges on the table, the basket and its crate of ten:
                             tap to count, drag to move
     HintButton.jsx          Blob's face in the corner: one step of help per tap
@@ -112,7 +116,8 @@ src/
   data/gameNames.js         the two word lists game names are built from
   data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
                             and Blob's errands for the end of a session
-  data/fruitStall.js        the five rounds, and round 1's order by age band
+  data/fruitStall.js        the tutorial's five rounds (round 1's order by age band)
+                            and Chapter 1's rounds
   data/market.js            the market's art: the six layers, basket, orange, crate,
                             the seller, Mum's face, and how many locks there are
   styles/game.css           the game screens' own tokens (garden green, paper)
@@ -357,6 +362,34 @@ A child gets a few small sparkles each time an orange goes into the basket:
 they fly from where it lands to the basket's count, in under half a second
 (CSS and SVG, none with reduced motion).
 
+*The progress meter* sits beside the child's name, in the same glass chip
+style (on a phone, inside the name's chip, under the name). It has one
+segment for each round the child plays today: five in the tutorial,
+three in Chapter 1, and it starts empty every time. When a round is
+answered (the order in round 1, a full basket in rounds 2 to 4, round 5
+once Blob has explained it), sparkles fly from the basket's count into the
+next segment, which turns from outlined to solid lavender as they land,
+with a soft rising sound. When the last fills, the meter glows briefly
+with a warmer sound, and then the lock opens. A right answer to "How many
+MORE?" gets the rising sound too. It is not a score: no number, no
+percentage, nothing to compare; it only shows how far through the child
+is. Without motion the segments simply light, with the same sounds.
+
+The sounds are made in `lib/sound.js`, and the corner switch mutes them
+(reduced motion doesn't: it is about movement, not sound):
+
+- **A correct answer** (240 ms): two sine notes a fifth apart, the second
+  70 ms after the first, each gliding up a whole tone in 60 ms (660 to
+  740 Hz, then 990 to 1110 Hz), with a faint sine an octave above the
+  second (1980 to 2220 Hz) for air. 8 ms rise, then they fade.
+- **The meter full** (half a second): four triangle-wave notes rising C5,
+  E5, G5, C6 (523, 659, 784, 1047 Hz), 80 ms apart, through a 2400 Hz
+  low-pass, each fading over 260 ms, over a quiet sine at C4 (262 Hz).
+- **A crate cracking open** (140 ms): a burst of white noise through a
+  1800 Hz band-pass (Q 1.5), gone in 35 ms; a second, quieter one 25 ms
+  later at 3200 Hz (Q 2); under them a triangle wave falling from 220 to
+  110 Hz in 80 ms.
+
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row. The first time, Blob says "You did it!
 Look, the first lock is open!" over Mum's face and her chain of seven
@@ -365,10 +398,53 @@ padlocks (one for the tutorial, one for each of the six stalls): the first lock'
 voice), and it falls away. As it springs, a handful of sparkles fly out
 from the shackle, the basket's sparkles a little bigger, in under half a
 second (none with reduced motion). No confetti, star ratings or score. A card then shows
-the seven locks, one open and six closed. A child who has cleared the stall
-before sees that card first when they come back, then starts at round 2:
-no tutorial, no practice. If `stall_progress` can't be read, the game
-starts as if nothing were cleared.
+the seven locks, one open and six closed. A child who has finished the
+tutorial sees that card first when they come back, then plays Chapter 1
+(below). If `stall_progress` can't be read, the game starts as if
+nothing were cleared.
+
+*Chapter 1, Stage A: adding past ten.* The same stall, now with full
+crates on the table: each a crate of ten oranges in two rows of five, with
+a small 10, stacked at the table's left end. Each round is a sum like
+28 + 6 (`CHAPTER_ONE_ROUNDS` in `data/fruitStall.js`: 28 + 6, 17 + 5,
+39 + 4), though the child never sees it written. Two crates on the table,
+eight oranges in the basket with its two empty spaces outlined, so the
+child can see how many more it needs without counting, and six loose on
+the stall. They drag two in; the basket shuts into a crate, which goes up
+onto the table with the others, and four loose oranges are left. Then
+Blob, one step at a time: "Three crates…" (the crates light), "…and four
+loose." (the loose oranges light), "Thirty-four." (both, and only now the
+number). Objects first, the number second. The seller asks the child to
+pack the new oranges once, at the start.
+
+*Chapter 1, Stage B: taking away, by cracking a crate.* Three orders
+(32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
+the table and an empty basket, stepped left to make room for the
+customer's order: a cloth beside it with the order drawn as dotted
+outlines, a crate shape for each crate, a circle for each loose orange.
+The child carries crates and loose oranges to it, by touch or mouse.
+Each order needs more loose oranges than there are. In the first, nothing
+warns the child and nothing is greyed out: they carry the two loose ones
+across, run out, and reach for another (or wait two seconds), and only then does Blob ask
+"Hmm. Not enough loose ones. What's inside a crate?" (his line stays up,
+with no button, and the crates breathe a little light). A tap on a crate
+splits it open with a short wooden crack; its ten oranges spill into the
+basket's ten spaces, and from there they can be carried to the order. A
+crate tapped before that does nothing. In the next two orders the child
+can open one whenever they like, and Blob asks again only if they run
+out. Anything the order doesn't want springs back. When the order is
+full it glows, its segment of the meter fills, the customer takes it,
+and Blob names what is left the same way: "One crate…" (lights the
+crate), "…and seven loose." (lights the loose ones, in the basket),
+"Seventeen." No hint button in Stage B yet.
+
+*The end of Chapter 1.* Finishing it the first time is saved at once as
+a `fruit-stall-chapter-1` row in `stall_progress`, and a card says "The
+market is opening up!": the map comes next. It opens no lock. Mum's
+locks are one per place in the market (`LOCK_STALLS` in
+`data/market.js`: for now just the tutorial's `fruit-stall`), so a
+chapter's row is progress, not a lock. A child coming back after
+Chapter 1 plays it again, ending on Blob's errand.
 
 *The end of a session.* After round 5 Blob gives the child one small thing
 to try away from the screen, picked at random from `ERRANDS` in
