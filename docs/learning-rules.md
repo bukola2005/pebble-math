@@ -24,7 +24,7 @@ ten, which stays on screen, and the rest stay on the stall.
 
 | Round | In the basket | On the stall | What happens |
 |---|---|---|---|
-| 2 | 8 | 5 | Blob asks "How many MORE to fill the basket?" The empty spaces are outlined. Two go in, the basket becomes a crate of ten, three are left: "Ten and three. Thirteen." |
+| 2 | 8 | 5 | Blob wonders "Hmm. How many MORE to fill the basket?" The empty spaces are outlined. Two go in, the basket becomes a crate of ten, three are left: "Ten and three. Thirteen." |
 | 3 | 7 | 6 | The same question, no outlines. |
 | 4 | 9 | 7 | Blob asks nothing. The child does it. |
 | 5 | 6 | 3 | **The break.** Six and three is nine, so the basket never fills and the trained move doesn't apply. The child puts all nine in, then Blob says, a line at a time: "Hmm. The basket didn't fill this time." "Nine. One short of ten." (the one empty space lights up) "Not every pile makes a ten. That's fine." |
@@ -93,5 +93,8 @@ the per-round record of hints isn't saved yet.
   7–8 asks for 3–10, 9 and over asks for 5–10. The game covers
   kindergarten to Primary 3, and the dashboard now offers only Under 7 and
   7–8; the 9-and-over range is kept for children added before that.
-- **No coins or currency.** Things unlock through locks and levels. Money
-  arrives with the money chapter, designed alongside the naira wallet.
+- **No coins or currency.** Places open when the child has helped enough
+  to see further into the haze: a lantern is what lets them see, and two
+  lanterns open the next place on the main path ([story.md](story.md)).
+  There are no locks and no levels, only places in one market. Money
+  arrives at the Money Corner, designed alongside the naira wallet.

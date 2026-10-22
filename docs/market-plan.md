@@ -104,16 +104,16 @@ Objects matter as much as operations. A child who only ever drags oranges learns
 
 ## The progress meter
 
-Not a score, and not coins. A small meter sits on screen. Each correct answer sends a few sparkles into it. When it fills — at the end of a chapter — one monster or one item unlocks.
+Not a score, and not coins. A small meter sits on screen. Each correct answer sends a few sparkles into it. When it fills — at the end of a chapter — the chapter is done, and the trader comes back from asking along the row to lend a lantern ([story.md](story.md)).
 
 Why this shape:
 
 - It rewards **finishing**, not being fast and not being first.
 - The sparkles travelling from the object to the meter tell the child *that* something happened, without a message interrupting them.
-- One unlock per chapter means a child meets a new friend roughly every session, which is a better rhythm than a stream of small rewards.
+- Friends are not prizes for filling it. One of Blob's friends joins at each new place, and how many have joined is how close the child is to finding their mother, not a stream of small rewards.
 - It needs no second currency, so the naira in the Money Corner stays the only money in the game.
 
-The monsters are the unlocks. One joins per chapter, so by the end of the market a child has met all of them. Blob is the guide and is never unlocked; he is there from the first minute.
+The monsters are Blob's friends from around the market, joining the search. One joins at each new place, so by the end of the market the child has met all seven and the whole market is looking. Blob is the first, there from the first minute. He is not a guide: he is lost too, he doesn't know the answers, and he is a friend rather than a teacher.
 
 ## Number facts by year
 
