@@ -937,7 +937,7 @@ button.pm-stack-crate:focus-visible {
 
 /* Chapter 1: a tapped crate's 10, there for a moment and gone. Quiet: no
    sound, no bounce. */
-.pm-stack-crate .pm-stack-crate__tag {
+.pm-stack-crate__tag.is-peek {
   animation: pm-tens-peek 1.6s var(--pm-ease) both;
 }
 
@@ -955,7 +955,73 @@ button.pm-stack-crate:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pm-stack-crate .pm-stack-crate__tag {
+  .pm-stack-crate__tag.is-peek {
     animation: none;
   }
+}
+
+/* The cloth's own count, in its top corner: the basket's tag, pinned on.
+   It pops with each change, so a crate's 10 shows as a jump. */
+.pm-order__tag {
+  position: absolute;
+  left: -12px;
+  top: -14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 46px;
+  height: 46px;
+  padding: 0 6px;
+  border-radius: 8px 8px 12px 12px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 2.5px #7a4a24,
+    0 4px 8px rgba(70, 40, 20, 0.35);
+  font-family: var(--pm-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  animation: pm-count-pop 0.3s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-count-pop {
+  from {
+    scale: 1.35;
+  }
+}
+
+/* Stage A's loose oranges on the table, and how many, as Blob names them. */
+.pm-game__group-tag {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 6px;
+  translate: -50% -100%;
+  border-radius: 12px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 2.5px #7a4a24,
+    0 4px 8px rgba(70, 40, 20, 0.35);
+  font-family: var(--pm-font-display);
+  font-size: 1.4rem;
+  color: var(--pm-ink);
+  animation: pm-count-pop 0.3s var(--pm-ease-pop) both;
+}
+
+/* Stage B: the loose ones are all in the basket now, and light up with it. */
+.pm-game--spot-loose .pm-basket.has-loose,
+.pm-game--spot-both .pm-basket.has-loose {
+  z-index: 6;
+}
+
+.pm-game--spot-loose .pm-basket.has-loose .pm-basket__orange img,
+.pm-game--spot-both .pm-basket.has-loose .pm-basket__orange img {
+  filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 10px rgba(255, 220, 130, 0.9));
+}
+
+.pm-game--spot-loose .pm-basket.has-loose .pm-basket__tag {
+  scale: 1.3;
 }

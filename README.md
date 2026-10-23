@@ -88,6 +88,7 @@ src/
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
     PlayHud.jsx             the play screens' corners: a way out, game name, mute,
                             and at a stall the progress meter; the name opens the profile
+    MarketMap.jsx           the market map: one clear picture, the haze over it in CSS
     ProfilePanel.jsx        the child's profile over the paused game: friends,
                             lanterns and keepsakes
     Sparkles.jsx            the small stars that fly to the basket's count and the meter
@@ -118,6 +119,7 @@ src/
   data/monsters.js          Blob, and the seven a grown-up can pick
   data/friends.js           Blob's seven friends, who join the search one place at a time
   data/lanterns.js          how lanterns are earned and spent, and their two pictures
+  data/places.js            the market's places on the map: one row each, { id, name, x, y, r }
   data/zizi.js              Zizi's six looks and her original look
   data/gameNames.js         the two word lists game names are built from
   data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
@@ -149,7 +151,8 @@ public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogu
 public/ui/lantern-*.webp    the lantern, lit and unlit (the same lamp, cut to one box)
 public/friends/*.webp       dark silhouettes of the six friends still to join, made
                             from their art (a few KB each instead of the full pictures)
-public/art/*.webp           market map (day, misty), not used yet; the blank
+public/art/*.webp           the market map, clear (market-map-day: the map screen; the
+                            haze is drawn in CSS), a misty one not used, and the blank
                             storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
 public/fonts/               Plus Jakarta Sans and Fredoka One, with their licences,
@@ -382,8 +385,9 @@ one empty space lights up) "Oh. Not every pile makes a ten." Blob
 notices; he doesn't instruct.
 
 Rounds 1 to 5 are **the tutorial**, not a chapter; nothing on screen says
-"Chapter 1". When it ends, Blob's errand card says the tutorial is finished
-and more of the market is coming.
+"Chapter 1". When it ends the stall starts again straight away as Chapter
+1, as if the child had just come back: Grandma, the crates, a fresh meter.
+No card, and no trip back to "Who's playing?".
 
 A child gets a few small sparkles each time an orange goes into the basket:
 they fly from where it lands to the basket's count, in under half a second
@@ -422,9 +426,9 @@ The sounds are made in `lib/sound.js`, and the corner switch mutes them
   lands: G5 (784 Hz) at 270 ms and C6 (1047 Hz) 50 ms later.
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
-at once as a `stall_progress` row; then Blob's errand card. No confetti,
+at once as a `stall_progress` row; then Chapter 1 starts. No confetti,
 star ratings or score. A child who has finished the tutorial plays
-Chapter 1 when they come back (below). If `stall_progress` can't be read,
+Chapter 1 when they come back, too (below). If `stall_progress` can't be read,
 the game starts as if nothing were cleared. There are no locks and no
 chain: nobody took the mother ([docs/story.md](docs/story.md)).
 
@@ -470,10 +474,18 @@ lesson.
 "15 oranges, please.", "23 oranges, please." and "8 oranges, please."
 (32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
 the table and an empty basket, stepped left to make room for a plain
-cloth beside it, with nothing drawn on it. The child carries crates and
-loose oranges to it, by touch or mouse, in any mix that makes the number;
-anything that would make more springs back, and anything on the cloth can
-be dragged or tapped back. Each order needs more loose oranges than there
+cloth beside it, with nothing drawn on it. The order is never put away:
+it stays up all round as a small strip at the top, "Customer · 23
+oranges" (there is no Next to dismiss it, and no "Fill the order": the
+number is the order). The child carries crates and loose oranges to the
+cloth, by touch or mouse, in any mix; anything that would make more than
+the number springs back, and anything on the cloth can be dragged or
+tapped back. The cloth has its own count, like the basket's, in its
+corner, and it counts oranges, not things: two crates and three loose go
+10, 20, 21, 22, 23. Counting on in tens and then ones is what the crates
+are for, and it lets the child check before they say they're done. Done
+appears on the strip once something is on the cloth; the customer checks
+it, and if it isn't the number, "Hmm, let me count these again." Each order needs more loose oranges than there
 are. In the first, nothing warns the child and nothing is greyed out:
 they carry the two loose ones across, run out, and reach for another (or
 wait two seconds), and only then does Blob ask "Hmm. Not enough loose
@@ -484,15 +496,22 @@ and from there they can be carried to the order. Before that, a tapped
 crate only shows its 10. In the next two orders the child can open one
 whenever they like (a tap opens it, so there the ten oranges spilling
 out are what show the ten), and Blob asks again only if they run out.
-When what is on the cloth makes the number it glows, its segment of the
-meter fills, the customer takes it, and Blob asks about what is left the
-same way: "One crate…", "…and seven loose.", "How many is that?" (17, 71
-or 8). No hint button in Stage B.
+When it is right the cloth glows, its segment of the meter fills, the
+customer takes it, and any loose oranges left on the table go into the
+basket with the rest, so the loose ones are one group ("and eight loose"
+is a basket of eight, not seven and one on its own). Then Blob asks about
+what is left the same way: "One crate…" (each crate shows its 10),
+"…and eight loose." (the basket shows its 8), "How many is that?" (18, 81
+or 9). In Stage A, where the loose ones are on the table, a tag over them
+shows how many as he names them. No hint button in Stage B.
 
 *Chapter 1, Stage C: three tests.* Nothing to help: no outlines, no
 hint, no 10 on the crates, no Blob, nothing counted aloud, and the basket
-put away. The customer's order stays up with a Done button, and the
-counter, a plain wooden top in the middle, starts empty. "33 oranges,
+put away. The customer's order stays up, with Done once something is on
+the counter, a plain wooden top in the middle that starts empty. The
+counter counts what is on it, like the cloth (it shows what was placed,
+never what to place), except in the reading round, where its count would
+be the answer to "How many oranges is that?". "33 oranges,
 please.": the child
 carries crates and loose oranges from the stall to the counter (anything
 can be dragged or tapped back) and taps Done. "One crate and five
@@ -524,14 +543,32 @@ in the child's profile in the game (below) and, for a parent, on the
 dashboard, as item cards drawn in SVG: the hat isn't worn on the Zizi
 picture, whose seven looks are painted with their heads in different
 places. A child coming back after Chapter 1 plays it again (Grandma
-leaves and comes back again), ending on Blob's errand.
+leaves and comes back again).
 
-*The end of a session.* After round 5 Blob says one small thing he is
-going to try himself, away from the screen, and asks the child to try it
-too, picked at random from `ERRANDS` in `data/dialogue.js` ("I'm going to
-count out ten of anything at home, and see what's left over. You try it
-too?"): his own idea, not homework. Then a quiet word that this is as far
-as the market goes for now, and a way back to "Who's playing?".
+*Blob's errand.* Then Blob says one small thing he is going to try
+himself, away from the screen, and asks the child to try it too, picked at
+random from `ERRANDS` in `data/dialogue.js` ("I'm going to count out ten
+of anything at home, and see what's left over. You try it too?"): his own
+idea, not homework. Its button goes on to the map.
+
+*Chapter 1 ends on the map* (`components/MarketMap.jsx`, built from the
+map demo). One clear picture of the market (`public/art/market-map-day.webp`)
+with the haze drawn over it in CSS: a purple veil, and a soft-masked hole
+in it over each open place, where the clear picture shows through. Each
+place is one row in `data/places.js`, `{ id, name, x, y, r }`. A dashed
+chain runs along the path from place to place, with a small padlock
+between each open place and the next one that isn't; places still in the
+haze have a drifting wisp and a padlock, open ones a dot, and the Fruit
+Stall has the child's pin, with their Zizi's face. The first time, the
+two lanterns float in from below to the Provision Store, its haze pulls
+back, its chain falls away, and they are spent: that is what lanterns are
+for. A tap on a place opens its card: the Fruit Stall's "Carry on here"
+plays Chapter 1 again; the Provision Store says the haze has lifted but
+nobody is ready yet; a place still in the haze says Blob's friends haven't
+reached it. The corner's home button goes back to "Who's playing?". On a
+phone held upright the map is as tall as the screen and scrolls sideways.
+The map picture is fetched in the background during the tests, so it is
+there when the map opens.
 
 *Blob's hint button*, bottom left: each tap gives the next step (a
 question, then the empty spaces outlined, then Blob trying the move
@@ -587,9 +624,12 @@ place's teaching chapter (at the Fruit Stall, Chapter 1's Stages A and B),
 one for finishing its test rounds (Stage C), and one more every time the
 child comes back and does the test rounds again: only for coming back,
 never for being fast or right first time. Two open the next place on the
-main path; extras will open optional places off the main road. Neither is
-built, so none are spent yet, and finishing a chapter once always earns
-the two needed to go on. Each lantern earned is a row in `lanterns`
+main path: at the end of Chapter 1 the map opens the Provision Store with
+the two it earns (a place's `opensAfter` in `data/places.js`), and the
+profile shows them gone. Extras will open optional places off the main
+road (not built). What is spent is worked out from which places are open;
+it isn't saved. Finishing a chapter once always earns the two needed to
+go on. Each lantern earned is a row in `lanterns`
 (`teaching` and `test` once per place, `replay` each time), counted when a
 session starts. Chapter 1's are saved at its end, when Grandma is back to
 lend them, so a lantern never turns up in the profile before the child

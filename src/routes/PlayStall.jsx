@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import BasketAward from "../components/BasketAward";
 import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
 import DialogueBox from "../components/DialogueBox";
 import HintButton from "../components/HintButton";
+import MarketMap from "../components/MarketMap";
 import PlayHud from "../components/PlayHud";
 import RewardItems from "../components/RewardItems";
 import Sparkles, { SPARKLES_LAND_MS } from "../components/Sparkles";
@@ -33,8 +34,9 @@ import {
   setUpRound,
   totalChoices,
 } from "../data/fruitStall";
-import { LANTERN } from "../data/lanterns";
+import { LANTERN, LANTERNS_TO_OPEN } from "../data/lanterns";
 import { ORANGE, SELLER_PORTRAIT } from "../data/market";
+import { MAP_ART, PLACES, openCount } from "../data/places";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
@@ -85,10 +87,8 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               stall_progress gets its row now.
     finishing after round 5's Next: its segment of the meter fills and the
               whole meter glows
-  And last:
-    end       Blob's errand, something to try away from the screen, and
-              that the tutorial is finished and more of the market is
-              coming
+  And then straight into Chapter 1, the same stall, as if the child had
+  just come back.
 
   A child who has finished the tutorial plays Chapter 1 instead: the same
   stall, with full crates on the table. From here the game never breaks a
@@ -114,21 +114,25 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               and the number shows.
   Stage B takes away, cracking a crate open when there aren't enough
   loose oranges:
-    ask       a customer asks for a number ("15 oranges, please."), and a
-              plain cloth waits beside the basket
-    play      carry crates and loose oranges to it, any mix that makes the
-              number; anything that would go over springs back, and
-              anything on the cloth can be taken back. In the first round
+    play      a customer asks for a number ("15 oranges, please."), and it
+              stays up all round, as a small strip: "15 oranges". The
+              child carries crates and loose oranges to a plain cloth
+              beside the basket, any mix; anything that would go over
+              springs back, and anything on the cloth can be taken back.
+              The cloth counts in oranges, a crate as 10 (10, 20, 21…).
+              Done, once something is on it: the customer checks ("Hmm,
+              let me count these again." if it isn't right). In the first round
               there aren't enough loose ones, and nothing says so: the
               child runs out, reaches for another, and only then does
               Blob ask "What's inside a crate?" From then on a tapped crate
               splits open, with a wooden crack, and its ten oranges spill
               into the basket. (In the next rounds a crate can be opened
               whenever the child likes.)
-    done      the cloth makes the number: it glows and the customer takes
-              it
+    done      it glows and the customer takes it; the loose oranges left
+              on the table go into the basket, so they are one group
     summary   Blob: "One crate… and seven loose. How many is that?", and
-              the child taps it, as in Stage A
+              the child taps it, as in Stage A. As he names them, each
+              crate shows its 10 and the loose ones their number.
   Stage C is three test rounds, with nothing to help: no outlines, no
   hint, no Blob, no counting aloud, and the basket put away. The
   customer's order stays up with a Done button; the counter starts empty.
@@ -152,7 +156,12 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               "fruit-stall-chapter-1" row), which earns the straw hat and
               the tally stick (data/rewards.js); a card says Grandma gives
               them, and that the market is opening up: the map is next.
-    end       Blob's errand
+    end       Blob's errand, and then
+    map       the market map (components/MarketMap.jsx): the Fruit Stall
+              clear, the child's pin on it, and, the first time, the two
+              lanterns floating to the Provision Store as its haze pulls
+              back. "Carry on here" on the Fruit Stall plays Chapter 1
+              again.
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
@@ -168,8 +177,34 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
   starts empty each time.
 */
 
+/*
+  The stall starts afresh (a new `run`) when the tutorial ends, as
+  Chapter 1, and again from the map's "Carry on here", with what the child
+  has done today added to what was loaded.
+*/
 export default function PlayStall() {
   const { player, newcomer } = useOutletContext();
+  const [run, setRun] = useState({ n: 0, cleared: [], lanterns: 0 });
+  const now = run.n
+    ? {
+        ...player,
+        cleared_stalls: [...new Set([...(player.cleared_stalls ?? []), ...run.cleared])],
+        lanterns: player.lanterns == null ? null : player.lanterns + run.lanterns,
+      }
+    : player;
+  return (
+    <FruitStall
+      key={run.n}
+      player={now}
+      newcomer={run.n ? false : newcomer}
+      onAgain={({ cleared, lanterns }) =>
+        setRun((r) => ({ n: r.n + 1, cleared: [...r.cleared, ...cleared], lanterns: r.lanterns + lanterns }))
+      }
+    />
+  );
+}
+
+function FruitStall({ player, newcomer, onAgain }) {
   const clearedBefore = !newcomer && (player.cleared_stalls ?? []).includes(STALL_ID);
   // Once the tutorial is done, the stall is Chapter 1.
   const chapterOne = clearedBefore;
@@ -195,6 +230,11 @@ export default function PlayStall() {
   const [grandmaAway, setGrandmaAway] = useState(false);
   // Chapter 1: the number the child has said for "How many is that?"
   const [said, setSaid] = useState(null);
+  // Stage B: Done, and the customer found it right.
+  const [orderReady, setOrderReady] = useState(false);
+  // The map, at the very end: has it been reached (the next place's
+  // lanterns are spent then), and which place opens on it.
+  const [mapReached, setMapReached] = useState(false);
   // Stage C's reading round: handed over, and the number going in.
   const [handed, setHanded] = useState(false);
   const [entry, setEntry] = useState(null); // { tens, ones, active }
@@ -211,7 +251,6 @@ export default function PlayStall() {
   const [trayed, setTrayed] = useState(false);
   const [lineStep, setLineStep] = useState(0);
   const [stall, setStall] = useState(null); // the stall picture, once it's in the page
-  const navigate = useNavigate();
   const paused = usePaused(); // the child's profile is open over the game
   const gameRef = useRef(null);
   const tally = useRef({ hints: 0, wrong: 0 });
@@ -275,7 +314,7 @@ export default function PlayStall() {
   const stageC = round.stage === "C";
   // Stage B: the loose oranges still here (on the table or, once a crate
   // is cracked, in the basket), and how many more the order wants.
-  const looseHere = round.oranges.length + inBasket.length - delivered.loose.length;
+  const looseHere = new Set([...round.oranges, ...inBasket].filter((id) => !delivered.loose.includes(id))).size;
   const handedOver = delivered.crates.length * BASKET_HOLDS + delivered.loose.length;
   const stillWanted = stageB ? round.want - handedOver : 0;
   const loose = stageB ? looseHere : onTable;
@@ -345,10 +384,14 @@ export default function PlayStall() {
     setOrderTaken(false);
     setHanded(false);
     setEntry(null);
+    setOrderReady(false);
     clearRoundState();
     setTrayed(false);
     setLineStep(0);
-    setPhase(chapterOne ? (next.stage === "B" ? "ask" : "play") : index === 0 ? "ask" : next.ask ? "question" : "play");
+    setPhase(chapterOne ? "play" : index === 0 ? "ask" : next.ask ? "question" : "play");
+    // The map comes at the end: fetch it in the background while the
+    // child does the tests.
+    if (chapterOne && next.stage === "C") new Image().src = MAP_ART.src;
   };
 
   // After a round: on to the next. After the last: its segment of the
@@ -361,7 +404,7 @@ export default function PlayStall() {
       setPhase("finishing");
       fillMeter(() => {
         if (!chapterOne) {
-          setPhase("end");
+          onAgain({ cleared: [STALL_ID], lanterns: 0 });
           return;
         }
         setGrandmaAway(false);
@@ -451,12 +494,23 @@ export default function PlayStall() {
     }
   };
 
+  // Stage B: Done. The customer counts it: right, and the round goes on;
+  // not right, "Hmm, let me count these again.", as often as it takes.
+  const checkOrder = () => {
+    if (!stageB || phase !== "play" || orderReady || handedOver === 0) return;
+    primeSound(); // from this tap, for the "yes"
+    if (handedOver === round.want) {
+      setWrongTaps(0);
+      setOrderReady(true);
+    } else tryAgain();
+  };
+
   // Stage B: something carried to the customer's cloth. It goes on, in
   // any mix of crates and loose oranges, unless it would make more than
   // the number asked for; then it springs back. Stage C's counter takes
   // anything.
   const deliver = (id, kind) => {
-    if (!(stageB || stageC) || phase !== "play" || handed) return false;
+    if (!(stageB || stageC) || phase !== "play" || handed || orderReady) return false;
     if (stageB && handedOver + (kind === "crate" ? BASKET_HOLDS : 1) > round.want) return false;
     if (kind === "crate") {
       setCrates((list) => list.filter((x) => x !== id));
@@ -472,7 +526,7 @@ export default function PlayStall() {
   // Stage C: something taken back off the counter, to the stall.
   // Anything on Stage B's cloth or Stage C's counter can be taken back.
   const takeBack = (id, kind) => {
-    if (!(stageB || stageC) || phase !== "play" || handed) return false;
+    if (!(stageB || stageC) || phase !== "play" || handed || orderReady) return false;
     if (kind === "crate") {
       setDelivered((now) => ({ ...now, crates: now.crates.filter((x) => x !== id) }));
       setCrates((list) => [...list, id]);
@@ -648,7 +702,7 @@ export default function PlayStall() {
     if (phase !== "play") return undefined;
     let next = null;
     if (stageB) {
-      if (handedOver === round.want) next = "done";
+      if (orderReady) next = "done";
     } else if (stageC) {
       // Answered with "Done" (handOver), not by filling something.
     } else if (round.practice) {
@@ -692,7 +746,7 @@ export default function PlayStall() {
       next === "puzzled" ? 900 : 500
     );
     return () => cancel(id);
-  }, [phase, inBasket.length, onTable, round, player.id, cleared, delivered]);
+  }, [phase, inBasket.length, onTable, round, player.id, cleared, delivered, orderReady]);
 
   // The crate closes; the leftovers move to their cloth; then Blob says
   // what is there.
@@ -725,6 +779,13 @@ export default function PlayStall() {
       if (stageC) {
         afterRound();
         return;
+      }
+      // The loose oranges still on the table go into the basket with the
+      // rest, so "and seven loose" is one group of seven.
+      const onStall = round.oranges.filter((id) => !inBasket.includes(id) && !delivered.loose.includes(id));
+      if (onStall.length) {
+        gameRef.current?.noteWhere(onStall);
+        setInBasket((list) => [...list.filter((id) => !delivered.loose.includes(id)), ...onStall]);
       }
       setLineStep(1);
       setPhase("summary");
@@ -804,6 +865,12 @@ export default function PlayStall() {
     ...(cleared ? [STALL_ID] : []),
     ...(chapterJustCleared ? [CHAPTER_ONE_ID] : []),
   ];
+  // Lanterns spent: two for each place opened after the Fruit Stall, from
+  // the moment the map opens it.
+  const spent =
+    LANTERNS_TO_OPEN * (openCount([...(player.cleared_stalls ?? []), ...(mapReached && chapterJustCleared ? [CHAPTER_ONE_ID] : [])]) - 1);
+  // The place opening on the map now: the one Chapter 1 opens, the first time.
+  const opening = chapterJustCleared ? PLACES.find((place) => place.opensAfter === CHAPTER_ONE_ID)?.id ?? null : null;
 
   return (
     <div
@@ -823,6 +890,7 @@ export default function PlayStall() {
         player={player}
         earned={earned}
         lanterns={player.lanterns == null ? null : player.lanterns + lanternsToday}
+        spent={spent}
         meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }}
       />
 
@@ -866,6 +934,7 @@ export default function PlayStall() {
                   deliveredLoose: delivered.loose,
                   done: phase === "done",
                   taken: orderTaken,
+                  counts: true,
                 }
               : stageC
                 ? {
@@ -876,6 +945,9 @@ export default function PlayStall() {
                     done: phase === "done",
                     taken: orderTaken,
                     slots: round.read,
+                    // The counter's count, except in the reading round, where
+                    // it would show the answer to its own question.
+                    counts: !round.read,
                     entry,
                   }
                 : null
@@ -905,7 +977,18 @@ export default function PlayStall() {
         <div className="pm-stall__top">
           {round.practice && phase !== "award" && <p className="pm-stall__practice">{FRUIT_STALL.practice}</p>}
 
-          {phase === "play" && !wallLine && !stageC && (
+          {/* Stage B: the order, up all round, and Done once something is
+              on the cloth. */}
+          {stageB && (phase === "play" || phase === "done") && (
+            <OrderStrip
+              values={values}
+              onDone={phase === "play" && !orderReady && handedOver > 0 ? checkOrder : null}
+              note={wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
+              noteKey={wrongTaps}
+            />
+          )}
+
+          {phase === "play" && !wallLine && !stageB && !stageC && (
             <p className="pm-stall__goal" role="status">
               {round.practice ? (
                 <>
@@ -918,7 +1001,7 @@ export default function PlayStall() {
                   <span className="pm-stall__goal-words">{fillLine(FRUIT_STALL.goal, values)}</span>
                 </>
               ) : (
-                <span className="pm-stall__goal-words">{stageB ? CHAPTER_ONE.orderGoal : FRUIT_STALL.fillGoal}</span>
+                <span className="pm-stall__goal-words">{FRUIT_STALL.fillGoal}</span>
               )}
             </p>
           )}
@@ -959,7 +1042,7 @@ export default function PlayStall() {
               note={wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
               noteKey={wrongTaps}
               buttonLabel={CHAPTER_ONE.test.done}
-              onNext={entry ? null : handOver}
+              onNext={entry || handedOver === 0 ? null : handOver}
             />
           )}
 
@@ -1001,7 +1084,23 @@ export default function PlayStall() {
         <EndForNow
           sayEnd={!chapterJustCleared}
           endLine={chapterOne ? CHAPTER_ONE.endLine : undefined}
-          onDone={() => navigate("/play")}
+          onDone={() => {
+            setMapReached(true);
+            setPhase("map");
+          }}
+        />
+      )}
+      {phase === "map" && (
+        <MarketMap
+          zizi={zizi}
+          cleared={earned}
+          opening={opening}
+          onCarryOn={() =>
+            onAgain({
+              cleared: [...(cleared ? [STALL_ID] : []), ...(chapterJustCleared ? [CHAPTER_ONE_ID] : [])],
+              lanterns: lanternsToday,
+            })
+          }
         />
       )}
 
@@ -1159,6 +1258,40 @@ function EndForNow({ sayEnd, endLine = FRUIT_STALL.endForNow.endLine, onDone }) 
           {button}
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Stage B's order, up for the whole round: who asked, and the number
+ * ("23 oranges"), read aloud as the customer says it. Done appears once
+ * something is on the cloth; the customer's "Hmm, let me count these
+ * again." comes under it.
+ */
+function OrderStrip({ values, onDone, note, noteKey }) {
+  useReadAloud(fillLine(CHAPTER_ONE.order.text, values), SPEAKERS.customer.voice);
+
+  // Said each time it is given, even when it hasn't changed.
+  useEffect(() => {
+    if (note) speak(note, SPEAKERS.customer.voice);
+  }, [note, noteKey]);
+
+  return (
+    <div className="pm-stall__order" role="group" aria-label={SPEAKERS.customer.label}>
+      <p className="pm-stall__order-words">
+        <span className="pm-stall__order-who">{SPEAKERS.customer.label}</span>
+        <span className="pm-stall__order-want">{fillLine(CHAPTER_ONE.orderStrip, values)}</span>
+      </p>
+      {onDone && (
+        <button type="button" className="pm-stall__order-done" onClick={onDone}>
+          {CHAPTER_ONE.test.done}
+        </button>
+      )}
+      {note && (
+        <p key={noteKey} className="pm-stall__order-note" aria-live="polite">
+          {note}
+        </p>
+      )}
     </div>
   );
 }

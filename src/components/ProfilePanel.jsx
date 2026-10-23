@@ -20,8 +20,9 @@ import "./ProfilePanel.css";
                an empty space.
 
   `earned` is the stall_progress ids they have; `lanterns` how many
-  lanterns (null when that couldn't be read: the section is left out
-  rather than show none).
+  lanterns they have earned (null when that couldn't be read: the section
+  is left out rather than show none), and `spent` how many have opened
+  places on the map.
 
   The game pauses while it is open (lib/pause.js) and goes on exactly
   where it was when it closes: with the close button, Escape, or a tap
@@ -29,7 +30,7 @@ import "./ProfilePanel.css";
   the focus stays inside it.
 */
 
-export default function ProfilePanel({ player, zizi, earned, lanterns, onClose }) {
+export default function ProfilePanel({ player, zizi, earned, lanterns, spent = 0, onClose }) {
   const ref = useRef(null);
 
   // The panel's own entrance goes on while the game holds.
@@ -49,7 +50,7 @@ export default function ProfilePanel({ player, zizi, earned, lanterns, onClose }
   };
 
   const friends = friendsFor(earned);
-  const lamps = lanterns == null ? null : lanternsShown(lanterns);
+  const lamps = lanterns == null ? null : lanternsShown(lanterns, spent);
   const keepsakes = rewardsFor(earned);
 
   return (

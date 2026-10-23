@@ -191,6 +191,116 @@
   }
 }
 
+/* --- Stage B: the order, up all round ------------------------------------------------
+   Small: who asked and the number, and Done once something is on the
+   cloth. Above Blob's line when he speaks, so it is never gone. */
+.pm-stall__order {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-items: center;
+  column-gap: 14px;
+  max-width: calc(100vw - 24px);
+  padding: 6px 6px 6px 20px;
+  border-radius: 28px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 3px var(--pm-garden-leaf),
+    var(--pm-shadow-md);
+  animation: pm-goal-in 0.4s var(--pm-ease-pop) both;
+}
+
+.pm-stall__order-words {
+  display: grid;
+  justify-items: start;
+  padding: 2px 0;
+}
+
+.pm-stall__order-who {
+  font-family: var(--pm-font-display);
+  font-size: 0.875rem;
+  line-height: 1.1;
+  color: var(--pm-purple-700);
+}
+
+.pm-stall__order-want {
+  font-family: var(--pm-font-display);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--pm-ink);
+}
+
+/* The one thing to press. */
+.pm-stall__order-done {
+  min-width: 96px;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--pm-r-pill);
+  background: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+  font-family: var(--pm-font-display);
+  font-size: 1.25rem;
+  color: var(--pm-ink-on-orange);
+  cursor: pointer;
+  animation: pm-goal-in 0.3s var(--pm-ease-pop) both;
+}
+
+.pm-stall__order-done:focus-visible {
+  outline: 4px solid var(--pm-purple-700);
+  outline-offset: 3px;
+}
+
+/* No Done yet: the number on its own. */
+.pm-stall__order:not(:has(.pm-stall__order-done)) {
+  grid-template-columns: auto;
+  padding-right: 22px;
+}
+
+.pm-stall__order-note {
+  grid-column: 1 / -1;
+  padding: 4px 8px 2px 0;
+  font-family: var(--pm-font-display);
+  font-size: 1rem;
+  color: var(--pm-purple-700);
+}
+
+/* A short screen: the strip moves up into the corner row, like the goal. */
+@media (max-height: 480px) {
+  .pm-stall__order {
+    position: fixed;
+    top: max(6px, env(safe-area-inset-top));
+    left: 72px;
+    max-width: calc(100vw - 72px - 250px);
+    padding: 2px 4px 2px 14px;
+  }
+
+  .pm-stall__order-who {
+    display: none;
+  }
+
+  .pm-stall__order-want {
+    font-size: 1.3rem;
+  }
+
+  .pm-stall__order-done {
+    min-height: 44px;
+    min-width: 80px;
+    font-size: 1.1rem;
+  }
+
+  .pm-stall__order-note {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: var(--pm-paper);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+}
+
 /* --- after round 5: as far as the market goes for now ----------------------------- */
 .pm-stall__end {
   position: fixed;

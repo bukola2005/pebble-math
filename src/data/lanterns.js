@@ -8,9 +8,11 @@
             1 more every time the child comes back and does the test
               rounds again. Only for coming back: never for being fast,
               or right first time.
-    spent   2 open the next place on the main path; extras will open
-              optional places off the main road. Neither is built yet,
-              so for now none are spent.
+    spent   2 open the next place on the main path: at the end of
+              Chapter 1 the map opens the Provision Store with the two it
+              earns (data/places.js, `opensAfter`). Extras will open
+              optional places off the main road (not built yet). What is
+              spent is worked out from which places are open, not saved.
 
   A child is never blocked: finishing a chapter once earns the two needed
   to go on. Each one earned is a row in `lanterns` (lib/lanterns.js).
@@ -25,5 +27,11 @@ export const LANTERN = {
   unlit: { src: "/ui/lantern-unlit.webp", w: 121, h: 240 },
 };
 
-/** For the profile: the lanterns a child has (lit), and the ones still needed for the next place (dark). */
-export const lanternsShown = (have) => ({ lit: have, dark: Math.max(0, LANTERNS_TO_OPEN - have) });
+/**
+ * For the profile: the lanterns a child has (lit: earned less spent), and
+ * the ones still needed for the next place (dark).
+ */
+export const lanternsShown = (earned, spent = 0) => {
+  const have = Math.max(0, earned - spent);
+  return { lit: have, dark: Math.max(0, LANTERNS_TO_OPEN - have) };
+};

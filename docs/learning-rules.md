@@ -68,6 +68,20 @@ saved, not just right or wrong. (Where swapping changes nothing, as in 22,
 the place-value one is the tens and ones side by side as they are said,
 202.)
 
+The order never disappears. The customer's number stays on screen the
+whole round, and the only way on is Done, once something has been placed.
+What the child places is counted for them as they place it, in oranges,
+not things: a crate adds ten, so two crates and three loose go 10, 20,
+21, 22, 23. That rising count is the lesson, counting on in tens and then
+ones, and it lets the child check their own work before Done, as a trader
+would. It shows what they placed; it never says what to place. (Not in
+the reading round, where it would be the answer.)
+
+When Blob asks about crates and loose oranges, the loose ones are one
+group, and each group is labelled with its number as he names it: 10 on
+each crate, 8 on the loose pile. The child counts what is in front of
+them instead of holding it in their head.
+
 Hints are on request, never on screen waiting: nothing is always on,
 everything is asked for, and the test rounds have nothing. In practice, a
 tapped crate shows a quiet 10 for a moment, and that is all it does: it

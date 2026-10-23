@@ -371,8 +371,8 @@ function counterLayout(o, room, crateCount) {
   };
 }
 
-/** A crate of ten, as drawn on the table and in an order; `tag` shows its 10. */
-function CrateOfTen({ tag = true }) {
+/** A crate of ten, as drawn on the table and in an order; `tag` shows its 10 (`peek`: for a moment). */
+function CrateOfTen({ tag = true, peek = false }) {
   return (
     <>
       <img className="pm-crate__art" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
@@ -382,11 +382,25 @@ function CrateOfTen({ tag = true }) {
         </span>
       ))}
       {tag && (
-        <span className="pm-stack-crate__tag" aria-hidden="true">
+        <span className={`pm-stack-crate__tag${peek ? " is-peek" : ""}`} aria-hidden="true">
           10
         </span>
       )}
     </>
+  );
+}
+
+/**
+ * The cloth's (or the counter's) own count, like the basket's: oranges,
+ * not things, so a crate adds 10 (10, 20, 21, 22, 23). It shows what has
+ * been placed; it never says what to place.
+ */
+function OrderCount({ order }) {
+  const count = order.deliveredCrates.length * 10 + order.deliveredLoose.length;
+  return (
+    <span key={count} className="pm-order__tag" aria-hidden="true">
+      {count}
+    </span>
   );
 }
 
@@ -505,6 +519,15 @@ export default function BasketGame({
     basket: () => basketRef.current,
     order: () => orderRef.current,
     nearestOrange,
+    // Notes where these oranges are now, so they fly from there to where
+    // they go next (the loose ones gathering into the basket).
+    noteWhere: (ids) => {
+      for (const id of ids) {
+        const el = tableEls.current.get(id) ?? basketEls.current.get(id);
+        const body = el?.querySelector(".pm-orange__body") ?? el;
+        if (body) flights.current.set(id, { from: body.getBoundingClientRect() });
+      }
+    },
     // Sends an orange from the basket back to its place on the table.
     flyBack: (id) => {
       const el = basketEls.current.get(id);
@@ -790,7 +813,11 @@ export default function BasketGame({
         crates.map((id) => {
           const at = spotsNow.get(id);
           const style = { left: at.left, top: at.top, width: at.width };
-          const tag = tens === "always" || peek?.id === id;
+          // Its 10: always (the tutorial), for a moment when tapped, or
+          // from when Blob names the crates.
+          const naming = tens === "tap" && (spotlight === "crates" || spotlight === "loose" || spotlight === "both");
+          const peeking = tens === "tap" && peek?.id === id && !naming;
+          const tag = tens === "always" || naming || peeking;
           if (!order && tens !== "tap") {
             return (
               <div key={id} ref={keep(crateEls, id)} className="pm-stack-crate" style={style} role="img" aria-label={crateLabel}>
@@ -810,7 +837,7 @@ export default function BasketGame({
                 aria-label={crateLabel}
                 onClick={() => peekAt(id)}
               >
-                <CrateOfTen key={tag ? peek.key : "plain"} tag={tag} />
+                <CrateOfTen key={peeking ? peek.key : "plain"} tag={tag} peek={peeking} />
               </button>
             );
           }
@@ -844,7 +871,7 @@ export default function BasketGame({
                 }
               }}
             >
-              <CrateOfTen key={tag && tens === "tap" ? peek.key : "plain"} tag={tag} />
+              <CrateOfTen key={peeking ? peek.key : "plain"} tag={tag} peek={peeking} />
             </button>
           );
         })}
@@ -932,6 +959,7 @@ export default function BasketGame({
           <p id="pm-counter-help" className="pm-sr-only">
             Press Enter to put it back on the stall.
           </p>
+          {order.counts && <OrderCount order={order} />}
         </div>
       )}
 
@@ -1035,6 +1063,7 @@ export default function BasketGame({
           <p id="pm-cloth-help" className="pm-sr-only">
             Press Enter to take it back.
           </p>
+          {order.counts && <OrderCount order={order} />}
           {/* What is on it, as the child sees it: never a total. */}
           <p className="pm-sr-only" aria-live="polite">
             {`In the order: ${order.deliveredCrates.length} ${order.deliveredCrates.length === 1 ? "crate" : "crates"} and ${order.deliveredLoose.length} loose ${order.deliveredLoose.length === 1 ? "orange" : "oranges"}.`}
@@ -1165,10 +1194,14 @@ export default function BasketGame({
             aria-hidden="true"
           />
         ))}
-        {/* The basket's own count, on a tag tied to its rim. */}
-        <span key={held} className="pm-basket__tag" aria-hidden="true">
-          {held}
-        </span>
+        {/* The basket's own count, on a tag tied to its rim. While Blob
+            names the crates, it waits for him to name the loose ones, and
+            an empty basket says nothing while he asks. */}
+        {!(tens === "tap" && (spotlight === "crates" || (spotlight && held === 0))) && (
+          <span key={held} className="pm-basket__tag" aria-hidden="true">
+            {held}
+          </span>
+        )}
         <p className="pm-sr-only" aria-live="polite">
           {held === 1 ? "1 orange in the basket" : `${held} oranges in the basket`}
         </p>
@@ -1211,6 +1244,21 @@ export default function BasketGame({
           <img className="pm-crack__half pm-crack__half--left" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
           <img className="pm-crack__half pm-crack__half--right" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
         </div>
+      )}
+
+      {/* Chapter 1, Stage A: the loose oranges on the table, and how many,
+          as Blob names them. */}
+      {tens === "tap" && !order && (spotlight === "loose" || spotlight === "both") && onTable.length > 0 && (
+        <span
+          className="pm-game__group-tag"
+          style={{
+            left: Math.min(...onTable.map((id) => layout.spots[id].x)) + (Math.max(...onTable.map((id) => layout.spots[id].x)) - Math.min(...onTable.map((id) => layout.spots[id].x)) + layout.size) / 2,
+            top: Math.min(...onTable.map((id) => layout.spots[id].y)) - 14,
+          }}
+          aria-hidden="true"
+        >
+          {onTable.length}
+        </span>
       )}
 
       {/* Chapter 1: the crates and the loose oranges together, and how many. */}
