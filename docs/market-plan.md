@@ -104,16 +104,16 @@ Objects matter as much as operations. A child who only ever drags oranges learns
 
 ## The progress meter
 
-Not a score, and not coins. A small meter sits on screen. Each correct answer sends a few sparkles into it. When it fills — at the end of a chapter — one monster or one item unlocks.
+Not a score, and not coins. A small meter sits on screen. Each correct answer sends a few sparkles into it. When it fills — at the end of a chapter — the chapter is done, and the trader comes back from asking along the row to lend a lantern ([story.md](story.md)).
 
 Why this shape:
 
 - It rewards **finishing**, not being fast and not being first.
 - The sparkles travelling from the object to the meter tell the child *that* something happened, without a message interrupting them.
-- One unlock per chapter means a child meets a new friend roughly every session, which is a better rhythm than a stream of small rewards.
+- Friends are not prizes for filling it. One of Blob's friends joins at each new place, and how many have joined is how close the child is to finding their mother, not a stream of small rewards.
 - It needs no second currency, so the naira in the Money Corner stays the only money in the game.
 
-The monsters are the unlocks. One joins per chapter, so by the end of the market a child has met all of them. Blob is the guide and is never unlocked; he is there from the first minute.
+The monsters are Blob's friends from around the market, joining the search. One joins at each new place, so by the end of the market the child has met all seven and the whole market is looking. Blob is the first, there from the first minute. He is not a guide: he is lost too, he doesn't know the answers, and he is a friend rather than a teacher.
 
 ## Number facts by year
 
@@ -132,9 +132,9 @@ A rough map of what a child should be able to do, to aim each stall at. **Not ch
 ## Open questions
 
 - **Side views.** Every stall currently faces front. A market where some stalls sit left and right would feel like a place rather than a backdrop. Worth one experiment before committing to seven front-facing scenes.
-- **The dashboard.** It is bare because nothing has been played yet. Once stalls produce data, it needs: which children, when they last played, which locks are open, and — the useful part — where a child keeps getting stuck. Streaks, a store, pets and loot are all possible later, but none of them should arrive before the dashboard answers "is my child learning anything".
+- **The dashboard.** It is bare because nothing has been played yet. Once stalls produce data, it needs: which children, when they last played, which places are open, and — the useful part — where a child keeps getting stuck. Streaks, a store, pets and loot are all possible later, but none of them should arrive before the dashboard answers "is my child learning anything".
 - **Avatar outfits.** All six Zizi looks currently wear the same clothes. Six distinct outfits, including the parasol one, would make the picker feel like a choice rather than a hairstyle menu.
-- **Animation.** The game is still. Sparkles travelling from a correct object to the counter, a meter that fills, a lock that turns — small motions that tell a child something happened.
+- **Animation.** No longer still: sparkles travel from a correct move into the meter, the meter fills and glows, a crate cracks open, Grandma walks off and comes back, a lantern arrives, a chosen card hops. Small motions that tell a child something happened. What is still open is the map: the haze lifting as places open.
 
 ---
 

@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Navigate, Outlet, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import CTAButton from "../components/CTAButton";
 import PlayLoading from "../components/PlayLoading";
+import { countLanterns } from "../lib/lanterns";
 import { getPlayer } from "../lib/players";
 import { listClearedStalls } from "../lib/progress";
 import { nextStep } from "../lib/playFlow";
@@ -55,16 +56,19 @@ export default function PlaySessionShell() {
     let active = true;
     // Which stalls they have cleared comes alongside, as
     // `player.cleared_stalls`. If that can't be read, the game still
-    // starts, as if none were cleared yet.
+    // starts, as if none were cleared yet. So does how many lanterns they
+    // have, as `player.lanterns` (null if it can't be read).
     const cleared = listClearedStalls(playerId).catch((error) => ({ data: [], error }));
-    Promise.all([getPlayer(playerId), cleared])
-      .then(([{ data, error }, stalls]) => {
+    const lanterns = countLanterns(playerId).catch((error) => ({ data: null, error }));
+    Promise.all([getPlayer(playerId), cleared, lanterns])
+      .then(([{ data, error }, stalls, lamps]) => {
         if (!active) return;
         if (stalls.error) console.warn("Couldn't read which stalls are cleared.", stalls.error);
+        if (lamps.error) console.warn("Couldn't read the lanterns.", lamps.error);
         if (error) setFailure(error);
         else if (!data) setMissing(true);
         else {
-          setPlayer({ ...data, cleared_stalls: stalls.data });
+          setPlayer({ ...data, cleared_stalls: stalls.data, lanterns: lamps.data });
           setNewcomer(!data.scene1_done);
           // Every visit starts at the loading screen, even a reload in the
           // middle of a step, so the step's pictures are in before it shows

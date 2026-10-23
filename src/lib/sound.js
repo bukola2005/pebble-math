@@ -2,9 +2,9 @@ import { isMuted } from "./speech";
 
 /*
   The game's few small sounds, made in the browser (Web Audio) so there
-  are no sound files to download: a lock opening, a correct answer, the
-  progress meter filling, and a crate cracking open. The speaker switch in the corner mutes them
-  along with reading aloud.
+  are no sound files to download: a correct answer, the progress meter
+  filling, a crate cracking open, and a child choosing who is playing. The speaker switch in the corner mutes them along with
+  reading aloud.
 
   A browser only plays sound after the child has tapped something on the
   page, so `primeSound()` is called from the tap that leads to a sound,
@@ -24,48 +24,6 @@ function audio() {
 /** Call from a tap, before a sound that comes a little later. */
 export function primeSound() {
   if (!isMuted()) audio();
-}
-
-/** A lock opening: a small metal click, then two soft bell notes. */
-export function playLockOpen() {
-  if (isMuted()) return;
-  const ctx = audio();
-  if (!ctx) return;
-  const t = ctx.currentTime + 0.02;
-
-  // The click: a very short burst of filtered noise.
-  const length = Math.floor(ctx.sampleRate * 0.05);
-  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 3;
-  const click = ctx.createBufferSource();
-  click.buffer = buffer;
-  const band = ctx.createBiquadFilter();
-  band.type = "bandpass";
-  band.frequency.value = 2600;
-  band.Q.value = 2.5;
-  const clickGain = ctx.createGain();
-  clickGain.gain.value = 0.22;
-  click.connect(band).connect(clickGain).connect(ctx.destination);
-  click.start(t);
-
-  // Two soft notes, a fifth apart, fading slowly.
-  [
-    [659.25, 0.07, 0.12],
-    [987.77, 0.05, 0.3],
-  ].forEach(([frequency, peak, delay]) => {
-    const start = t + delay;
-    const tone = ctx.createOscillator();
-    tone.type = "sine";
-    tone.frequency.value = frequency;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(peak, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + 1.6);
-    tone.connect(gain).connect(ctx.destination);
-    tone.start(start);
-    tone.stop(start + 1.7);
-  });
 }
 
 /*
@@ -105,7 +63,7 @@ export function playCorrect() {
 }
 
 /**
- * The progress meter full, just before the lock opens: warmer and longer,
+ * The progress meter full, at the end of the tutorial or a chapter: warmer and longer,
  * half a second. Four triangle-wave notes rising C5, E5, G5, C6 (523, 659,
  * 784 and 1047 Hz), 80 ms apart, through a low-pass at 2400 Hz that rounds
  * them off, each fading over 260 ms; under them a quiet sine at C4
@@ -157,4 +115,22 @@ export function playCrack() {
   burst(t, 1800, 1.5, 0.4, 0.035);
   burst(t + 0.025, 3200, 2, 0.2, 0.03);
   note(ctx, ctx.destination, { at: t, type: "triangle", from: 220, to: 110, glide: 0.08, peak: 0.09, length: 0.14 });
+}
+
+/**
+ * Choosing who is playing, with the card's hop (routes/Play.css): short
+ * and bright, done by 450 ms, well inside the 600 ms celebration. A soft
+ * pop as the hop starts, 60 ms in: a sine falling from 900 to 300 Hz in
+ * 40 ms, gone by 70 ms. Then, as it lands, two sine notes rising a fourth:
+ * G5 (784 Hz) at 270 ms, fading over 100 ms, and C6 (1047 Hz) 50 ms
+ * later, fading over 130 ms.
+ */
+export function playPick() {
+  if (isMuted()) return;
+  const ctx = audio();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.01;
+  note(ctx, ctx.destination, { at: t + 0.06, from: 900, to: 300, glide: 0.04, peak: 0.07, length: 0.07 });
+  note(ctx, ctx.destination, { at: t + 0.27, from: 783.99, peak: 0.05, length: 0.1 });
+  note(ctx, ctx.destination, { at: t + 0.32, from: 1046.5, peak: 0.045, length: 0.13 });
 }

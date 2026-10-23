@@ -24,20 +24,6 @@ export const BASKET = { src: "/stall/basket.webp", w: 480, h: 433 };
 export const SELLER = { src: "/stall/seller.webp", w: 435, h: 900 };
 export const SELLER_PORTRAIT = { src: "/stall/seller-portrait.webp", w: 320, h: 320 };
 
-/** Zizi's mum, smiling, from the opening film (the frame at 2.5 s), behind
-    her chain when a lock opens. */
-export const MUM_FACE = { src: "/characters/mum-face.webp", w: 300, h: 406 };
-
-/** The locks on Mum's chain: the tutorial opens the first, and each of the
-    six stalls one more. */
-export const LOCK_COUNT = 7;
-
-/** The stall_progress rows that each open one of Mum's locks: one per
-    place in the market (the Fruit Stall's is its tutorial; the six
-    stalls will add theirs). A chapter's row, like
-    "fruit-stall-chapter-1", records how far a child has got without
-    opening another: the stall's lock is already open. */
-export const LOCK_STALLS = ["fruit-stall"];
 export const ORANGE = { src: "/stall/orange.webp", w: 168, h: 182 };
 export const CRATE = { src: "/stall/crate.webp", w: 440, h: 328 };
 

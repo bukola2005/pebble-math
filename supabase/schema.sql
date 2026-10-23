@@ -153,9 +153,8 @@ create policy "players_delete_own" on public.players
 
 -- ----------------------------------------------------------------------
 -- stall_progress: one row per market stall, or stall chapter, a child has
--- cleared. Only a place's own row opens one of Mum's locks (LOCK_STALLS
--- in src/data/market.js); a chapter's row ('fruit-stall-chapter-1')
--- records progress without opening another. Adding one is one more id in
+-- cleared: 'fruit-stall' for the Fruit Stall's tutorial,
+-- 'fruit-stall-chapter-1' for its Chapter 1. Adding one is one more id in
 -- the check.
 --
 -- It has no profile_id of its own, so its policies check that the player
@@ -188,6 +187,107 @@ create policy "stall_progress_insert_own" on public.stall_progress
   for insert to authenticated
   with check (exists (select 1 from public.players p
                       where p.id = player_id and p.profile_id = (select auth.uid())));
+
+
+-- ----------------------------------------------------------------------
+-- attempts: every answer a child gives after the tutorial, right or wrong,
+-- and if wrong, which step broke. In Chapter 1: each tap on Blob's "How
+-- many is that?" (stages 'A' and 'B': `asked` is the total, `crates` and
+-- `loose` what was on the table, `total` the number tapped, which says
+-- what went wrong: its digits swapped, its digits added, or, for a number
+-- like 22, the tens and ones side by side, 202), and each answer in the
+-- test rounds (stage 'C'). Collected now so the data is there when the
+-- teacher dashboard is built; nothing shows it yet.
+-- Like stall_progress, its policies check that the player belongs to the
+-- caller, and it has no update or delete; deleting the player removes it.
+-- stall_id and stage are not checked against a list: every new chapter
+-- brings new ones, and a list would need altering each time.
+-- ----------------------------------------------------------------------
+create table if not exists public.attempts (
+  id          uuid primary key default gen_random_uuid(),
+  player_id   uuid not null references public.players (id) on delete cascade,
+  stall_id    text not null,
+  stage       text not null,
+  round       smallint not null check (round between 1 and 20),
+  asked       smallint not null check (asked between 0 and 99),
+  crates      smallint not null check (crates between 0 and 20),
+  loose       smallint not null check (loose between 0 and 99),
+  total       smallint check (total between 0 and 999),
+  failed_step text check (failed_step in ('crates', 'loose', 'total')),
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists attempts_player_idx on public.attempts (player_id, created_at);
+
+-- For a database made with those two checks, and with room only for
+-- two-digit totals.
+alter table public.attempts drop constraint if exists attempts_stall_id_check, drop constraint if exists attempts_stage_check;
+alter table public.attempts drop constraint if exists attempts_total_check, add constraint attempts_total_check check (total between 0 and 999);
+
+alter table public.attempts enable row level security;
+revoke all on public.attempts from anon;
+grant select, insert on public.attempts to authenticated;
+
+drop policy if exists "attempts_select_own" on public.attempts;
+create policy "attempts_select_own" on public.attempts
+  for select to authenticated
+  using (exists (select 1 from public.players p
+                 where p.id = player_id and p.profile_id = (select auth.uid())));
+
+drop policy if exists "attempts_insert_own" on public.attempts;
+create policy "attempts_insert_own" on public.attempts
+  for insert to authenticated
+  with check (exists (select 1 from public.players p
+                      where p.id = player_id and p.profile_id = (select auth.uid())));
+
+
+-- ----------------------------------------------------------------------
+-- lanterns: one row per lantern a child has earned (docs/story.md and
+-- src/data/lanterns.js), where and why:
+--   'teaching'  finishing a place's teaching chapter, once per place
+--   'test'      finishing its test rounds, once per place
+--   'replay'    coming back and doing the test rounds again, each time
+-- Never for speed or for being right first time. Like stall_progress,
+-- its policies check that the player belongs to the caller, and it has
+-- no update or delete; deleting the player removes it.
+-- ----------------------------------------------------------------------
+create table if not exists public.lanterns (
+  id         uuid primary key default gen_random_uuid(),
+  player_id  uuid not null references public.players (id) on delete cascade,
+  stall_id   text not null,
+  reason     text not null check (reason in ('teaching', 'test', 'replay')),
+  earned_at  timestamptz not null default now()
+);
+
+-- The teaching and test lanterns come once per place; replays every time.
+create unique index if not exists lanterns_once
+  on public.lanterns (player_id, stall_id, reason) where reason in ('teaching', 'test');
+create index if not exists lanterns_player_idx on public.lanterns (player_id);
+
+alter table public.lanterns enable row level security;
+revoke all on public.lanterns from anon;
+grant select, insert on public.lanterns to authenticated;
+
+drop policy if exists "lanterns_select_own" on public.lanterns;
+create policy "lanterns_select_own" on public.lanterns
+  for select to authenticated
+  using (exists (select 1 from public.players p
+                 where p.id = player_id and p.profile_id = (select auth.uid())));
+
+drop policy if exists "lanterns_insert_own" on public.lanterns;
+create policy "lanterns_insert_own" on public.lanterns
+  for insert to authenticated
+  with check (exists (select 1 from public.players p
+                      where p.id = player_id and p.profile_id = (select auth.uid())));
+
+-- Children who finished Chapter 1 before there were lanterns: the two it
+-- earns. (Running this again adds nothing.)
+insert into public.lanterns (player_id, stall_id, reason)
+select progress.player_id, progress.stall_id, earned.reason
+from public.stall_progress progress
+cross join (values ('teaching'), ('test')) as earned (reason)
+where progress.stall_id = 'fruit-stall-chapter-1'
+on conflict do nothing;
 
 
 -- ----------------------------------------------------------------------
@@ -232,7 +332,7 @@ create trigger on_auth_user_created
 
 -- ----------------------------------------------------------------------
 -- "Delete my account" on the dashboard. Deletes the caller's own sign-in;
--- their profile, players and stall_progress rows go with it (each table
+-- their profile, players, stall_progress, attempts and lanterns rows go with it (each table
 -- references the one above it on delete cascade). It can only ever delete
 -- the account that calls it: there is no argument to point it elsewhere.
 --

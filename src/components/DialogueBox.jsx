@@ -16,6 +16,7 @@ import "./DialogueBox.css";
  *                 Without it (and without choices) there is no button: a
  *                 line that stays while the child does something
  *   choices       numbers to tap instead of Next, for a question
+ *   tray          lay the numbers out as a compact numeral tray (0 to 9)
  *   onChoose(n)   a number was tapped
  *   silent        don't read the line aloud: the caller does, its own way
  *   note          a second, short line under the first ("Count again…");
@@ -36,6 +37,7 @@ export default function DialogueBox({
   note = null,
   noteKey = 0,
   silent = false,
+  tray = false,
 }) {
   const speaker = SPEAKERS[line.speaker] ?? { label: "", voice: "narrator" };
   const label = fillLine(speaker.label, values);
@@ -45,7 +47,7 @@ export default function DialogueBox({
 
   const [shaking, setShaking] = useState(null);
 
-  useReadAloud(silent ? null : text, speaker.voice);
+  useReadAloud(silent ? null : text, line.voice ?? speaker.voice);
 
   // The note is said each time it is given, even when it hasn't changed.
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function DialogueBox({
         draggable={false}
       />
 
-      <div className="pm-dialogue__panel">
+      <div className={`pm-dialogue__panel${portrait ? "" : " pm-dialogue__panel--plain"}`}>
         <span className="pm-dialogue__frame" aria-hidden="true" />
 
         {portrait && (
@@ -119,7 +121,7 @@ export default function DialogueBox({
         </div>
 
         {choices ? (
-          <div className="pm-dialogue__choices" role="group" aria-label="Choose a number">
+          <div className={`pm-dialogue__choices${tray ? " pm-dialogue__choices--tray" : ""}`} role="group" aria-label="Choose a number">
             {choices.map((value, i) => (
               <button
                 key={value}

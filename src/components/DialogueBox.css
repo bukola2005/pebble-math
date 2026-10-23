@@ -26,6 +26,13 @@
   box-shadow: 0 22px 50px rgba(20, 14, 40, 0.34);
 }
 
+/* A line with no portrait (a customer, or no one): the words take the
+   portrait's place, so the button keeps a column of its own and stays
+   inside the box. */
+.pm-dialogue__panel--plain {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 /* The painted border: a thick leaf-green band with a light inner edge,
    roughened by the SVG filter so it reads as brushwork, not a rule. */
 .pm-dialogue__frame {
@@ -223,6 +230,10 @@
     padding: 16px;
   }
 
+  .pm-dialogue__panel--plain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .pm-dialogue__next,
   .pm-dialogue__choices {
     grid-column: 1 / -1;
@@ -272,4 +283,19 @@
   .pm-dialogue__leaves {
     display: none;
   }
+}
+
+/* Stage C's numeral tray: 0 to 9 in two rows of five, smaller, still
+   white with a lavender edge (never orange). */
+.pm-dialogue__choices--tray {
+  display: grid;
+  grid-template-columns: repeat(5, 52px);
+  gap: 8px;
+  justify-content: center;
+}
+
+.pm-dialogue__choices--tray .pm-dialogue__choice {
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
 }

@@ -747,21 +747,6 @@ button.pm-stack-crate:focus-visible {
   pointer-events: none;
 }
 
-.pm-order__crate-gap,
-.pm-order__gap {
-  position: absolute;
-  border: 3px dashed rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.pm-order__crate-gap {
-  aspect-ratio: 440 / 328;
-  border-radius: 12px;
-}
-
-.pm-order__gap {
-  border-radius: 50%;
-}
 
 .pm-order__crate {
   position: absolute;
@@ -855,5 +840,122 @@ button.pm-stack-crate:focus-visible {
   .pm-order.is-done {
     animation: none;
     transition: none;
+  }
+}
+
+/* --- Chapter 1, Stage C: the counter -------------------------------------------------
+   A plain wooden counter top, not the cloth: no outlines on it, nothing
+   but what the child puts there. */
+.pm-order--counter {
+  border-radius: 18px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0) 0 22px,
+      rgba(90, 55, 25, 0.12) 22px 24px
+    ),
+    linear-gradient(180deg, #e2b77d, #c9925a);
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.3),
+    0 10px 14px rgba(70, 40, 20, 0.3);
+}
+
+.pm-order.is-carrying {
+  z-index: 41;
+}
+
+.pm-order__crate.is-movable,
+.pm-order__orange.is-movable {
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-order__crate.is-movable:focus-visible,
+.pm-order__orange.is-movable:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.pm-order__crate.is-dragging,
+.pm-order__orange.is-dragging {
+  z-index: 40;
+  cursor: grabbing;
+  filter: drop-shadow(0 14px 10px rgba(70, 35, 10, 0.3));
+}
+
+.pm-order__crate.is-returning,
+.pm-order__orange.is-returning {
+  transition: transform 0.4s var(--pm-ease-pop);
+}
+
+/* The reading round's two slots: tens under the crates, ones under the
+   loose oranges. White with a lavender edge, never orange; the one being
+   filled has the thicker edge. */
+.pm-slots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pm-slot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  translate: -50% 0;
+  border: 0;
+  border-radius: 14px;
+  background: var(--pm-white);
+  box-shadow:
+    inset 0 0 0 3px var(--pm-purple),
+    var(--pm-shadow-sm);
+  font-family: var(--pm-font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.pm-slot.is-active {
+  box-shadow:
+    inset 0 0 0 5px var(--pm-purple-700),
+    var(--pm-shadow-sm);
+}
+
+.pm-slot:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 3px;
+}
+
+/* Chapter 1: a tapped crate's 10, there for a moment and gone. Quiet: no
+   sound, no bounce. */
+.pm-stack-crate .pm-stack-crate__tag {
+  animation: pm-tens-peek 1.6s var(--pm-ease) both;
+}
+
+@keyframes pm-tens-peek {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-stack-crate .pm-stack-crate__tag {
+    animation: none;
   }
 }

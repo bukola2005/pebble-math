@@ -48,6 +48,7 @@
 }
 
 .pm-hud__name {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -64,9 +65,34 @@
   font-size: 1rem;
   font-weight: 400;
   color: var(--pm-ink);
+  transition: transform 0.15s var(--pm-ease-pop);
 }
 
-.pm-hud__name span {
+/* The whole chip is the button that opens the child's profile. */
+.pm-hud__open {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-hud__open:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.pm-hud__open:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
+}
+
+.pm-hud__name:has(.pm-hud__open:active) {
+  transform: scale(0.96);
+}
+
+.pm-hud__game-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -82,114 +108,62 @@
   object-position: 50% 4%;
 }
 
-/* --- the progress meter, at a stall ----------------------------------------------
-   The same glass as the name, one segment per round: outlined until it is
-   answered, then solid lavender. Beside the name where there's room; on a
-   phone, where there isn't, a row of small segments inside the name's
-   chip, under the name. */
-.pm-hud__meter {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 48px;
-  padding: 0 14px;
-  border-radius: var(--pm-r-pill);
-  background: var(--pm-glass-bg);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: inset 0 0 0 1.5px var(--pm-glass-border), var(--pm-shadow-sm);
+/* --- the progress meter, at a stall: a ring around the child's face -------------
+   One segment per round, with small gaps; empty ones a faint track, filled
+   ones solid lavender, clockwise from the top. */
+.pm-hud__face {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.pm-hud__name .pm-hud__face img {
+  width: 32px;
+  height: 32px;
+}
+
+.pm-hud__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .pm-hud__segment {
-  width: 12px;
-  height: 20px;
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 2px var(--pm-purple-500);
-  transition:
-    background-color 0.15s ease-out,
-    box-shadow 0.15s ease-out;
+  fill: none;
+  stroke: rgba(125, 140, 242, 0.24);
+  transition: stroke 0.15s ease-out;
 }
 
 /* Lights as the sparkles land (routes/PlayStall.jsx times the two together). */
-.pm-hud__segment--on {
-  background: var(--pm-purple);
-  box-shadow:
-    inset 0 0 0 2px var(--pm-purple),
-    0 0 8px rgba(153, 166, 249, 0.9);
+.pm-hud__segment.is-on {
+  stroke: var(--pm-purple);
 }
 
-/* The last segment filled: the whole meter glows, briefly, before the lock. */
-.pm-hud__meter--glow {
-  animation: pm-meter-glow 0.8s ease-out both;
+/* Where the sparkles aim: the middle of each segment. */
+.pm-hud__mark {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  pointer-events: none;
 }
 
-@keyframes pm-meter-glow {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 0 0 1.5px var(--pm-glass-border),
-      0 0 0 0 rgba(153, 166, 249, 0);
-  }
+/* The last segment filled: the ring glows, briefly, before the end. */
+.pm-hud__face.is-glowing {
+  animation: pm-ring-glow 0.8s ease-out both;
+}
+
+@keyframes pm-ring-glow {
   35% {
     box-shadow:
-      inset 0 0 0 2px var(--pm-purple),
-      0 0 24px 8px rgba(153, 166, 249, 0.95);
-  }
-}
-
-@media (max-width: 599px) {
-  /* The meter and the name share one cell, so the segments sit in the
-     name's chip, under the name and beside the face. */
-  .pm-hud__right--meter {
-    display: grid;
-    grid-template-columns: auto auto;
-    align-items: start;
-  }
-
-  .pm-hud__right--meter .pm-hud__name {
-    grid-area: 1 / 1;
-    min-width: 136px;
-    height: 50px;
-  }
-
-  .pm-hud__right--meter .pm-hud__name span {
-    align-self: flex-start;
-    margin-top: 6px;
-  }
-
-  .pm-hud__right--meter > .pm-hud__button {
-    grid-area: 1 / 2;
-  }
-
-  .pm-hud__right--meter .pm-hud__meter {
-    z-index: 1;
-    grid-area: 1 / 1;
-    align-self: end;
-    justify-self: start;
-    height: auto;
-    margin: 0 0 9px 52px;
-    padding: 0;
-    gap: 3px;
-    background: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-    pointer-events: none;
-  }
-
-  .pm-hud__right--meter .pm-hud__segment {
-    width: 10px;
-    height: 9px;
-    border-radius: 3px;
-  }
-
-  /* There, the whole chip glows when the last segment fills. */
-  .pm-hud__right--meter .pm-hud__meter--glow {
-    animation: none;
-  }
-
-  .pm-hud__right--meter:has(.pm-hud__meter--glow) .pm-hud__name {
-    animation: pm-meter-glow 0.8s ease-out both;
+      0 0 0 3px rgba(153, 166, 249, 0.55),
+      0 0 22px 8px rgba(153, 166, 249, 0.95);
   }
 }
 
@@ -199,11 +173,10 @@
     transition: none;
   }
 
-  .pm-hud__meter--glow,
-  .pm-hud__right--meter:has(.pm-hud__meter--glow) .pm-hud__name {
+  .pm-hud__face.is-glowing {
     animation: none;
     box-shadow:
-      inset 0 0 0 2px var(--pm-purple),
-      0 0 20px 6px rgba(153, 166, 249, 0.9);
+      0 0 0 3px rgba(153, 166, 249, 0.55),
+      0 0 18px 6px rgba(153, 166, 249, 0.9);
   }
 }

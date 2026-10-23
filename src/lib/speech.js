@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { isPaused, onPauseChange, usePaused } from "./pause";
 
 /*
   Reads the game's lines aloud with the browser's own voice
@@ -55,11 +56,14 @@ const subscribe = (listener) => {
 /** Whether reading aloud is muted, kept in step across every screen. */
 export const useMuted = () => useSyncExternalStore(subscribe, isMuted, isMuted);
 
-// One browser voice for everyone, pitched a little differently per speaker.
+// One browser voice for everyone, pitched a little differently per speaker
+// (and "blob-small", Blob in a small voice: slower and quieter).
 const STYLE = {
   zizi: { pitch: 1.3, rate: 0.95 },
   blob: { pitch: 1.12, rate: 0.95 },
+  "blob-small": { pitch: 1.08, rate: 0.82, volume: 0.6 },
   seller: { pitch: 0.92, rate: 0.92 },
+  customer: { pitch: 1.0, rate: 0.95 },
   narrator: { pitch: 1.05, rate: 0.95 },
 };
 
@@ -92,17 +96,21 @@ if (canSpeak) {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopSpeaking();
   });
+  // Nor while the game is paused, with the child's profile open over it.
+  onPauseChange((paused) => {
+    if (paused) stopSpeaking();
+  });
 }
 
 /**
  * Says `text` in `speaker`'s voice, cutting off whatever was being said.
  * `onEnd` runs when the line has been said (or the browser gave up on it).
- * Returns false when nothing will be said at all (muted, or no voice on
- * the device), so a caller pacing things to the voice knows to wait for a
- * tap instead.
+ * Returns false when nothing will be said at all (muted, no voice on the
+ * device, or the game paused), so a caller pacing things to the voice
+ * knows to wait for a tap instead.
  */
 export function speak(text, speaker = "narrator", { onEnd } = {}) {
-  if (!canSpeak || muted || !text) return false;
+  if (!canSpeak || muted || isPaused() || !text) return false;
   stopSpeaking();
   // No voice on the device (or the list hasn't arrived yet): say nothing.
   // Speaking without a voice set would let the browser pick its default,
@@ -122,6 +130,7 @@ export function speak(text, speaker = "narrator", { onEnd } = {}) {
     const style = STYLE[speaker] ?? STYLE.narrator;
     utterance.pitch = style.pitch;
     utterance.rate = style.rate;
+    utterance.volume = style.volume ?? 1;
     if (onEnd) {
       utterance.onend = onEnd;
       utterance.onerror = onEnd;
@@ -139,13 +148,15 @@ export function stopSpeaking() {
 
 /**
  * Reads `text` aloud when it appears or changes, and again when reading
- * aloud is switched back on; stops when the component goes away.
+ * aloud is switched back on or the game goes on after a pause; stops when
+ * the component goes away.
  */
 export function useReadAloud(text, speaker) {
   const quiet = useMuted();
+  const paused = usePaused();
   useEffect(() => {
-    if (quiet || !text) return undefined;
+    if (quiet || paused || !text) return undefined;
     speak(text, speaker);
     return () => stopSpeaking();
-  }, [text, speaker, quiet]);
+  }, [text, speaker, quiet, paused]);
 }

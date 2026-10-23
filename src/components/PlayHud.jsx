@@ -1,7 +1,9 @@
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NUMBER_WORDS, capitalise } from "../data/dialogue";
 import { getZiziLook } from "../data/zizi";
 import { canSpeak, setMuted, useMuted } from "../lib/speech";
+import ProfilePanel from "./ProfilePanel";
 import "./PlayHud.css";
 
 /**
@@ -9,16 +11,79 @@ import "./PlayHud.css";
  * the right the child's game name (the one place it is shown) with the
  * sound switch: reading aloud and the game's few sounds.
  *
- * At a stall, `meter` adds the progress meter beside the name: one segment
- * per round, outlined until it is answered, then solid lavender.
+ * Tapping the name opens the child's profile over the game, which pauses
+ * until it closes (ProfilePanel). `earned` is what it shows them as
+ * having: the stall_progress ids they have cleared, today's included;
+ * `lanterns` how many lanterns, today's included (null if unknown).
+ *
+ * At a stall, `meter` adds the progress meter: a ring around the child's
+ * face, one segment per round with small gaps between, filling clockwise
+ * from the top in solid lavender as each is answered.
  *   { total, filled, glow, ref }   `glow` while the last one has just
  *                                  filled; `ref` for the sparkles to aim at
  * It only ever says how far through the child is: no number, no score.
  */
-export default function PlayHud({ player, meter = null }) {
+
+// The ring, in its own 44-unit box: its middle, radius and width.
+const RING = { c: 22, r: 19.5, w: 4, gap: 3 };
+
+function MeterRing({ total, filled }) {
+  const around = 2 * Math.PI * RING.r;
+  const each = around / total;
+  const gap = total > 1 ? RING.gap : 0;
+  return (
+    <svg className="pm-hud__ring" viewBox="0 0 44 44" aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <circle
+          key={i}
+          className={`pm-hud__segment${i < filled ? " is-on" : ""}`}
+          cx={RING.c}
+          cy={RING.c}
+          r={RING.r}
+          strokeWidth={RING.w}
+          strokeDasharray={`${each - gap} ${around - each + gap}`}
+          strokeDashoffset={-(i * each + gap / 2)}
+          transform={`rotate(-90 ${RING.c} ${RING.c})`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Where each segment's middle is, for the sparkles that fly into it. */
+function SegmentMarks({ total }) {
+  return Array.from({ length: total }, (_, i) => {
+    const angle = -Math.PI / 2 + ((i + 0.5) * 2 * Math.PI) / total;
+    return (
+      <span
+        key={i}
+        className="pm-hud__mark"
+        data-segment={i}
+        style={{
+          left: `${((RING.c + RING.r * Math.cos(angle)) / 44) * 100}%`,
+          top: `${((RING.c + RING.r * Math.sin(angle)) / 44) * 100}%`,
+        }}
+      />
+    );
+  });
+}
+export default function PlayHud({
+  player,
+  meter = null,
+  earned = player.cleared_stalls ?? [],
+  lanterns = player.lanterns ?? null,
+}) {
   const navigate = useNavigate();
   const muted = useMuted();
   const zizi = getZiziLook(player.character);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const nameRef = useRef(null);
+
+  const closeProfile = () => {
+    setProfileOpen(false);
+    // The dialog gives the focus back itself; where it can't, the name has it.
+    if (document.activeElement === document.body) nameRef.current?.focus({ preventScroll: true });
+  };
 
   return (
     <div className="pm-hud">
@@ -40,37 +105,43 @@ export default function PlayHud({ player, meter = null }) {
         </svg>
       </button>
 
-      <div className={`pm-hud__right${meter ? " pm-hud__right--meter" : ""}`}>
-        {meter && (
-          <div
-            ref={meter.ref}
-            className={`pm-hud__meter${meter.glow ? " pm-hud__meter--glow" : ""}`}
-            role="progressbar"
-            aria-label="How far through"
-            aria-valuemin={0}
-            aria-valuemax={meter.total}
-            aria-valuenow={meter.filled}
-            aria-valuetext={
-              meter.filled >= meter.total
-                ? "All done"
-                : `${capitalise(NUMBER_WORDS[meter.filled])} done, ${NUMBER_WORDS[meter.total - meter.filled]} to go`
-            }
-          >
-            {Array.from({ length: meter.total }, (_, i) => (
-              <span
-                key={i}
-                data-segment={i}
-                className={`pm-hud__segment${i < meter.filled ? " pm-hud__segment--on" : ""}`}
-              />
-            ))}
-          </div>
-        )}
-
+      <div className="pm-hud__right">
         {player.game_name && (
-          <p className="pm-hud__name">
-            <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
-            <span>{player.game_name}</span>
-          </p>
+          <div className="pm-hud__name">
+            {meter ? (
+              <span
+                ref={meter.ref}
+                className={`pm-hud__face${meter.glow ? " is-glowing" : ""}`}
+                role="progressbar"
+                aria-label="How far through"
+                aria-valuemin={0}
+                aria-valuemax={meter.total}
+                aria-valuenow={meter.filled}
+                aria-valuetext={
+                  meter.filled >= meter.total
+                    ? "All done"
+                    : `${capitalise(NUMBER_WORDS[meter.filled])} done, ${NUMBER_WORDS[meter.total - meter.filled]} to go`
+                }
+              >
+                <MeterRing total={meter.total} filled={meter.filled} />
+                <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
+                <SegmentMarks total={meter.total} />
+              </span>
+            ) : (
+              <img src={zizi.src} alt="" aria-hidden="true" draggable={false} />
+            )}
+            <span className="pm-hud__game-name">{player.game_name}</span>
+            {/* Over the whole chip, so the meter inside it stays a meter. */}
+            <button
+              ref={nameRef}
+              type="button"
+              className="pm-hud__open"
+              aria-label={`${player.game_name}: open profile`}
+              aria-haspopup="dialog"
+              aria-expanded={profileOpen}
+              onClick={() => setProfileOpen(true)}
+            />
+          </div>
         )}
 
         {/* Only where the browser can actually read aloud. */}
@@ -105,6 +176,10 @@ export default function PlayHud({ player, meter = null }) {
           </button>
         )}
       </div>
+
+      {profileOpen && (
+        <ProfilePanel player={player} zizi={zizi} earned={earned} lanterns={lanterns} onClose={closeProfile} />
+      )}
     </div>
   );
 }

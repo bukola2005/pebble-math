@@ -92,6 +92,13 @@
   width: auto;
   height: 44%;
   transform: translateX(-50%);
+  transition: opacity 0.8s var(--pm-ease), transform 0.8s var(--pm-ease);
+}
+
+/* Gone along the row to ask (Chapter 1): she walks off to the right. */
+.pm-layer--seller.is-away {
+  opacity: 0;
+  transform: translateX(-10%);
 }
 
 .pm-layer--near {

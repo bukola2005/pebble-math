@@ -41,7 +41,7 @@ src/
     EmailConfirmed.jsx      /confirmed, where the sign-up confirmation link lands
     ResetPassword.jsx       where the reset link lands: choose a new password
     Dashboard.jsx           greeting, email, the account's players: add, delete, Play
-    Play.jsx                "Who's playing?" — the child picks their own card
+    Play.jsx                "Who's playing?" — the child picks their own card, which hops
     PlaySessionShell.jsx    /play/:id and below: fetches the player, hands it to each step
     PlayHub.jsx             /play/:id: the loading screen, then the next step
     PlayIntro.jsx           /play/:id/intro: the opening film
@@ -57,11 +57,14 @@ src/
     players.js              every query on the players table, and its error messages
     playFlow.js             the order of the play steps, and what each one loads
     speech.js               reads lines aloud with on-device voices only, with the mute switch
+    pause.js                pausing the game while the child's profile is open: waits,
+                            movement and reading aloud all hold
+    lanterns.js             lanterns: how many a child has, and saving one earned
     stallLog.js             how each stall round went (hints used), in memory for now
     progress.js             stall_progress: which stalls a child has cleared
     sound.js                the game's sounds, made in the browser (no files): the
-                            lock, a correct answer, the progress meter filling,
-                            a crate cracking open
+                            a correct answer, the progress meter filling,
+                            a crate cracking open, choosing who is playing
     preload.js              the loaders behind the loading bar (real progress only)
     authErrors.js           Supabase auth error → a sentence a parent can act on
     account.js              "Delete my account" (calls delete_my_account() in the database)
@@ -84,14 +87,15 @@ src/
     DialogueBox.jsx         the one dialogue box: speaker, portrait, line, big Next
     StallBackdrop.jsx       the stall's six painted layers, or the dim market
     PlayHud.jsx             the play screens' corners: a way out, game name, mute,
-                            and at a stall the progress meter
+                            and at a stall the progress meter; the name opens the profile
+    ProfilePanel.jsx        the child's profile over the paused game: friends,
+                            lanterns and keepsakes
     Sparkles.jsx            the small stars that fly to the basket's count and the meter
     BasketGame.jsx          oranges on the table, the basket and its crate of ten:
                             tap to count, drag to move
     HintButton.jsx          Blob's face in the corner: one step of help per tap
     CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
     BasketAward.jsx         the card that gives the child their basket
-    LockChain.jsx           Mum's chain and its seven padlocks, drawn in SVG
     Navbar.jsx              wordmark, links, Get Started, mobile menu
     Hero.jsx                eyebrow, headline, lead, CTAs, chapter line
     MarketScene.jsx         the SVG stall + the 3 → 5 loop
@@ -111,7 +115,9 @@ src/
     CTAButton.jsx           the only button (primary / secondary)
     GlassPanel.jsx          the translucent surface
   data/characters.js        the eight monsters, with intrinsic sizes
-  data/monsters.js          Blob the guide, and the seven a grown-up can pick
+  data/monsters.js          Blob, and the seven a grown-up can pick
+  data/friends.js           Blob's seven friends, who join the search one place at a time
+  data/lanterns.js          how lanterns are earned and spent, and their two pictures
   data/zizi.js              Zizi's six looks and her original look
   data/gameNames.js         the two word lists game names are built from
   data/dialogue.js          every line in the game: Scene 1, the tutorial, the stall,
@@ -119,7 +125,7 @@ src/
   data/fruitStall.js        the tutorial's five rounds (round 1's order by age band)
                             and Chapter 1's rounds
   data/market.js            the market's art: the six layers, basket, orange, crate,
-                            the seller, Mum's face, and how many locks there are
+                            and the seller
   styles/game.css           the game screens' own tokens (garden green, paper)
   data/players.js           age bands and class levels a player may hold
   data/media.js             the agreed paths for the loading art, storybook and film
@@ -129,8 +135,8 @@ public/characters/*.webp    the eight monsters, halos cleaned up
 public/characters/mother-sheet.svg
                             Zizi's mother; story artwork only, never playable
 public/characters/mum-face.webp
-                            her face, smiling, from the opening film (2.5 s),
-                            behind her chain
+                            her face, smiling, from the opening film (2.5 s); not
+                            used now, kept for when she is found
 public/zizi/*.webp          Zizi: six looks (zizi-headband, -cornrows, -afro, -puffs,
                             -twists, -braids) and the original, zizi-default
 public/video/pre-intro.*    the opening film (webm + mp4 + poster)
@@ -140,6 +146,9 @@ public/stall/*.webp         the Fruit Stall's six layers (sky, far, palms, groun
                             fruit-stall, near), the basket, orange and crate, and
                             the seller (seller.webp, seller-portrait.webp)
 public/ui/leaves-*.webp     two leaf sprigs from the near layer, for the dialogue box
+public/ui/lantern-*.webp    the lantern, lit and unlit (the same lamp, cut to one box)
+public/friends/*.webp       dark silhouettes of the six friends still to join, made
+                            from their art (a few KB each instead of the full pictures)
 public/art/*.webp           market map (day, misty), not used yet; the blank
                             storybook behind the avatar screen
 source-art/                 full-size masters, kept out of git and out of the build
@@ -275,16 +284,29 @@ student sign-up: a child can't own an account, so the grown-up creates one
 and adds the child from the dashboard.
 
 **Who is who.** Every child plays as **Zizi**, in the look they choose.
-The purple monster is **Blob**, the guide, and nobody can pick it. The other
+The purple monster is **Blob**, and nobody can pick it. He is not a guide:
+he is lost in the market too ([docs/story.md](docs/story.md)). The other
 seven monsters are on the grown-up's side: a grown-up picks one for each
 child when adding them (`players.monster`), so the cards on the dashboard
-and on "Who's playing?" are easy to tell apart. Children added before
+and on "Who's playing?" are easy to tell apart. In the game, six of them
+(green, blue, orange, pink, yellow, teal) are Blob's friends, who join the
+search one place at a time; lavender is not one of them. Children added before
 monsters came back show a neutral circle with their initial.
 
 **"Who's playing?"** is built for a child: one big card per child (their
 monster and their name), nothing to type, no sign-out, no settings. The
 device stays signed in as the grown-up. A small link in the corner goes
-back to the dashboard.
+back to the dashboard. What a child has earned isn't shown here: this
+screen is only for choosing who is playing.
+
+The cards sit still. Tapping one is like picking a player in a game: that
+monster squashes, hops with a small lean on the way up, lands level with a
+burst of lavender sparkles behind it, and its card turns to its chosen
+look (a lavender edge and wash), all in 600 ms of CSS keyframes on the
+picture that was already there; then the game starts. Taps after the
+first do nothing. A sound goes with it (below). With reduced motion there
+is no hop, lean or sparkle: the card fades to its chosen look, and the
+sound still plays.
 
 **The loading screen** shows `public/loading/hands-apart.webp` full screen,
 with a slim bar low down that fills only as files actually arrive
@@ -317,9 +339,13 @@ a Shuffle button. It starts on a random pair. There is no text box: a child
 never types anything, so they can't put a real name in. "That's my name!"
 saves it.
 
-**Scene 1** (until `players.scene1_done`): the dim market, as written in the
-handoff. The child's Zizi hides behind toppled crates while purple haze
-drifts past, and Blob finds her. Her lines are labelled with the child's
+**Scene 1** (until `players.scene1_done`): the dim market. The child's Zizi
+hides behind toppled crates while purple haze drifts past, and she and
+Blob find each other: "…I'm lost too", he says, in a small voice (the line
+carries its own `voice`, read slower and quieter). He knows one useful
+thing: he has friends in this market, and they will help them look. He doesn't know where her mother is;
+the traders see everyone but can't leave their stalls, so the two of them
+will mind a stall while a trader goes and asks. Her lines are labelled with the child's
 game name, never "Zizi". "Let's go" saves `scene1_done` and goes straight to
 the Fruit Stall.
 
@@ -340,9 +366,9 @@ at the right number.
 
 *Rounds 2 to 5* fill the basket to ten (`data/fruitStall.js`, and
 [docs/learning-rules.md](docs/learning-rules.md) for why). The basket
-starts part full; in rounds 2 and 3 Blob first asks "How many MORE to fill
-the basket?" with three numbers to tap, and a wrong one gets "Count
-again…". When the basket fills it closes into a crate of ten, and what is
+starts part full; in rounds 2 and 3 Blob first wonders "Hmm. How many MORE
+to fill the basket?" with three numbers to tap, and a wrong one gets "Hmm,
+let me count these again." (Blob counting again himself; never "wrong"). When the basket fills it closes into a crate of ten, and what is
 left on the stall moves onto a woven cloth beside it, so the leftovers
 can't be mistaken for the stall's stock. Then Blob says what is there one
 step at a time, and the light follows the words: "Ten…" (the crate lifts
@@ -352,25 +378,26 @@ step waits for the voice, about a second apart; with the sound off, the
 child taps through them. Round 5 never fills the basket: the child puts all
 nine in, and Blob says what happened, one line at a time and paced the same
 way: "Hmm. The basket didn't fill this time." "Nine. One short of ten." (the
-one empty space lights up) "Not every pile makes a ten. That's fine."
+one empty space lights up) "Oh. Not every pile makes a ten." Blob
+notices; he doesn't instruct.
 
 Rounds 1 to 5 are **the tutorial**, not a chapter; nothing on screen says
-"Chapter 1". After the lock opens, the card says the tutorial is finished
+"Chapter 1". When it ends, Blob's errand card says the tutorial is finished
 and more of the market is coming.
 
 A child gets a few small sparkles each time an orange goes into the basket:
 they fly from where it lands to the basket's count, in under half a second
 (CSS and SVG, none with reduced motion).
 
-*The progress meter* sits beside the child's name, in the same glass chip
-style (on a phone, inside the name's chip, under the name). It has one
-segment for each round the child plays today: five in the tutorial,
-three in Chapter 1, and it starts empty every time. When a round is
+*The progress meter* is a ring around the child's face, in the name's
+chip: an SVG circle cut into one segment per round the child plays today
+(stroke-dasharray, small gaps between), filling clockwise from the top.
+Five in the tutorial, nine in Chapter 1, and it starts empty every time. When a round is
 answered (the order in round 1, a full basket in rounds 2 to 4, round 5
 once Blob has explained it), sparkles fly from the basket's count into the
 next segment, which turns from outlined to solid lavender as they land,
 with a soft rising sound. When the last fills, the meter glows briefly
-with a warmer sound, and then the lock opens. A right answer to "How many
+with a warmer sound, and then the end comes. A right answer to "How many
 MORE?" gets the rising sound too. It is not a score: no number, no
 percentage, nothing to compare; it only shows how far through the child
 is. Without motion the segments simply light, with the same sounds.
@@ -389,72 +416,128 @@ The sounds are made in `lib/sound.js`, and the corner switch mutes them
   1800 Hz band-pass (Q 1.5), gone in 35 ms; a second, quieter one 25 ms
   later at 3200 Hz (Q 2); under them a triangle wave falling from 220 to
   110 Hz in 80 ms.
+- **Choosing who is playing** (done by 450 ms, inside the 600 ms hop): a
+  soft pop as the hop starts, 60 ms in (a sine falling from 900 to 300 Hz
+  in 40 ms, gone by 70 ms), then two sine notes rising a fourth as it
+  lands: G5 (784 Hz) at 270 ms and C6 (1047 Hz) 50 ms later.
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
-at once as a `stall_progress` row. The first time, Blob says "You did it!
-Look, the first lock is open!" over Mum's face and her chain of seven
-padlocks (one for the tutorial, one for each of the six stalls): the first lock's key turns, it springs open with a soft sound
-(made in the browser, `lib/sound.js`; the corner switch mutes it with the
-voice), and it falls away. As it springs, a handful of sparkles fly out
-from the shackle, the basket's sparkles a little bigger, in under half a
-second (none with reduced motion). No confetti, star ratings or score. A card then shows
-the seven locks, one open and six closed. A child who has finished the
-tutorial sees that card first when they come back, then plays Chapter 1
-(below). If `stall_progress` can't be read, the game starts as if
-nothing were cleared.
+at once as a `stall_progress` row; then Blob's errand card. No confetti,
+star ratings or score. A child who has finished the tutorial plays
+Chapter 1 when they come back (below). If `stall_progress` can't be read,
+the game starts as if nothing were cleared. There are no locks and no
+chain: nobody took the mother ([docs/story.md](docs/story.md)).
+
+*After the tutorial, nobody answers for the child.* The tutorial is the
+teaching stage; from Chapter 1 on, the game never breaks a number down for
+the child and never says a total they could say
+([docs/learning-rules.md](docs/learning-rules.md)). A customer asks for a
+number; the child decides what that is in crates and loose; the child says
+the total, and the game only confirms. Nothing is outlined. The one hint
+that is always there to ask for: tap a crate and a quiet 10 shows on it for
+a moment, then goes (never in the test rounds). Blob's hint button stays
+in Stage A.
 
 *Chapter 1, Stage A: adding past ten.* The same stall, now with full
-crates on the table: each a crate of ten oranges in two rows of five, with
-a small 10, stacked at the table's left end. Each round is a sum like
-28 + 6 (`CHAPTER_ONE_ROUNDS` in `data/fruitStall.js`: 28 + 6, 17 + 5,
-39 + 4), though the child never sees it written. Two crates on the table,
-eight oranges in the basket with its two empty spaces outlined, so the
-child can see how many more it needs without counting, and six loose on
-the stall. They drag two in; the basket shuts into a crate, which goes up
-onto the table with the others, and four loose oranges are left. Then
-Blob, one step at a time: "Three crates…" (the crates light), "…and four
-loose." (the loose oranges light), "Thirty-four." (both, and only now the
-number). Objects first, the number second. The seller asks the child to
-pack the new oranges once, at the start.
+crates on the table: each a crate of ten oranges in two rows of five,
+stacked at the table's left end, with no number on it. Each round is a
+sum like 28 + 6 (`CHAPTER_ONE_ROUNDS` in `data/fruitStall.js`: 28 + 6,
+17 + 5, 39 + 4), though the child never sees it written. Two crates on the
+table, eight oranges in the basket, and six loose on the stall. They drag
+two in; the basket shuts into a crate, which goes up onto the table with
+the others, and four loose oranges are left. Then Blob, one step at a
+time: "Three crates…" (the crates light), "…and four loose." (the loose
+oranges light), "How many is that?" (both), and three numbers to tap: 34,
+43 and 7 (`totalChoices` in `data/fruitStall.js`). The wrong ones are
+there to tell a teacher something, not to be near misses: 43 (the digits
+swapped) is a place-value slip, 7 (the digits added) means a crate isn't
+seen as ten. For 22, where swapping changes nothing, the place-value one
+is 202, the tens and ones side by side as they are said. A wrong tap gets
+"Hmm, let me count these again."; the right one gets the soft "yes", the
+number shows, and Blob says it after the child ("Thirty-four!"). Every tap
+is saved in `attempts`, with the number tapped. Objects first, the number
+second, and the number the child's.
 
-*Chapter 1, Stage B: taking away, by cracking a crate.* Three orders
+*Grandma goes to ask.* At the start of the chapter Grandma asks the child
+to pack the new oranges and mind her stall, and says she'll go along the
+row and ask everyone about their mother; then she walks out of the
+picture. That is why the child serves the customers alone: from here every
+order is a customer's, and a customer asks for a number in digits, never
+for crates and loose: "15 oranges, please." The two digits are the
+lesson.
+
+*Chapter 1, Stage B: taking away, by cracking a crate.* Three orders,
+"15 oranges, please.", "23 oranges, please." and "8 oranges, please."
 (32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
-the table and an empty basket, stepped left to make room for the
-customer's order: a cloth beside it with the order drawn as dotted
-outlines, a crate shape for each crate, a circle for each loose orange.
-The child carries crates and loose oranges to it, by touch or mouse.
-Each order needs more loose oranges than there are. In the first, nothing
-warns the child and nothing is greyed out: they carry the two loose ones
-across, run out, and reach for another (or wait two seconds), and only then does Blob ask
-"Hmm. Not enough loose ones. What's inside a crate?" (his line stays up,
-with no button, and the crates breathe a little light). A tap on a crate
-splits it open with a short wooden crack; its ten oranges spill into the
-basket's ten spaces, and from there they can be carried to the order. A
-crate tapped before that does nothing. In the next two orders the child
-can open one whenever they like, and Blob asks again only if they run
-out. Anything the order doesn't want springs back. When the order is
-full it glows, its segment of the meter fills, the customer takes it,
-and Blob names what is left the same way: "One crate…" (lights the
-crate), "…and seven loose." (lights the loose ones, in the basket),
-"Seventeen." No hint button in Stage B yet.
+the table and an empty basket, stepped left to make room for a plain
+cloth beside it, with nothing drawn on it. The child carries crates and
+loose oranges to it, by touch or mouse, in any mix that makes the number;
+anything that would make more springs back, and anything on the cloth can
+be dragged or tapped back. Each order needs more loose oranges than there
+are. In the first, nothing warns the child and nothing is greyed out:
+they carry the two loose ones across, run out, and reach for another (or
+wait two seconds), and only then does Blob ask "Hmm. Not enough loose
+ones. What's inside a crate?" (his line stays up, with no button, and the
+crates breathe a little light). A tap on a crate splits it open with a
+short wooden crack; its ten oranges spill into the basket's ten spaces,
+and from there they can be carried to the order. Before that, a tapped
+crate only shows its 10. In the next two orders the child can open one
+whenever they like (a tap opens it, so there the ten oranges spilling
+out are what show the ten), and Blob asks again only if they run out.
+When what is on the cloth makes the number it glows, its segment of the
+meter fills, the customer takes it, and Blob asks about what is left the
+same way: "One crate…", "…and seven loose.", "How many is that?" (17, 71
+or 8). No hint button in Stage B.
 
-*The end of Chapter 1.* Finishing it the first time is saved at once as
-a `fruit-stall-chapter-1` row in `stall_progress`, and a card says "The
-market is opening up!": the map comes next. It opens no lock. Mum's
-locks are one per place in the market (`LOCK_STALLS` in
-`data/market.js`: for now just the tutorial's `fruit-stall`), so a
-chapter's row is progress, not a lock. A child coming back after
-Chapter 1 plays it again, ending on Blob's errand.
+*Chapter 1, Stage C: three tests.* Nothing to help: no outlines, no
+hint, no 10 on the crates, no Blob, nothing counted aloud, and the basket
+put away. The customer's order stays up with a Done button, and the
+counter, a plain wooden top in the middle, starts empty. "33 oranges,
+please.": the child
+carries crates and loose oranges from the stall to the counter (anything
+can be dragged or tapped back) and taps Done. "One crate and five
+oranges.": once those are handed over, "How many oranges is that?", and
+the child taps numerals into two slots under the counter, tens under the
+crates and ones under the loose oranges. "20 oranges, please.": no loose
+ones at all. Wrong is just the customer checking their own order, "Hmm,
+let me count these again.", as often as it takes; nothing turns red. Each Done, and each number, is saved as a row in
+`attempts` (`lib/attempts.js`) with what was handed over and, if it was
+wrong, the first step that broke: `crates`, `loose` or `total`. Nothing
+shows those yet; they are for the teacher dashboard. Only what the
+customer takes is ever counted; the stock on the stall never is.
 
-*The end of a session.* After round 5 Blob gives the child one small thing
-to try away from the screen, picked at random from `ERRANDS` in
-`data/dialogue.js` ("Count out ten of anything at home. What's left
-over?"), with a quiet word that this is as far as the market goes for now
-and a way back to "Who's playing?".
+*The end of Chapter 1.* Grandma comes back: she walks back into the
+picture, and a card says "Grandma is back!" No news yet. She lends the
+child her lantern, so they can see further into the haze, and it arrives
+on the card (down from above, its light coming up); the first time a
+second one follows, "for serving the customers all by yourself". On a
+replay she gives one, for coming back. Then she points: "Look, over there.
+More of the market!" (`CHAPTER_ONE.back` in `data/dialogue.js`; without
+motion the lanterns are simply there, lit.)
+
+Finishing it the first time (after Stage C) is also
+saved at once as a `fruit-stall-chapter-1` row in `stall_progress`, which
+earns the straw hat and the tally stick (`data/rewards.js`: every reward
+comes from the place that gave it). A second card shows them, says Grandma
+gives them, and that the market is opening up: the map comes next. They show
+in the child's profile in the game (below) and, for a parent, on the
+dashboard, as item cards drawn in SVG: the hat isn't worn on the Zizi
+picture, whose seven looks are painted with their heads in different
+places. A child coming back after Chapter 1 plays it again (Grandma
+leaves and comes back again), ending on Blob's errand.
+
+*The end of a session.* After round 5 Blob says one small thing he is
+going to try himself, away from the screen, and asks the child to try it
+too, picked at random from `ERRANDS` in `data/dialogue.js` ("I'm going to
+count out ten of anything at home, and see what's left over. You try it
+too?"): his own idea, not homework. Then a quiet word that this is as far
+as the market goes for now, and a way back to "Who's playing?".
 
 *Blob's hint button*, bottom left: each tap gives the next step (a
-question, then the empty spaces outlined, then the move shown slowly
-once), never the answer, and it resets each round. How many hints a child
+question, then the empty spaces outlined, then Blob trying the move
+slowly, once), never the answer, and it resets each round. Blob thinks out
+loud ("Hmm. What about those empty spaces?"): he doesn't know the answer
+either, and never sounds as if he is keeping one back. How many hints a child
 used, and how many wrong numbers they tapped, is noted per round in
 `lib/stallLog.js`, in memory only, shaped to be saved later.
 
@@ -469,7 +552,7 @@ counts the focused orange and B puts it in the basket.
 **Every line is in `data/dialogue.js`**, to edit without touching code, and
 is read aloud with the browser's own voice (`lib/speech.js`) until real
 recordings exist. The speaker button in the top corner mutes it (and the
-lock's sound), and that is remembered on the device. Only voices on the
+game's sounds), and that is remembered on the device. Only voices on the
 device itself are used: the online ones (Edge's "Online (Natural)" voices,
 Chrome's "Google" voices) send each line, the child's game name included,
 to Microsoft or Google, so they are never chosen, and a device with no
@@ -478,8 +561,49 @@ comes first, then British, then any English. Chrome stays silent until the
 child has tapped something on the page, which every normal path through
 the game does.
 
-**The game name** appears in the top corner of the play screens and as Zizi's
-label in the dialogue box, and nowhere else.
+**The game name** appears in the top corner of the play screens, as Zizi's
+label in the dialogue box, and in the child's profile, and nowhere else.
+
+**The profile.** The name in the top corner (Zizi's face and the game
+name) is a button: it opens the child's profile over the game. Their
+face and game name, then what the story counts
+([docs/story.md](docs/story.md)):
+
+- **Friends**, first and with the most room: seven spaces, Blob in colour
+  and the six still to join as dark silhouettes of their own shapes, under
+  "Blob's friends are helping us look." One joins at each new place
+  (`data/friends.js`); for now that is only Blob. It is how close the
+  child is to finding their mother.
+- **Lanterns**: the lit lamp for each one they have, the unlit lamp for
+  each one still needed to open the next place (two).
+- **Keepsakes**: the straw hat and the tally stick, once Grandma has given
+  them, and no empty spaces beside them, ever: they are gifts, not a set.
+
+It is a native `<dialog>`: the close button, Escape or a tap outside closes
+it, and the focus goes back to the name.
+
+**Lanterns** (`data/lanterns.js`, `lib/lanterns.js`). One for finishing a
+place's teaching chapter (at the Fruit Stall, Chapter 1's Stages A and B),
+one for finishing its test rounds (Stage C), and one more every time the
+child comes back and does the test rounds again: only for coming back,
+never for being fast or right first time. Two open the next place on the
+main path; extras will open optional places off the main road. Neither is
+built, so none are spent yet, and finishing a chapter once always earns
+the two needed to go on. Each lantern earned is a row in `lanterns`
+(`teaching` and `test` once per place, `replay` each time), counted when a
+session starts. Chapter 1's are saved at its end, when Grandma is back to
+lend them, so a lantern never turns up in the profile before the child
+has seen it arrive.
+
+While it is open the game is paused (`lib/pause.js`), and closing it goes
+on exactly where it was. Nothing is against the clock, so nothing is
+lost: the game's waits (`after()` instead of `setTimeout`: a full basket
+becoming a crate, an order being taken, Blob's two seconds at the wall,
+his steps) stop counting and go on with the time they had left;
+everything moving on screen stops mid-way (`document.getAnimations()`);
+and reading aloud stops, with the line it was on said again on closing.
+A touch on the corners (the name, the sound) doesn't count as reaching for
+another orange at the wall.
 
 `prefers-reduced-motion` turns off the little pops, the bar's glide, the
 haze drifting, the bobbing arrow and the tutorial's moving demonstration
@@ -656,6 +780,6 @@ drags onto, at its own depth.
 
 Parallax runs from slowest to fastest: sky, far, palms, ground, near. The
 stall barely moves, because it is the subject. The empty sand on the right
-is for the fruit seller and Blob. The layers are in place as a still
+is for Grandma (the fruit seller) and Blob. The layers are in place as a still
 picture (`components/StallBackdrop.css`); the parallax and the living
 effects aren't built yet.

@@ -1,0 +1,407 @@
+/* The child's profile, over the paused game: a white card with lavender
+   edges, and never orange. The only thing in it to press is the close
+   button, and it looks like the game's corner buttons. */
+.pm-profile {
+  /* The dialog is only the card's frame: the card fills it. */
+  width: min(820px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pm-r-lg);
+  background: transparent;
+  color: var(--pm-ink);
+  overflow: visible;
+  animation: pm-profile-in 0.22s var(--pm-ease) both;
+}
+
+/* Just dimmed, not blurred: a blur over the whole game is slow to draw
+   on a cheap phone. */
+.pm-profile::backdrop {
+  background: rgba(30, 30, 50, 0.5);
+}
+
+@keyframes pm-profile-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+
+/* Who, then Friends (the most room), then Lanterns and Keepsakes. */
+.pm-profile__card {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    "who"
+    "friends"
+    "pair";
+  gap: 20px;
+  max-height: calc(100dvh - 24px);
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: var(--pm-r-lg);
+  background: var(--pm-white);
+  box-shadow: inset 0 0 0 2px var(--pm-line-purple), var(--pm-shadow-lg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Like the corner buttons of the game. */
+.pm-profile__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pm-purple-50);
+  box-shadow: inset 0 0 0 1.5px var(--pm-line-purple);
+  color: var(--pm-purple-700);
+  cursor: pointer;
+}
+
+.pm-profile__close svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pm-profile__close:hover {
+  background: var(--pm-purple-100);
+}
+
+.pm-profile__close:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 2px;
+}
+
+/* --- the child: their face, as in the corner chip, and their name --------------- */
+.pm-profile__who {
+  grid-area: who;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Clear of the close button. */
+  padding-right: 56px;
+}
+
+.pm-profile__face {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--pm-purple-100);
+  box-shadow: inset 0 0 0 2px var(--pm-line-purple);
+  object-fit: cover;
+  object-position: 50% 4%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.pm-profile__name {
+  min-width: 0;
+  font-family: var(--pm-font-display);
+  font-size: clamp(1.5rem, 3.6vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.pm-profile__heading {
+  margin: 0 0 10px;
+  font-family: var(--pm-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+/* --- Friends: Blob, and six still to join ------------------------------------------ */
+.pm-profile__friends {
+  grid-area: friends;
+}
+
+.pm-profile__friend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-profile__friend {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  width: 92px;
+  height: 112px;
+  padding: 8px 6px 6px;
+  border-radius: var(--pm-r-md);
+}
+
+.pm-profile__friend img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Here: in colour, on lavender, with his name. */
+.pm-profile__friend.is-here {
+  background: var(--pm-purple-100);
+  box-shadow: inset 0 0 0 2px var(--pm-purple-300);
+}
+
+.pm-profile__friend-name {
+  font-family: var(--pm-font-display);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  color: var(--pm-ink);
+}
+
+/* Still to join: a dark shape, no name. */
+.pm-profile__friend.is-coming {
+  grid-template-rows: 1fr;
+  padding: 10px;
+  background: rgba(30, 30, 50, 0.04);
+  box-shadow: inset 0 0 0 2px rgba(30, 30, 50, 0.08);
+}
+
+.pm-profile__caption {
+  margin: 12px 0 0;
+  font-size: var(--pm-body);
+  font-weight: 600;
+  color: var(--pm-ink-muted);
+}
+
+/* --- Lanterns and Keepsakes, side by side where there's room --------------------- */
+.pm-profile__pair {
+  grid-area: pair;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 40px;
+}
+
+.pm-profile__lantern-row,
+.pm-profile__keepsake-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-profile__lantern {
+  display: grid;
+  place-items: end center;
+  height: 84px;
+}
+
+.pm-profile__lantern img {
+  width: auto;
+  height: 76px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* A keepsake: its picture and its name. */
+.pm-profile__item {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+  width: 92px;
+  height: 104px;
+  padding: 8px 6px;
+  border-radius: var(--pm-r-md);
+  background: var(--pm-purple-50);
+  box-shadow: inset 0 0 0 2px var(--pm-line-purple);
+}
+
+.pm-profile__picture {
+  display: grid;
+  place-items: center;
+}
+
+.pm-profile__picture svg {
+  width: 56px;
+  height: 56px;
+}
+
+.pm-profile__item-name {
+  font-size: var(--pm-micro);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--pm-ink);
+}
+
+/* A phone held upright: the friends four to a row, everything centred. */
+@media (max-width: 600px) {
+  .pm-profile__card {
+    gap: 18px;
+  }
+
+  .pm-profile__face {
+    width: 60px;
+    height: 60px;
+  }
+
+  .pm-profile__heading,
+  .pm-profile__caption {
+    text-align: center;
+  }
+
+  .pm-profile__friend-row,
+  .pm-profile__pair,
+  .pm-profile__lantern-row,
+  .pm-profile__keepsake-row {
+    justify-content: center;
+  }
+
+  .pm-profile__friend-row {
+    gap: 8px;
+  }
+
+  .pm-profile__friend {
+    width: clamp(56px, 18vw, 80px);
+    height: auto;
+    aspect-ratio: 5 / 6;
+  }
+
+  .pm-profile__friend.is-coming {
+    padding: 8px;
+  }
+
+  .pm-profile__pair {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .pm-profile__lantern {
+    height: 72px;
+  }
+
+  .pm-profile__lantern img {
+    height: 66px;
+  }
+
+  .pm-profile__item {
+    width: clamp(72px, 22vw, 92px);
+    height: auto;
+    min-height: 92px;
+  }
+
+  .pm-profile__picture svg {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* A phone on its side: the child on the left, the rest beside them, the
+   friends all in one row. */
+@media (max-height: 480px) and (min-width: 601px) {
+  .pm-profile__card {
+    grid-template-columns: 120px 1fr;
+    grid-template-areas:
+      "who friends"
+      "who pair";
+    gap: 12px 20px;
+    padding: 16px 20px;
+  }
+
+  .pm-profile__who {
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding-right: 0;
+    text-align: center;
+  }
+
+  .pm-profile__face {
+    width: 88px;
+    height: 88px;
+  }
+
+  .pm-profile__name {
+    font-size: 1.25rem;
+  }
+
+  .pm-profile__friends {
+    padding-right: 52px;
+  }
+
+  .pm-profile__heading {
+    margin-bottom: 6px;
+    font-size: 1rem;
+  }
+
+  .pm-profile__friend-row {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .pm-profile__friend {
+    width: 60px;
+    height: 74px;
+    padding: 4px 3px 3px;
+  }
+
+  .pm-profile__friend-name {
+    font-size: 0.8125rem;
+  }
+
+  .pm-profile__friend.is-coming {
+    padding: 6px;
+  }
+
+  .pm-profile__caption {
+    margin-top: 6px;
+    font-size: var(--pm-micro);
+  }
+
+  .pm-profile__pair {
+    gap: 12px 28px;
+  }
+
+  .pm-profile__lantern {
+    height: 64px;
+  }
+
+  .pm-profile__lantern img {
+    height: 60px;
+  }
+
+  .pm-profile__item {
+    width: 76px;
+    height: 84px;
+    padding: 6px 4px;
+  }
+
+  .pm-profile__picture svg {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-profile {
+    animation-name: pm-profile-fade;
+  }
+
+  @keyframes pm-profile-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}
