@@ -95,7 +95,7 @@ export default function DialogueBox({
         draggable={false}
       />
 
-      <div className="pm-dialogue__panel">
+      <div className={`pm-dialogue__panel${portrait ? "" : " pm-dialogue__panel--plain"}`}>
         <span className="pm-dialogue__frame" aria-hidden="true" />
 
         {portrait && (

@@ -20,7 +20,6 @@ import {
   capitalise,
   fillLine,
   numberName,
-  orderWords,
   readOrderWords,
 } from "../data/dialogue";
 import {
@@ -32,6 +31,7 @@ import {
   ROUND_COUNT,
   setUpChapterRound,
   setUpRound,
+  totalChoices,
 } from "../data/fruitStall";
 import { LANTERN } from "../data/lanterns";
 import { ORANGE, SELLER_PORTRAIT } from "../data/market";
@@ -91,31 +91,44 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               coming
 
   A child who has finished the tutorial plays Chapter 1 instead: the same
-  stall, with full crates on the table. Stage A adds past ten
-  (data/fruitStall.js, CHAPTER_ONE_ROUNDS):
+  stall, with full crates on the table. From here the game never breaks a
+  number down for the child and never says a total they could say: a
+  customer asks for a number, the child decides what that is in crates
+  and loose, and the child says how many (docs/learning-rules.md). Nothing
+  is outlined; a tapped crate shows a quiet 10 for a moment, in practice
+  only. Stage A adds past ten (data/fruitStall.js, CHAPTER_ONE_ROUNDS):
     ask       Grandma asks the child to pack the new oranges and mind the
               stall, and goes along the row to ask about their mother
               (once): she walks out of the picture. From here the child
               serves the customers alone.
-    play      fill the basket; its empty spaces are outlined
+    play      fill the basket (Blob's hint button can show its empty
+              spaces, if the child asks)
     closing   it shuts into a crate, which goes up onto the table with
               the others (the basket is empty again)
-    summary   Blob: "Three crates… and four loose. Thirty-four." one step
-              at a time, the crates lighting, then the loose oranges, then
-              both, and only then the number
+    summary   Blob: "Three crates… and four loose. How many is that?" one
+              step at a time, the crates lighting, then the loose oranges,
+              then both. The child taps one of three numbers (the right
+              one, its digits swapped, its digits added); a wrong one gets
+              "Hmm, let me count these again." Each tap is saved
+              (lib/attempts.js). Only after the right one does Blob say it,
+              and the number shows.
   Stage B takes away, cracking a crate open when there aren't enough
   loose oranges:
-    ask       a customer gives their order ("one crate and five loose
-              oranges"), which waits on a cloth beside the basket
-    play      carry crates and loose oranges to it. In the first round
+    ask       a customer asks for a number ("15 oranges, please."), and a
+              plain cloth waits beside the basket
+    play      carry crates and loose oranges to it, any mix that makes the
+              number; anything that would go over springs back, and
+              anything on the cloth can be taken back. In the first round
               there aren't enough loose ones, and nothing says so: the
               child runs out, reaches for another, and only then does
               Blob ask "What's inside a crate?" From then on a tapped crate
               splits open, with a wooden crack, and its ten oranges spill
               into the basket. (In the next rounds a crate can be opened
               whenever the child likes.)
-    done      the order glows and the customer takes it
-    summary   Blob: "One crate… and seven loose. Seventeen."
+    done      the cloth makes the number: it glows and the customer takes
+              it
+    summary   Blob: "One crate… and seven loose. How many is that?", and
+              the child taps it, as in Stage A
   Stage C is three test rounds, with nothing to help: no outlines, no
   hint, no Blob, no counting aloud, and the basket put away. The
   customer's order stays up with a Done button; the counter starts empty.
@@ -180,6 +193,8 @@ export default function PlayStall() {
   // and comes back at the end.
   const [introStep, setIntroStep] = useState(0);
   const [grandmaAway, setGrandmaAway] = useState(false);
+  // Chapter 1: the number the child has said for "How many is that?"
+  const [said, setSaid] = useState(null);
   // Stage C's reading round: handed over, and the number going in.
   const [handed, setHanded] = useState(false);
   const [entry, setEntry] = useState(null); // { tens, ones, active }
@@ -261,7 +276,8 @@ export default function PlayStall() {
   // Stage B: the loose oranges still here (on the table or, once a crate
   // is cracked, in the basket), and how many more the order wants.
   const looseHere = round.oranges.length + inBasket.length - delivered.loose.length;
-  const looseWanted = stageB ? round.order.loose - delivered.loose.length : 0;
+  const handedOver = delivered.crates.length * BASKET_HOLDS + delivered.loose.length;
+  const stillWanted = stageB ? round.want - handedOver : 0;
   const loose = stageB ? looseHere : onTable;
   const values = {
     name: player.game_name,
@@ -273,13 +289,15 @@ export default function PlayStall() {
     crates: `${capitalise(NUMBER_WORDS[crates.length] ?? String(crates.length))} ${crates.length === 1 ? "crate" : "crates"}`,
     loose: NUMBER_WORDS[loose],
     sum: capitalise(numberName(crates.length * BASKET_HOLDS + loose) ?? ""),
-    order: stageB ? orderWords(round.order) : "",
     want: round.want ?? "",
     readOrder: round.read ? readOrderWords({ crates: Math.floor(round.want / 10), loose: round.want % 10 }) : "",
   };
   // The lines Blob says one step at a time, by phase.
   const stepped =
-    { summary: chapterOne ? CHAPTER_ONE.cratesAnd : FRUIT_STALL.tenAnd, puzzled: FRUIT_STALL.shortOfTen }[phase] ?? null;
+    { summary: chapterOne ? CHAPTER_ONE.cratesAsk : FRUIT_STALL.tenAnd, puzzled: FRUIT_STALL.shortOfTen }[phase] ?? null;
+  // Chapter 1: Blob's question at the end of the steps, and its three numbers.
+  const askingTotal = chapterOne && phase === "summary" && stepped && lineStep >= stepped.length && said == null;
+  const totalOptions = chapterOne && phase === "summary" ? totalChoices(crates.length, loose, round.seed) : null;
 
   // --- the tutorial ---------------------------------------------------------------
   const beats = [
@@ -303,6 +321,7 @@ export default function PlayStall() {
     setHintShown(false);
     setDemoKey(0);
     setWrongTaps(0);
+    setSaid(null);
     tally.current = { hints: 0, wrong: 0 };
   };
 
@@ -401,16 +420,48 @@ export default function PlayStall() {
     }
   };
 
-  // Stage B: something carried to the customer's order. It goes in while
-  // the order still wants one; otherwise it springs back.
+  // Chapter 1: the child's answer to Blob's "How many is that?" Every tap
+  // is saved, with the number picked (which wrong one tells a teacher what
+  // went wrong: see totalChoices). Right: the "yes", and Blob says it after
+  // them. Wrong: "Hmm, let me count these again.", as often as it takes.
+  const chooseTotal = (value) => {
+    const right = totalOptions.right;
+    recordAttempt({
+      playerId: player.id,
+      stallId: CHAPTER_ONE_ID,
+      stage: round.stage,
+      round: round.index - (stageB ? FIRST_ORDER_ROUND : 0) + 1,
+      asked: right,
+      crates: crates.length,
+      loose,
+      total: value,
+      failedStep: value === right ? null : "total",
+    })
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save that answer.", error);
+      })
+      .catch((error) => console.warn("Couldn't save that answer.", error));
+    if (value === right) {
+      playCorrect();
+      setWrongTaps(0);
+      setSaid(value);
+    } else {
+      tally.current.wrong += 1;
+      setWrongTaps((n) => n + 1);
+    }
+  };
+
+  // Stage B: something carried to the customer's cloth. It goes on, in
+  // any mix of crates and loose oranges, unless it would make more than
+  // the number asked for; then it springs back. Stage C's counter takes
+  // anything.
   const deliver = (id, kind) => {
     if (!(stageB || stageC) || phase !== "play" || handed) return false;
+    if (stageB && handedOver + (kind === "crate" ? BASKET_HOLDS : 1) > round.want) return false;
     if (kind === "crate") {
-      if (stageB && delivered.crates.length >= round.order.crates) return false;
       setCrates((list) => list.filter((x) => x !== id));
       setDelivered((now) => ({ ...now, crates: [...now.crates, id] }));
     } else {
-      if (stageB && delivered.loose.length >= round.order.loose) return false;
       setDelivered((now) => ({ ...now, loose: [...now.loose, id] }));
       setCounted((list) => list.filter((x) => x !== id));
     }
@@ -419,8 +470,9 @@ export default function PlayStall() {
   };
 
   // Stage C: something taken back off the counter, to the stall.
+  // Anything on Stage B's cloth or Stage C's counter can be taken back.
   const takeBack = (id, kind) => {
-    if (!stageC || phase !== "play" || handed) return false;
+    if (!(stageB || stageC) || phase !== "play" || handed) return false;
     if (kind === "crate") {
       setDelivered((now) => ({ ...now, crates: now.crates.filter((x) => x !== id) }));
       setCrates((list) => [...list, id]);
@@ -547,10 +599,12 @@ export default function PlayStall() {
     setWall(false);
   };
 
-  // The wall: nothing loose left, and the order still wants more. In the
-  // first order a crate only opens after the child has hit it and heard
-  // Blob; after that they know, and can open one whenever they like.
-  const atWall = stageB && phase === "play" && !cracked && looseHere === 0 && looseWanted > 0;
+  // The wall: nothing loose left, and the order still wants some that a
+  // whole crate can't give. In the first order a crate only opens after
+  // the child has hit it and heard Blob; after that they know, and can
+  // open one whenever they like.
+  const atWall =
+    stageB && phase === "play" && !cracked && looseHere === 0 && stillWanted > 0 && stillWanted % BASKET_HOLDS !== 0;
   const canCrack = stageB && phase === "play" && !cracked && (round.index > FIRST_ORDER_ROUND || crackReady);
 
   // Blob waits until the child reaches for another (any touch) or sits
@@ -594,7 +648,7 @@ export default function PlayStall() {
     if (phase !== "play") return undefined;
     let next = null;
     if (stageB) {
-      if (delivered.crates.length === round.order.crates && delivered.loose.length === round.order.loose) next = "done";
+      if (handedOver === round.want) next = "done";
     } else if (stageC) {
       // Answered with "Done" (handOver), not by filling something.
     } else if (round.practice) {
@@ -728,9 +782,11 @@ export default function PlayStall() {
       ? FRUIT_STALL.howManyMore
       : phase === "won"
         ? FRUIT_STALL.practiceWon
-        : stepped
-          ? steppedLine
-          : null;
+        : said != null
+          ? CHAPTER_ONE.cratesSaid
+          : stepped
+            ? steppedLine
+            : null;
   const spotlight =
     phase === "summary"
       ? (chapterOne ? [null, "crates", "loose", "both"] : [null, "crate", "tray", "both"])[Math.min(lineStep, 3)]
@@ -792,12 +848,20 @@ export default function PlayStall() {
           trayed={trayed}
           crates={crates}
           crateRoom={chapterOne ? (round.crateIds?.length ?? 0) + (round.stage === "A" ? 1 : 0) : 0}
+          // A crate's 10: always in the tutorial; in Chapter 1 only when a
+          // crate is tapped, and never in the test rounds.
+          tens={!chapterOne ? "always" : stageC ? "never" : "tap"}
           emptied={packed}
           away={delivered.loose}
           order={
             stageB
               ? {
-                  ...round.order,
+                  // Room on the cloth: the number as crates and loose, and
+                  // more loose if the child brings them. Nothing drawn.
+                  room: {
+                    crates: Math.floor(round.want / BASKET_HOLDS),
+                    loose: Math.max(round.want % BASKET_HOLDS, delivered.loose.length),
+                  },
                   deliveredCrates: delivered.crates,
                   deliveredLoose: delivered.loose,
                   done: phase === "done",
@@ -820,6 +884,8 @@ export default function PlayStall() {
           inviteCrack={wallLine}
           spotlight={spotlight}
           total={chapterOne ? crates.length * BASKET_HOLDS + loose : BASKET_HOLDS + onTable}
+          // In Chapter 1 the number only shows once the child has said it.
+          showTotal={!chapterOne || said != null}
           demoKey={demoKey}
           onTap={tap}
           onDrop={drop}
@@ -864,9 +930,7 @@ export default function PlayStall() {
                   ? FRUIT_STALL.ask
                   : !stageB
                     ? CHAPTER_ONE.intro[introStep]
-                    : round.index === FIRST_ORDER_ROUND
-                      ? CHAPTER_ONE.orderFirst
-                      : CHAPTER_ONE.orderNext
+                    : CHAPTER_ONE.order
               }
               values={values}
               ziziPortrait={zizi}
@@ -904,11 +968,11 @@ export default function PlayStall() {
               line={blobSays}
               values={values}
               ziziPortrait={zizi}
-              choices={phase === "question" ? round.choices : null}
-              onChoose={choose}
-              note={phase === "question" && wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
+              choices={phase === "question" ? round.choices : askingTotal ? totalOptions.choices : null}
+              onChoose={askingTotal ? chooseTotal : choose}
+              note={(phase === "question" || askingTotal) && wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
               noteKey={wrongTaps}
-              silent={Boolean(stepped)}
+              silent={Boolean(stepped) && said == null}
               buttonLabel={FRUIT_STALL.next}
               onNext={wallLine ? null : nextStep}
             />

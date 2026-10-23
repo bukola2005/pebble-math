@@ -367,8 +367,8 @@ at the right number.
 *Rounds 2 to 5* fill the basket to ten (`data/fruitStall.js`, and
 [docs/learning-rules.md](docs/learning-rules.md) for why). The basket
 starts part full; in rounds 2 and 3 Blob first wonders "Hmm. How many MORE
-to fill the basket?" with three numbers to tap, and a wrong one gets "Count
-again…". When the basket fills it closes into a crate of ten, and what is
+to fill the basket?" with three numbers to tap, and a wrong one gets "Hmm,
+let me count these again." (Blob counting again himself; never "wrong"). When the basket fills it closes into a crate of ten, and what is
 left on the stall moves onto a woven cloth beside it, so the leftovers
 can't be mistaken for the stall's stock. Then Blob says what is there one
 step at a time, and the light follows the words: "Ten…" (the crate lifts
@@ -378,7 +378,8 @@ step waits for the voice, about a second apart; with the sound off, the
 child taps through them. Round 5 never fills the basket: the child puts all
 nine in, and Blob says what happened, one line at a time and paced the same
 way: "Hmm. The basket didn't fill this time." "Nine. One short of ten." (the
-one empty space lights up) "Not every pile makes a ten. That's fine."
+one empty space lights up) "Oh. Not every pile makes a ten." Blob
+notices; he doesn't instruct.
 
 Rounds 1 to 5 are **the tutorial**, not a chapter; nothing on screen says
 "Chapter 1". When it ends, Blob's errand card says the tutorial is finished
@@ -427,59 +428,79 @@ Chapter 1 when they come back (below). If `stall_progress` can't be read,
 the game starts as if nothing were cleared. There are no locks and no
 chain: nobody took the mother ([docs/story.md](docs/story.md)).
 
+*After the tutorial, nobody answers for the child.* The tutorial is the
+teaching stage; from Chapter 1 on, the game never breaks a number down for
+the child and never says a total they could say
+([docs/learning-rules.md](docs/learning-rules.md)). A customer asks for a
+number; the child decides what that is in crates and loose; the child says
+the total, and the game only confirms. Nothing is outlined. The one hint
+that is always there to ask for: tap a crate and a quiet 10 shows on it for
+a moment, then goes (never in the test rounds). Blob's hint button stays
+in Stage A.
+
 *Chapter 1, Stage A: adding past ten.* The same stall, now with full
-crates on the table: each a crate of ten oranges in two rows of five, with
-a small 10, stacked at the table's left end. Each round is a sum like
-28 + 6 (`CHAPTER_ONE_ROUNDS` in `data/fruitStall.js`: 28 + 6, 17 + 5,
-39 + 4), though the child never sees it written. Two crates on the table,
-eight oranges in the basket with its two empty spaces outlined, so the
-child can see how many more it needs without counting, and six loose on
-the stall. They drag two in; the basket shuts into a crate, which goes up
-onto the table with the others, and four loose oranges are left. Then
-Blob, one step at a time: "Three crates…" (the crates light), "…and four
-loose." (the loose oranges light), "Thirty-four." (both, and only now the
-number). Objects first, the number second.
+crates on the table: each a crate of ten oranges in two rows of five,
+stacked at the table's left end, with no number on it. Each round is a
+sum like 28 + 6 (`CHAPTER_ONE_ROUNDS` in `data/fruitStall.js`: 28 + 6,
+17 + 5, 39 + 4), though the child never sees it written. Two crates on the
+table, eight oranges in the basket, and six loose on the stall. They drag
+two in; the basket shuts into a crate, which goes up onto the table with
+the others, and four loose oranges are left. Then Blob, one step at a
+time: "Three crates…" (the crates light), "…and four loose." (the loose
+oranges light), "How many is that?" (both), and three numbers to tap: 34,
+43 and 7 (`totalChoices` in `data/fruitStall.js`). The wrong ones are
+there to tell a teacher something, not to be near misses: 43 (the digits
+swapped) is a place-value slip, 7 (the digits added) means a crate isn't
+seen as ten. For 22, where swapping changes nothing, the place-value one
+is 202, the tens and ones side by side as they are said. A wrong tap gets
+"Hmm, let me count these again."; the right one gets the soft "yes", the
+number shows, and Blob says it after the child ("Thirty-four!"). Every tap
+is saved in `attempts`, with the number tapped. Objects first, the number
+second, and the number the child's.
 
 *Grandma goes to ask.* At the start of the chapter Grandma asks the child
 to pack the new oranges and mind her stall, and says she'll go along the
 row and ask everyone about their mother; then she walks out of the
 picture. That is why the child serves the customers alone: from here every
-order is a customer's (the words are the same as before, under
-"Customer"), and in Stage C "A customer wants 33 oranges." has no name
-over it.
+order is a customer's, and a customer asks for a number in digits, never
+for crates and loose: "15 oranges, please." The two digits are the
+lesson.
 
-*Chapter 1, Stage B: taking away, by cracking a crate.* Three orders
+*Chapter 1, Stage B: taking away, by cracking a crate.* Three orders,
+"15 oranges, please.", "23 oranges, please." and "8 oranges, please."
 (32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
-the table and an empty basket, stepped left to make room for the
-customer's order: a cloth beside it with the order drawn as dotted
-outlines, a crate shape for each crate, a circle for each loose orange.
-The child carries crates and loose oranges to it, by touch or mouse.
-Each order needs more loose oranges than there are. In the first, nothing
-warns the child and nothing is greyed out: they carry the two loose ones
-across, run out, and reach for another (or wait two seconds), and only then does Blob ask
-"Hmm. Not enough loose ones. What's inside a crate?" (his line stays up,
-with no button, and the crates breathe a little light). A tap on a crate
-splits it open with a short wooden crack; its ten oranges spill into the
-basket's ten spaces, and from there they can be carried to the order. A
-crate tapped before that does nothing. In the next two orders the child
-can open one whenever they like, and Blob asks again only if they run
-out. Anything the order doesn't want springs back. When the order is
-full it glows, its segment of the meter fills, the customer takes it,
-and Blob names what is left the same way: "One crate…" (lights the
-crate), "…and seven loose." (lights the loose ones, in the basket),
-"Seventeen." No hint button in Stage B yet.
+the table and an empty basket, stepped left to make room for a plain
+cloth beside it, with nothing drawn on it. The child carries crates and
+loose oranges to it, by touch or mouse, in any mix that makes the number;
+anything that would make more springs back, and anything on the cloth can
+be dragged or tapped back. Each order needs more loose oranges than there
+are. In the first, nothing warns the child and nothing is greyed out:
+they carry the two loose ones across, run out, and reach for another (or
+wait two seconds), and only then does Blob ask "Hmm. Not enough loose
+ones. What's inside a crate?" (his line stays up, with no button, and the
+crates breathe a little light). A tap on a crate splits it open with a
+short wooden crack; its ten oranges spill into the basket's ten spaces,
+and from there they can be carried to the order. Before that, a tapped
+crate only shows its 10. In the next two orders the child can open one
+whenever they like (a tap opens it, so there the ten oranges spilling
+out are what show the ten), and Blob asks again only if they run out.
+When what is on the cloth makes the number it glows, its segment of the
+meter fills, the customer takes it, and Blob asks about what is left the
+same way: "One crate…", "…and seven loose.", "How many is that?" (17, 71
+or 8). No hint button in Stage B.
 
 *Chapter 1, Stage C: three tests.* Nothing to help: no outlines, no
-hint, no Blob, nothing counted aloud, and the basket put away. The
-customer's order stays up with a Done button, and the counter, a plain wooden top in
-the middle, starts empty. "A customer wants 33 oranges.": the child
+hint, no 10 on the crates, no Blob, nothing counted aloud, and the basket
+put away. The customer's order stays up with a Done button, and the
+counter, a plain wooden top in the middle, starts empty. "33 oranges,
+please.": the child
 carries crates and loose oranges from the stall to the counter (anything
 can be dragged or tapped back) and taps Done. "One crate and five
 oranges.": once those are handed over, "How many oranges is that?", and
 the child taps numerals into two slots under the counter, tens under the
-crates and ones under the loose oranges. "A customer wants 20 oranges.":
-no loose ones at all. Wrong is just "Count again…", as often as they
-like; nothing turns red. Each Done, and each number, is saved as a row in
+crates and ones under the loose oranges. "20 oranges, please.": no loose
+ones at all. Wrong is just the customer checking their own order, "Hmm,
+let me count these again.", as often as it takes; nothing turns red. Each Done, and each number, is saved as a row in
 `attempts` (`lib/attempts.js`) with what was handed over and, if it was
 wrong, the first step that broke: `crates`, `loose` or `total`. Nothing
 shows those yet; they are for the teacher dashboard. Only what the
@@ -505,11 +526,12 @@ picture, whose seven looks are painted with their heads in different
 places. A child coming back after Chapter 1 plays it again (Grandma
 leaves and comes back again), ending on Blob's errand.
 
-*The end of a session.* After round 5 Blob gives the child one small thing
-to try away from the screen, picked at random from `ERRANDS` in
-`data/dialogue.js` ("Count out ten of anything at home. What's left
-over?"), with a quiet word that this is as far as the market goes for now
-and a way back to "Who's playing?".
+*The end of a session.* After round 5 Blob says one small thing he is
+going to try himself, away from the screen, and asks the child to try it
+too, picked at random from `ERRANDS` in `data/dialogue.js` ("I'm going to
+count out ten of anything at home, and see what's left over. You try it
+too?"): his own idea, not homework. Then a quiet word that this is as far
+as the market goes for now, and a way back to "Who's playing?".
 
 *Blob's hint button*, bottom left: each tap gives the next step (a
 question, then the empty spaces outlined, then Blob trying the move

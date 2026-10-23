@@ -82,8 +82,9 @@ export const FRUIT_STALL = {
   // Rounds 2 to 5: fill the basket to ten.
   fillGoal: "Fill the basket",
   howManyMore: { speaker: "blob", text: "Hmm. How many MORE to fill the basket?" },
-  // A wrong number. Never "wrong".
-  countAgain: "Count again…",
+  // A wrong answer: never "wrong", and no judgement. Whoever asked (Blob,
+  // or the customer, whose order it is) counts again themselves.
+  countAgain: "Hmm, let me count these again.",
   // A full basket, as a crate of ten, and what is left over, on a cloth
   // beside it. Said one step at a time, and each step lights up what it
   // names: the crate, then the leftovers, then both. `show` is what the
@@ -99,7 +100,7 @@ export const FRUIT_STALL = {
   shortOfTen: [
     { show: "Hmm. The basket didn't fill this time.", say: "Hmm. The basket didn't fill this time." },
     { show: "{count}. {short} short of ten.", say: "{count}. {short} short of ten." },
-    { show: "Not every pile makes a ten. That's fine.", say: "Not every pile makes a ten. That's fine." },
+    { show: "Oh. Not every pile makes a ten.", say: "Oh. Not every pile makes a ten." },
   ],
 
   next: "Next",
@@ -127,20 +128,23 @@ export const CHAPTER_ONE = {
     { speaker: "seller", text: "{name}, more oranges came in. Can you pack them and mind my stall?" },
     { speaker: "seller", text: "I'll go along the row and ask everyone about your mother." },
   ],
-  // After a full basket goes up onto the table as a crate. Like "Ten and
-  // three": one step at a time, the crates lighting first, then the loose
-  // oranges, then both, and only then the number. `{crates}` is "Three
+  // After a full basket goes up onto the table as a crate, and after each
+  // order: one step at a time, the crates lighting first, then the loose
+  // oranges, then both, and Blob asks. He never says the total: the child
+  // taps it (three numbers, data/fruitStall.js totalChoices), and only
+  // then does he say it after them (`cratesSaid`). `{crates}` is "Three
   // crates", `{loose}` "four", `{sum}` "Thirty-four".
-  cratesAnd: [
+  cratesAsk: [
     { show: "{crates}…", say: "{crates}…" },
     { show: "{crates} and {loose} loose.", say: "and {loose} loose." },
-    { show: "{crates} and {loose} loose. {sum}.", say: "{sum}." },
+    { show: "{crates} and {loose} loose. How many is that?", say: "How many is that?" },
   ],
-  // Stage B. A customer gives each order; `{order}` is "one crate and
-  // five loose oranges". The order itself waits on a cloth beside the
-  // basket.
-  orderFirst: { speaker: "customer", text: "{name}, I need {order}. Can you get them ready?" },
-  orderNext: { speaker: "customer", text: "Now I need {order}." },
+  cratesSaid: { speaker: "blob", text: "{sum}!" },
+  // Stage B. A customer asks for a number, in digits ("15 oranges,
+  // please."), never as crates and loose: what that is in crates and
+  // loose is the child's to decide. The order goes on a cloth beside the
+  // basket, with nothing drawn on it.
+  order: { speaker: "customer", text: "{want} oranges, please." },
   orderGoal: "Fill the order",
   // Only once the child has run out of loose oranges and reached for more.
   // Then (and in round 1 of Stage B, only then) a tapped crate opens.
@@ -151,7 +155,7 @@ export const CHAPTER_ONE = {
   // and nothing else. No hint, no Blob, no counting aloud. `{want}` is the
   // number ("33"); `{readOrder}` is "One crate and five oranges".
   test: {
-    build: { speaker: "narrator", text: "A customer wants {want} oranges." },
+    build: { speaker: "customer", text: "{want} oranges, please." },
     read: { speaker: "customer", text: "{readOrder}." },
     // After the right oranges are handed over in the reading round.
     total: { speaker: "customer", text: "How many oranges is that?" },
@@ -191,25 +195,18 @@ export function readOrderWords({ crates, loose }) {
   return capitalise(parts.join(" and "));
 }
 
-/** "one crate and five loose oranges", for an order. */
-export function orderWords({ crates, loose }) {
-  const parts = [];
-  if (crates) parts.push(`${NUMBER_WORDS[crates]} ${crates === 1 ? "crate" : "crates"}`);
-  if (loose) parts.push(`${NUMBER_WORDS[loose]} loose ${loose === 1 ? "orange" : "oranges"}`);
-  return parts.join(" and ");
-}
-
 /**
- * Blob's errand at the end of a session: one small thing to try away from
- * the screen, so the idea goes home with the child. Plain words, nothing
- * to check. One list per stall; one line is picked at random.
+ * Blob's errand at the end of a session: something he is going to try
+ * himself, away from the screen, and asks the child to try too, so the
+ * idea goes home with them. His own idea, not homework. Plain words,
+ * nothing to check. One list per stall; one line is picked at random.
  */
 export const ERRANDS = {
   "fruit-stall": [
-    "Next time someone buys something, see if you can fill a ten.",
-    "Count out ten of anything at home. What's left over?",
-    "Make a pile of seven stones or bottle tops. I wonder how many more would make ten?",
-    "Next time fruit goes into a bag, count to ten. How many are left?",
+    "Next time someone buys something, I'm going to see if I can fill a ten. You try it too?",
+    "I'm going to count out ten of anything at home, and see what's left over. You try it too?",
+    "I'm going to make a pile of seven stones, and see how many more make ten. You try it too?",
+    "Next time fruit goes into a bag, I'm going to count to ten and see how many are left. You try it too?",
   ],
 };
 

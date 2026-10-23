@@ -747,21 +747,6 @@ button.pm-stack-crate:focus-visible {
   pointer-events: none;
 }
 
-.pm-order__crate-gap,
-.pm-order__gap {
-  position: absolute;
-  border: 3px dashed rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.pm-order__crate-gap {
-  aspect-ratio: 440 / 328;
-  border-radius: 12px;
-}
-
-.pm-order__gap {
-  border-radius: 50%;
-}
 
 .pm-order__crate {
   position: absolute;
@@ -948,4 +933,29 @@ button.pm-stack-crate:focus-visible {
 .pm-slot:focus-visible {
   outline: 3px solid var(--pm-purple-700);
   outline-offset: 3px;
+}
+
+/* Chapter 1: a tapped crate's 10, there for a moment and gone. Quiet: no
+   sound, no bounce. */
+.pm-stack-crate .pm-stack-crate__tag {
+  animation: pm-tens-peek 1.6s var(--pm-ease) both;
+}
+
+@keyframes pm-tens-peek {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-stack-crate .pm-stack-crate__tag {
+    animation: none;
+  }
 }

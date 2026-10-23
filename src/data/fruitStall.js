@@ -103,29 +103,37 @@ export function setUpRound(index, ageBand) {
 /**
  * Chapter 1, in order.
  *
+ * After the tutorial (the teaching stage) the game never breaks a number
+ * down for the child and never says a total they could say
+ * (docs/learning-rules.md): a customer asks for a number, the child
+ * decides what that is in crates and loose, and the child says how many.
+ *
  * Stage A: adding past ten. Each round is a sum like 28 + 6: full crates
- * already on the table (the tens), loose oranges in the basket with its
- * empty spaces outlined, so a child can see how many more it needs
- * without counting, and more loose oranges on the stall. A full basket
- * shuts into one more crate; what is left stays loose.
+ * already on the table (the tens), loose oranges in the basket, and more
+ * loose oranges on the stall. Nothing is outlined; Blob's hint button can
+ * show the basket's empty spaces, if the child asks. A full basket shuts
+ * into one more crate; what is left stays loose.
  *
  * Stage B: taking away, like 32 - 15. Crates and a few loose oranges on
- * the table, an empty basket, and Grandma's order. Each needs more loose
- * oranges than there are, so one crate has to be cracked open (its ten go
- * into the basket); each round has a different shape of order.
+ * the table, an empty basket, and a customer asking for a number ("15
+ * oranges, please."). Each needs more loose oranges than there are, so
+ * one crate has to be cracked open (its ten go into the basket).
  *
- * Stage C: three test rounds, and nothing to help: Grandma's order, the
- * stock on the stall, and an empty counter. Build 33; hand over one crate
- * and five, then say how many that is (15); build 20, which needs no loose
- * oranges at all. More stock than any answer needs, so the child chooses.
- *   want      the number the customer wants
- *   read      the reading round: Grandma says the crates and oranges, and
- *             after handing them over the child puts in the number
+ * Stage C: three test rounds, and nothing to help: the customer's order,
+ * the stock on the stall, and an empty counter. Build 33; hand over one
+ * crate and five, then say how many that is (15); build 20, which needs no
+ * loose oranges at all. More stock than any answer needs, so the child
+ * chooses.
+ *   want      the number the customer wants (Stage B's comes from `order`)
+ *   read      the reading round: the customer says the crates and
+ *             oranges, and after handing them over the child puts in the
+ *             number
  *
  *   crates    full crates on the table when the round starts
  *   inBasket  loose oranges already in the basket
  *   onStall   loose oranges on the stall's table
- *   order     what the customer wants (Stage B)
+ *   order     Stage B's order as crates and loose: never said or drawn,
+ *             only what the cloth makes room for
  */
 export const CHAPTER_ONE_ROUNDS = [
   { stage: "A", crates: 2, inBasket: 8, onStall: 6 }, // 28 + 6 = 34
@@ -164,11 +172,49 @@ export function setUpChapterRound(index) {
     prefilled: ids("basket", round.inBasket ?? 0),
     oranges: ids("orange", round.onStall),
     order: round.order ?? null,
-    want: round.want ?? null,
+    want: round.want ?? (round.order ? round.order.crates * BASKET_HOLDS + round.order.loose : null),
     read: Boolean(round.read),
     ask: false,
     choices: [],
-    outlines: round.stage === "A",
+    outlines: false,
     seed,
   };
+}
+
+/**
+ * Blob's "How many is that?" after the tutorial, for `crates` crates and
+ * `loose` loose oranges: three numbers to tap. The right one, and two
+ * wrong ones picked to tell a teacher something, not to be near misses:
+ *   reversed      the digits swapped (34 gives 43): a place-value slip
+ *   added         the digits added (34 gives 7): a crate not seen as ten
+ * Where swapping changes nothing (22), the place-value one is the tens and
+ * the ones written side by side as they are said, "twenty" "two" (202).
+ * Shuffled with the round's seed, so they stay put. `kind(value)` says
+ * which one a child picked.
+ */
+export function totalChoices(crates, loose, seed) {
+  const right = crates * BASKET_HOLDS + loose;
+  const tens = Math.floor(right / 10);
+  const ones = right % 10;
+  const reversed = ones * 10 + tens;
+  const placeValue = reversed !== right ? ["reversed", reversed] : ["side by side", Number(`${tens * 10}${ones}`)];
+  const picked = [["right", right], placeValue];
+  for (const option of [["added", tens + ones], ["ten more", right + 10]]) {
+    if (picked.length < 3 && option[1] > 0 && !picked.some(([, value]) => value === option[1])) picked.push(option);
+  }
+  // A small seeded shuffle.
+  let t = seed >>> 0;
+  const next = () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+  const order = [...picked];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(next() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const kinds = new Map(picked.map(([kind, value]) => [value, kind]));
+  return { right, choices: order.map(([, value]) => value), kind: (value) => kinds.get(value) ?? "other" };
 }
