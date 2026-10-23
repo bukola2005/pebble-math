@@ -191,13 +191,16 @@ create policy "stall_progress_insert_own" on public.stall_progress
 
 -- ----------------------------------------------------------------------
 -- attempts: every answer a child gives after the tutorial, right or wrong,
--- and if wrong, which step broke. In Chapter 1: each tap on Blob's "How
--- many is that?" (stages 'A' and 'B': `asked` is the total, `crates` and
+-- if wrong which step broke, and whether they had asked for the hint
+-- first (`used_hint`). In Chapter 1: each tap on Blob's "How many is
+-- that?" (stages 'A-ask' and 'B-ask': `asked` is the total, `crates` and
 -- `loose` what was on the table, `total` the number tapped, which says
 -- what went wrong: its digits swapped, its digits added, or, for a number
--- like 22, the tens and ones side by side, 202), and each answer in the
--- test rounds (stage 'C'). Collected now so the data is there when the
--- teacher dashboard is built; nothing shows it yet.
+-- like 22, the tens and ones side by side, 202); each Done on a Stage B
+-- order (stage 'B': `asked` the number ordered, `total` what was on the
+-- cloth); and each answer in the test rounds (stage 'C'). Collected now so
+-- the data is there when the teacher dashboard is built; nothing shows it
+-- yet.
 -- Like stall_progress, its policies check that the player belongs to the
 -- caller, and it has no update or delete; deleting the player removes it.
 -- stall_id and stage are not checked against a list: every new chapter
@@ -214,6 +217,7 @@ create table if not exists public.attempts (
   loose       smallint not null check (loose between 0 and 99),
   total       smallint check (total between 0 and 999),
   failed_step text check (failed_step in ('crates', 'loose', 'total')),
+  used_hint   boolean not null default false,
   created_at  timestamptz not null default now()
 );
 
@@ -223,6 +227,9 @@ create index if not exists attempts_player_idx on public.attempts (player_id, cr
 -- two-digit totals.
 alter table public.attempts drop constraint if exists attempts_stall_id_check, drop constraint if exists attempts_stage_check;
 alter table public.attempts drop constraint if exists attempts_total_check, add constraint attempts_total_check check (total between 0 and 999);
+-- And without the hint column: help is always there, and whether it was
+-- used is recorded.
+alter table public.attempts add column if not exists used_hint boolean not null default false;
 
 alter table public.attempts enable row level security;
 revoke all on public.attempts from anon;

@@ -105,12 +105,13 @@ export const FRUIT_STALL = {
 
   next: "Next",
 
-  // The end of Chapter 1, before the map: Blob's errand (ERRANDS, below),
-  // and `endLine` under it when the card before didn't just say it.
+  // As the child leaves the map at the end of Chapter 1: Blob's errand
+  // (ERRANDS, below), and `endLine` under it when the cards before didn't
+  // just say it.
   endForNow: {
     errandLabel: "Something to try at home",
     endLine: "That's the end of the tutorial. More of the market is coming.",
-    button: "Next",
+    button: "Who's playing?",
   },
 };
 

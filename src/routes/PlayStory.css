@@ -127,3 +127,10 @@
     height: 44vh;
   }
 }
+
+/* The dialogue box's top-right leaf sprig sits right where Blob stands in
+   this scene, across his face at most sizes, so the story's box goes
+   without it (the flowers at its other corner stay). */
+.pm-story .pm-dialogue__leaves--fan {
+  display: none;
+}

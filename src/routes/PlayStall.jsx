@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import BasketAward from "../components/BasketAward";
 import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
@@ -34,9 +34,9 @@ import {
   setUpRound,
   totalChoices,
 } from "../data/fruitStall";
-import { LANTERN, LANTERNS_TO_OPEN } from "../data/lanterns";
+import { LANTERN } from "../data/lanterns";
 import { ORANGE, SELLER_PORTRAIT } from "../data/market";
-import { MAP_ART, PLACES, openCount } from "../data/places";
+import { MAP_ART, PLACES } from "../data/places";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
@@ -232,9 +232,11 @@ function FruitStall({ player, newcomer, onAgain }) {
   const [said, setSaid] = useState(null);
   // Stage B: Done, and the customer found it right.
   const [orderReady, setOrderReady] = useState(false);
-  // The map, at the very end: has it been reached (the next place's
-  // lanterns are spent then), and which place opens on it.
+  // The map, at the end: once reached, the errand comes as the child
+  // leaves it, over it.
   const [mapReached, setMapReached] = useState(false);
+  // Chapter 1's hint: every crate shows its 10 for a few seconds.
+  const [tensKey, setTensKey] = useState(null);
   // Stage C's reading round: handed over, and the number going in.
   const [handed, setHanded] = useState(false);
   const [entry, setEntry] = useState(null); // { tens, ones, active }
@@ -252,6 +254,7 @@ function FruitStall({ player, newcomer, onAgain }) {
   const [lineStep, setLineStep] = useState(0);
   const [stall, setStall] = useState(null); // the stall picture, once it's in the page
   const paused = usePaused(); // the child's profile is open over the game
+  const navigate = useNavigate();
   const gameRef = useRef(null);
   const tally = useRef({ hints: 0, wrong: 0 });
   const timers = useRef([]);
@@ -472,13 +475,14 @@ function FruitStall({ player, newcomer, onAgain }) {
     recordAttempt({
       playerId: player.id,
       stallId: CHAPTER_ONE_ID,
-      stage: round.stage,
+      stage: `${round.stage}-ask`,
       round: round.index - (stageB ? FIRST_ORDER_ROUND : 0) + 1,
       asked: right,
       crates: crates.length,
       loose,
       total: value,
       failedStep: value === right ? null : "total",
+      usedHint: tally.current.hints > 0,
     })
       .then(({ error }) => {
         if (error) console.warn("Couldn't save that answer.", error);
@@ -499,6 +503,22 @@ function FruitStall({ player, newcomer, onAgain }) {
   const checkOrder = () => {
     if (!stageB || phase !== "play" || orderReady || handedOver === 0) return;
     primeSound(); // from this tap, for the "yes"
+    recordAttempt({
+      playerId: player.id,
+      stallId: CHAPTER_ONE_ID,
+      stage: "B",
+      round: round.index - FIRST_ORDER_ROUND + 1,
+      asked: round.want,
+      crates: delivered.crates.length,
+      loose: delivered.loose.length,
+      total: handedOver,
+      failedStep: handedOver === round.want ? null : "total",
+      usedHint: tally.current.hints > 0,
+    })
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save that answer.", error);
+      })
+      .catch((error) => console.warn("Couldn't save that answer.", error));
     if (handedOver === round.want) {
       setWrongTaps(0);
       setOrderReady(true);
@@ -572,6 +592,7 @@ function FruitStall({ player, newcomer, onAgain }) {
       asked: round.want,
       crates: delivered.crates.length,
       loose: delivered.loose.length,
+      usedHint: tally.current.hints > 0,
       ...fields,
     })
       .then(({ error }) => {
@@ -688,6 +709,17 @@ function FruitStall({ player, newcomer, onAgain }) {
 
   // One step of help per tap: a question, then the empty spaces, then
   // the move itself, slowly. Never the answer.
+  // Chapter 1's hint, in every round, the tests too: every crate shows its
+  // 10 for a few seconds. Nothing else: never what to do next, never a
+  // total. Whether it was used goes into the round's attempts.
+  const hintTens = () => {
+    tally.current.hints += 1;
+    setHintTaps((n) => n + 1);
+    const key = Date.now();
+    setTensKey(key);
+    later(() => setTensKey((now) => (now === key ? null : now)), 3200);
+  };
+
   const hint = () => {
     tally.current.hints += 1;
     setHintTaps((n) => n + 1);
@@ -865,10 +897,6 @@ function FruitStall({ player, newcomer, onAgain }) {
     ...(cleared ? [STALL_ID] : []),
     ...(chapterJustCleared ? [CHAPTER_ONE_ID] : []),
   ];
-  // Lanterns spent: two for each place opened after the Fruit Stall, from
-  // the moment the map opens it.
-  const spent =
-    LANTERNS_TO_OPEN * (openCount([...(player.cleared_stalls ?? []), ...(mapReached && chapterJustCleared ? [CHAPTER_ONE_ID] : [])]) - 1);
   // The place opening on the map now: the one Chapter 1 opens, the first time.
   const opening = chapterJustCleared ? PLACES.find((place) => place.opensAfter === CHAPTER_ONE_ID)?.id ?? null : null;
 
@@ -890,7 +918,7 @@ function FruitStall({ player, newcomer, onAgain }) {
         player={player}
         earned={earned}
         lanterns={player.lanterns == null ? null : player.lanterns + lanternsToday}
-        spent={spent}
+        onHome={phase === "map" ? () => setPhase("end") : undefined}
         meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }}
       />
 
@@ -919,6 +947,7 @@ function FruitStall({ player, newcomer, onAgain }) {
           // A crate's 10: always in the tutorial; in Chapter 1 only when a
           // crate is tapped, and never in the test rounds.
           tens={!chapterOne ? "always" : stageC ? "never" : "tap"}
+          hintTens={tensKey}
           emptied={packed}
           away={delivered.loose}
           order={
@@ -1062,11 +1091,13 @@ function FruitStall({ player, newcomer, onAgain }) {
           )}
         </div>
 
-        {playing && !stageB && !stageC && (
+        {/* Help is always there, in every round: in the tutorial, its
+            steps; in Chapter 1, the crates' 10s. */}
+        {playing && (
           <HintButton
-            message={hintShown && hintStep > 0 ? HINTS[hintStep - 1] : null}
+            message={!chapterOne && hintShown && hintStep > 0 ? HINTS[hintStep - 1] : null}
             shownKey={hintTaps}
-            onHint={hint}
+            onHint={chapterOne ? hintTens : hint}
           />
         )}
       </main>
@@ -1077,20 +1108,35 @@ function FruitStall({ player, newcomer, onAgain }) {
       ))}
 
       {phase === "back" && (
-        <GrandmaBack first={chapterJustCleared} onDone={() => setPhase(chapterJustCleared ? "opening" : "end")} />
+        <GrandmaBack
+          first={chapterJustCleared}
+          onDone={() => {
+            if (chapterJustCleared) setPhase("opening");
+            else {
+              setMapReached(true);
+              setPhase("map");
+            }
+          }}
+        />
       )}
-      {phase === "opening" && <OpeningCard onDone={() => setPhase("end")} />}
-      {phase === "end" && (
-        <EndForNow
-          sayEnd={!chapterJustCleared}
-          endLine={chapterOne ? CHAPTER_ONE.endLine : undefined}
+      {phase === "opening" && (
+        <OpeningCard
           onDone={() => {
             setMapReached(true);
             setPhase("map");
           }}
         />
       )}
-      {phase === "map" && (
+      {/* The map is where the chapter ends. The errand is the sign-off as
+          the child leaves it (the corner's home button), over the map. */}
+      {phase === "end" && (
+        <EndForNow
+          sayEnd={!chapterJustCleared}
+          endLine={chapterOne ? CHAPTER_ONE.endLine : undefined}
+          onDone={() => navigate("/play")}
+        />
+      )}
+      {(phase === "map" || (phase === "end" && mapReached)) && (
         <MarketMap
           zizi={zizi}
           cleared={earned}

@@ -437,10 +437,13 @@ teaching stage; from Chapter 1 on, the game never breaks a number down for
 the child and never says a total they could say
 ([docs/learning-rules.md](docs/learning-rules.md)). A customer asks for a
 number; the child decides what that is in crates and loose; the child says
-the total, and the game only confirms. Nothing is outlined. The one hint
-that is always there to ask for: tap a crate and a quiet 10 shows on it for
-a moment, then goes (never in the test rounds). Blob's hint button stays
-in Stage A.
+the total, and the game only confirms. Nothing is outlined. Help is
+always there, in every round, the tests too: Blob's hint button, bottom
+left, makes every crate show its 10 for three seconds, and nothing more (it
+never says what to do next, never adds anything up, never points at the
+cloth). Whether a child used it goes into their answers in `attempts`
+(`used_hint`). In practice a tapped crate also shows its 10 for a
+moment.
 
 *Chapter 1, Stage A: adding past ten.* The same stall, now with full
 crates on the table: each a crate of ten oranges in two rows of five,
@@ -503,7 +506,7 @@ is a basket of eight, not seven and one on its own). Then Blob asks about
 what is left the same way: "One crate…" (each crate shows its 10),
 "…and eight loose." (the basket shows its 8), "How many is that?" (18, 81
 or 9). In Stage A, where the loose ones are on the table, a tag over them
-shows how many as he names them. No hint button in Stage B.
+shows how many as he names them.
 
 *Chapter 1, Stage C: three tests.* Nothing to help: no outlines, no
 hint, no 10 on the crates, no Blob, nothing counted aloud, and the basket
@@ -521,7 +524,10 @@ crates and ones under the loose oranges. "20 oranges, please.": no loose
 ones at all. Wrong is just the customer checking their own order, "Hmm,
 let me count these again.", as often as it takes; nothing turns red. Each Done, and each number, is saved as a row in
 `attempts` (`lib/attempts.js`) with what was handed over and, if it was
-wrong, the first step that broke: `crates`, `loose` or `total`. Nothing
+wrong, the first step that broke: `crates`, `loose` or `total`. So is
+every Done on a Stage B order (stage `B`) and every tap on Blob's "How
+many is that?" (stages `A-ask` and `B-ask`), each with whether the hint
+was used in that round first (`used_hint`). Nothing
 shows those yet; they are for the teacher dashboard. Only what the
 customer takes is ever counted; the stock on the stall never is.
 
@@ -545,34 +551,38 @@ picture, whose seven looks are painted with their heads in different
 places. A child coming back after Chapter 1 plays it again (Grandma
 leaves and comes back again).
 
-*Blob's errand.* Then Blob says one small thing he is going to try
-himself, away from the screen, and asks the child to try it too, picked at
-random from `ERRANDS` in `data/dialogue.js` ("I'm going to count out ten
-of anything at home, and see what's left over. You try it too?"): his own
-idea, not homework. Its button goes on to the map.
-
 *Chapter 1 ends on the map* (`components/MarketMap.jsx`, built from the
 map demo). One clear picture of the market (`public/art/market-map-day.webp`)
 with the haze drawn over it in CSS: a purple veil, and a soft-masked hole
 in it over each open place, where the clear picture shows through. Each
 place is one row in `data/places.js`, `{ id, name, x, y, r }`. A dashed
-chain runs along the path from place to place, with a small padlock
-between each open place and the next one that isn't; places still in the
-haze have a drifting wisp and a padlock, open ones a dot, and the Fruit
-Stall has the child's pin, with their Zizi's face. The first time, the
-two lanterns float in from below to the Provision Store, its haze pulls
-back, its chain falls away, and they are spent: that is what lanterns are
-for. A tap on a place opens its card: the Fruit Stall's "Carry on here"
-plays Chapter 1 again; the Provision Store says the haze has lifted but
-nobody is ready yet; a place still in the haze says Blob's friends haven't
-reached it. The corner's home button goes back to "Who's playing?". On a
-phone held upright the map is as tall as the screen and scrolls sideways.
-The map picture is fetched in the background during the tests, so it is
-there when the map opens.
+line runs along the path from place to place, roped off (a rope between
+two posts, never a padlock: nothing in this market is locked) where the
+next place isn't open yet; places still in the haze have a drifting wisp
+and a rope, open ones a dot, and the Fruit Stall has the child's pin, with
+their Zizi's face. What a place needs is shown on it: the next place along
+the path has two dark lanterns. The first time, two lit lanterns float up
+to the Provision Store's dark ones and light them, its haze pulls back and
+its rope drops; its lanterns stay lit there, and the next place along
+shows its two dark ones. A tap on a place opens its card: the Fruit
+Stall's "Carry on here" plays Chapter 1 again; the Provision Store says
+the haze has lifted but nobody is ready yet; a place still in the haze
+says Blob's friends haven't reached it. On a phone held upright the map is
+as tall as the screen and scrolls sideways. The map picture is fetched in
+the background during the tests, so it is there when the map opens.
 
-*Blob's hint button*, bottom left: each tap gives the next step (a
-question, then the empty spaces outlined, then Blob trying the move
-slowly, once), never the answer, and it resets each round. Blob thinks out
+The map is where the chapter ends. When the child leaves it (the corner's
+home button), Blob signs off over it with his errand: one small thing he
+is going to try himself, away from the screen, and asks the child to try
+it too, picked at random from `ERRANDS` in `data/dialogue.js` ("I'm going
+to count out ten of anything at home, and see what's left over. You try
+it too?"): his own idea, not homework. Its button goes back to "Who's
+playing?".
+
+*Blob's hint button*, bottom left: in the tutorial each tap gives the next
+step (a question, then the empty spaces outlined, then Blob trying the
+move slowly, once), never the answer, and it resets each round. (In
+Chapter 1 it shows the crates' 10s: above.) Blob thinks out
 loud ("Hmm. What about those empty spaces?"): he doesn't know the answer
 either, and never sounds as if he is keeping one back. How many hints a child
 used, and how many wrong numbers they tapped, is noted per round in
@@ -611,8 +621,9 @@ face and game name, then what the story counts
   "Blob's friends are helping us look." One joins at each new place
   (`data/friends.js`); for now that is only Blob. It is how close the
   child is to finding their mother.
-- **Lanterns**: the lit lamp for each one they have, the unlit lamp for
-  each one still needed to open the next place (two).
+- **Lanterns**: every lantern they have earned, lit, for good. Nothing
+  earned is ever taken away; what a place still needs is shown on the map,
+  as dark lanterns on that place.
 - **Keepsakes**: the straw hat and the tally stick, once Grandma has given
   them, and no empty spaces beside them, ever: they are gifts, not a set.
 
@@ -624,12 +635,11 @@ place's teaching chapter (at the Fruit Stall, Chapter 1's Stages A and B),
 one for finishing its test rounds (Stage C), and one more every time the
 child comes back and does the test rounds again: only for coming back,
 never for being fast or right first time. Two open the next place on the
-main path: at the end of Chapter 1 the map opens the Provision Store with
-the two it earns (a place's `opensAfter` in `data/places.js`), and the
-profile shows them gone. Extras will open optional places off the main
-road (not built). What is spent is worked out from which places are open;
-it isn't saved. Finishing a chapter once always earns the two needed to
-go on. Each lantern earned is a row in `lanterns`
+main path: at the end of Chapter 1 the map's Provision Store lights with
+the two it earns (a place's `opensAfter` in `data/places.js`). They stay
+lit in the child's profile, and on the place they opened. Extras will open
+optional places off the main road (not built). Finishing a chapter once
+always earns the two needed to go on. Each lantern earned is a row in `lanterns`
 (`teaching` and `test` once per place, `replay` each time), counted when a
 session starts. Chapter 1's are saved at its end, when Grandma is back to
 lend them, so a lantern never turns up in the profile before the child

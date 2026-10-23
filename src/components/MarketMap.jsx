@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MAP_WORDS } from "../data/dialogue";
-import { LANTERN } from "../data/lanterns";
+import { LANTERN, LANTERNS_TO_OPEN } from "../data/lanterns";
 import { MAP_ART, PLACES, isOpen } from "../data/places";
 import { after, cancel } from "../lib/pause";
 import { useReadAloud } from "../lib/speech";
@@ -10,24 +10,33 @@ import "./MarketMap.css";
   The market map, built from the map demo: one clear picture of the
   market (data/places.js), and the haze drawn over it in CSS. Each open
   place shows the clear picture through a soft hole in the haze. A dashed
-  chain runs along the main path from place to place, with a small
-  padlock between each place and the next that isn't open yet; closed
-  places have a wisp of haze and a padlock, open ones a dot, and the
-  place the child is at has their pin, with their Zizi's face.
+  line runs along the main path from place to place, roped off (a rope
+  between two posts) where the next place isn't open yet; nothing in this
+  market is locked. Places still in the haze have a wisp and a rope, open
+  ones a dot, and the place the child is at has their pin, with their
+  Zizi's face.
 
-  `opening`: a place whose haze lifts now. The two lanterns that open it
-  (data/lanterns.js) float to it, its haze pulls back, its chain falls
-  away, and they are spent. Without motion it is simply open.
+  Lanterns: what a place needs is shown on it. The next place along the
+  path has two dark lanterns; a place they have opened keeps its two,
+  lit. (The child's profile shows every lantern they have earned, lit, for
+  good: nothing earned is ever taken away.)
+
+  `opening`: a place whose haze lifts now. Two lit lanterns float up to
+  its dark ones and light them, its haze pulls back and its rope drops.
+  Without motion it is simply open, its lanterns lit.
 
   A tap on a place opens its card: the Fruit Stall's has "Carry on here"
   (`onCarryOn`); one open but not built yet says so; one still under the
   haze says Blob's friends haven't reached it yet.
 */
 
-const PADLOCK = (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" fill="currentColor" />
-    <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+// A rope between two posts, across the path.
+const ROPE = (
+  <svg viewBox="0 0 32 22" aria-hidden="true">
+    <path d="M5 21V6M27 21V6" fill="none" stroke="#8a5a2c" strokeWidth="2.8" strokeLinecap="round" />
+    <path d="M5 8 Q16 16 27 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="5" cy="5.5" r="2.2" fill="#8a5a2c" />
+    <circle cx="27" cy="5.5" r="2.2" fill="#8a5a2c" />
   </svg>
 );
 
@@ -60,6 +69,10 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
 
   const lifted = (place) => isOpen(place, cleared) && !(place.id === opening && (step === "waiting" || step === "arriving"));
   const target = PLACES.find((place) => place.id === opening);
+  // The next place along the path, still in the haze: it shows what it needs.
+  const next = PLACES.find((place) => !lifted(place));
+  // Where a place's two lanterns stand: either side of it, a little above.
+  const lanternAt = (place, k) => ({ left: `${place.x + (k ? 2.4 : -2.4)}%`, top: `${place.y - 5.5}%` });
   const words = card == null ? null : cardWords(PLACES[card], lifted(PLACES[card]));
 
   return (
@@ -102,11 +115,11 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
             return (
               <span
                 key={a.id}
-                className={`pm-map__link-lock${lifted(b) ? " is-gone" : ""}`}
+                className={`pm-map__rope${lifted(b) ? " is-gone" : ""}`}
                 style={{ left: `${(a.x + b.x) / 2}%`, top: `${(a.y + b.y) / 2 - 1.8}%` }}
                 aria-hidden="true"
               >
-                {PADLOCK}
+                {ROPE}
               </span>
             );
           })}
@@ -165,15 +178,35 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
                 ) : open ? (
                   <span className="pm-map__dot" />
                 ) : (
-                  <span className="pm-map__shut">{PADLOCK}</span>
+                  <span className="pm-map__shut">{ROPE}</span>
                 )}
               </button>
             );
           })}
 
-          {/* The two lanterns that open the next place, floating to it. */}
+          {/* Each place's two lanterns: lit where they have opened it, dark
+              on the next place along, which still needs them. */}
+          {PLACES.map((place) => {
+            if (place.open === "start") return null;
+            const lit = lifted(place);
+            if (!lit && place !== next) return null;
+            return Array.from({ length: LANTERNS_TO_OPEN }, (_, k) => (
+              <img
+                key={`${place.id}-${k}-${lit ? "lit" : "dark"}`}
+                className={`pm-map__place-lantern${lit ? " is-lit" : " is-dark"}`}
+                src={lit ? LANTERN.lit.src : LANTERN.unlit.src}
+                width={LANTERN.lit.w}
+                height={LANTERN.lit.h}
+                alt=""
+                draggable={false}
+                style={lanternAt(place, k)}
+              />
+            ));
+          })}
+
+          {/* Two lit lanterns floating up to light the place opening now. */}
           {target &&
-            step !== "open" &&
+            (step === "waiting" || step === "arriving") &&
             [0, 1].map((k) => (
               <img
                 key={k}
@@ -183,7 +216,7 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
                 height={LANTERN.lit.h}
                 alt=""
                 draggable={false}
-                style={{ "--to-x": `${target.x + (k ? 2.2 : -2.2)}%`, "--to-y": `${target.y - 6}%`, "--from-x": `${48 + k * 4}%` }}
+                style={{ "--to-x": lanternAt(target, k).left, "--to-y": lanternAt(target, k).top, "--from-x": `${48 + k * 4}%` }}
               />
             ))}
         </div>

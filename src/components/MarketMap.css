@@ -108,25 +108,27 @@
   transform: translateY(10px);
 }
 
-.pm-map__link-lock {
+/* A rope between two posts across the path, where the next place isn't
+   open yet; it drops away when it opens. */
+.pm-map__rope {
   position: absolute;
-  width: clamp(12px, 1.4%, 20px);
-  aspect-ratio: 1;
+  width: clamp(20px, 2.2%, 32px);
+  aspect-ratio: 32 / 22;
   translate: -50% -50%;
   color: #efe0c2;
-  opacity: 0.72;
+  opacity: 0.85;
   pointer-events: none;
   transition:
     transform 0.7s cubic-bezier(0.3, 1.3, 0.5, 1),
     opacity 0.8s ease 0.2s;
 }
 
-.pm-map__link-lock.is-gone {
+.pm-map__rope.is-gone {
   transform: translateY(20px) rotate(22deg);
   opacity: 0;
 }
 
-.pm-map__link-lock svg,
+.pm-map__rope svg,
 .pm-map__shut svg {
   display: block;
   width: 100%;
@@ -197,8 +199,8 @@
 }
 
 .pm-map__shut {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 18px;
   color: #efe0c2;
   opacity: 0.8;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
@@ -228,14 +230,33 @@
   }
 }
 
-/* The two lanterns: from the bottom of the map to the place, then spent
-   as its haze lifts. */
+/* A place's two lanterns: dark on the next place, which needs them; lit
+   on a place they have opened. */
+.pm-map__place-lantern {
+  position: absolute;
+  width: auto;
+  height: 7%;
+  translate: -50% -50%;
+  pointer-events: none;
+  animation: pm-map-in 0.6s var(--pm-ease) both;
+}
+
+.pm-map__place-lantern.is-lit {
+  filter: drop-shadow(0 0 10px rgba(255, 214, 150, 0.95));
+}
+
+.pm-map__place-lantern.is-dark {
+  filter: brightness(0.8) saturate(0.7) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Two lit lanterns floating up to the place opening, to light its own. */
 .pm-map__lantern {
   position: absolute;
+  z-index: 1;
   left: var(--from-x);
   top: 104%;
   width: auto;
-  height: 12%;
+  height: 7%;
   translate: -50% -50%;
   opacity: 0;
   filter: drop-shadow(0 0 14px rgba(255, 214, 150, 0.95));
@@ -252,12 +273,6 @@
   opacity: 1;
 }
 
-.pm-map__lantern.is-lifting {
-  left: var(--to-x);
-  top: var(--to-y);
-  opacity: 0;
-  transition-duration: 0s, 0s, 1.4s;
-}
 
 /* A place's card. */
 .pm-map__sheet {
@@ -338,7 +353,7 @@
 @media (prefers-reduced-motion: reduce) {
   .pm-map__clear,
   .pm-map__chain,
-  .pm-map__link-lock,
+  .pm-map__rope,
   .pm-map__lantern {
     transition-duration: 0.01ms;
   }

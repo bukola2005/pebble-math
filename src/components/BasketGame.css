@@ -941,6 +941,11 @@ button.pm-stack-crate:focus-visible {
   animation: pm-tens-peek 1.6s var(--pm-ease) both;
 }
 
+/* Blob's hint: every crate's 10, for three seconds. */
+.pm-stack-crate__tag.is-hint {
+  animation: pm-tens-peek 3.2s var(--pm-ease) both;
+}
+
 @keyframes pm-tens-peek {
   0% {
     opacity: 0;
@@ -955,7 +960,8 @@ button.pm-stack-crate:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pm-stack-crate__tag.is-peek {
+  .pm-stack-crate__tag.is-peek,
+  .pm-stack-crate__tag.is-hint {
     animation: none;
   }
 }

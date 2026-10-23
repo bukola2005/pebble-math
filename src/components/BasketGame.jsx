@@ -28,7 +28,9 @@ import "./BasketGame.css";
 
   A crate's 10 (`tens`): "always" in the tutorial; "tap" in Chapter 1's
   practice, where a tapped crate shows a quiet 10 for a moment and
-  nothing else; "never" in the test rounds.
+  nothing else; "never" in the test rounds. Blob's hint (`hintTens`, a
+  key that changes with each tap) shows every crate's 10 for a few
+  seconds, in every round, the tests too.
 
   Stage B adds a customer's order (`order`), on a plain cloth beside the
   basket: nothing drawn on it, so what the number is in crates and loose
@@ -371,8 +373,11 @@ function counterLayout(o, room, crateCount) {
   };
 }
 
-/** A crate of ten, as drawn on the table and in an order; `tag` shows its 10 (`peek`: for a moment). */
-function CrateOfTen({ tag = true, peek = false }) {
+/**
+ * A crate of ten, as drawn on the table and in an order; `tag` shows its
+ * 10 (`peek`: for a moment; `hinted`: for the hint's few seconds).
+ */
+function CrateOfTen({ tag = true, peek = false, hinted = false }) {
   return (
     <>
       <img className="pm-crate__art" src={CRATE.src} width={CRATE.w} height={CRATE.h} alt="" draggable={false} />
@@ -382,7 +387,7 @@ function CrateOfTen({ tag = true, peek = false }) {
         </span>
       ))}
       {tag && (
-        <span className={`pm-stack-crate__tag${peek ? " is-peek" : ""}`} aria-hidden="true">
+        <span className={`pm-stack-crate__tag${hinted ? " is-hint" : peek ? " is-peek" : ""}`} aria-hidden="true">
           10
         </span>
       )}
@@ -439,6 +444,7 @@ export default function BasketGame({
   crates = [],
   crateRoom = 0,
   tens = "always",
+  hintTens = null,
   emptied = false,
   away = [],
   order = null,
@@ -817,11 +823,12 @@ export default function BasketGame({
           // from when Blob names the crates.
           const naming = tens === "tap" && (spotlight === "crates" || spotlight === "loose" || spotlight === "both");
           const peeking = tens === "tap" && peek?.id === id && !naming;
-          const tag = tens === "always" || naming || peeking;
+          const hinted = hintTens != null && !naming && tens !== "always";
+          const tag = tens === "always" || naming || peeking || hinted;
           if (!order && tens !== "tap") {
             return (
               <div key={id} ref={keep(crateEls, id)} className="pm-stack-crate" style={style} role="img" aria-label={crateLabel}>
-                <CrateOfTen tag={tag} />
+                <CrateOfTen key={hinted ? hintTens : "plain"} tag={tag} hinted={hinted} />
               </div>
             );
           }
@@ -837,7 +844,7 @@ export default function BasketGame({
                 aria-label={crateLabel}
                 onClick={() => peekAt(id)}
               >
-                <CrateOfTen key={peeking ? peek.key : "plain"} tag={tag} peek={peeking} />
+                <CrateOfTen key={hinted ? hintTens : peeking ? peek.key : "plain"} tag={tag} peek={peeking} hinted={hinted} />
               </button>
             );
           }
@@ -871,15 +878,15 @@ export default function BasketGame({
                 }
               }}
             >
-              <CrateOfTen key={peeking ? peek.key : "plain"} tag={tag} peek={peeking} />
+              <CrateOfTen key={hinted ? hintTens : peeking ? peek.key : "plain"} tag={tag} peek={peeking} hinted={hinted} />
             </button>
           );
         })}
 
-      {/* What a tapped crate holds, for a screen reader. */}
-      {tens === "tap" && (
+      {/* What a tapped crate holds, or every crate with the hint, for a screen reader. */}
+      {tens !== "always" && (
         <p className="pm-sr-only" aria-live="polite">
-          {peek ? "10" : ""}
+          {hintTens != null ? "Each crate: 10" : peek ? "10" : ""}
         </p>
       )}
 
@@ -921,7 +928,7 @@ export default function BasketGame({
                 }
               }}
             >
-              <CrateOfTen tag={tens === "always"} />
+              <CrateOfTen key={hintTens ?? "plain"} tag={tens === "always" || hintTens != null} hinted={hintTens != null && tens !== "always"} />
             </div>
           ))}
           {order.deliveredLoose.map((id, i) => (
@@ -1025,7 +1032,7 @@ export default function BasketGame({
                 }
               }}
             >
-              <CrateOfTen tag={tens === "always"} />
+              <CrateOfTen key={hintTens ?? "plain"} tag={tens === "always" || hintTens != null} hinted={hintTens != null && tens !== "always"} />
             </div>
           ))}
           {order.deliveredLoose.map((id, i) => (
