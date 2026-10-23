@@ -271,8 +271,9 @@ Child      /play "Who's playing?" → tap own card → /play/:id (loading)
            → /avatar     Zizi's look (until character holds one)
            → /name       the game name (until game_name is set)
            → /story      Scene 1 (until scene1_done)
-           → /stall/fruit  the Fruit Stall, which is where every later
-                           visit starts until the map exists
+           → /stall/fruit  the Fruit Stall, where every later visit
+                           starts: where they got to, or the map
+                           once Chapter 1 is done
 ```
 
 Every step is its own route and its own chunk of code, and `lib/playFlow.js`
@@ -427,8 +428,8 @@ The sounds are made in `lib/sound.js`, and the corner switch mutes them
 
 *Clearing the stall.* Finishing round 5 clears the stall, and that is saved
 at once as a `stall_progress` row; then Chapter 1 starts. No confetti,
-star ratings or score. A child who has finished the tutorial plays
-Chapter 1 when they come back, too (below). If `stall_progress` can't be read,
+star ratings or score. A child who has finished the tutorial comes back
+to Chapter 1, where they left off (below). If `stall_progress` can't be read,
 the game starts as if nothing were cleared. There are no locks and no
 chain: nobody took the mother ([docs/story.md](docs/story.md)).
 
@@ -548,8 +549,8 @@ gives them, and that the market is opening up: the map comes next. They show
 in the child's profile in the game (below) and, for a parent, on the
 dashboard, as item cards drawn in SVG: the hat isn't worn on the Zizi
 picture, whose seven looks are painted with their heads in different
-places. A child coming back after Chapter 1 plays it again (Grandma
-leaves and comes back again).
+places. A child coming back after Chapter 1 goes to the map, and plays it
+again only if they choose to there (Grandma leaves and comes back again).
 
 *Chapter 1 ends on the map* (`components/MarketMap.jsx`, built from the
 map demo). One clear picture of the market (`public/art/market-map-day.webp`)
@@ -578,6 +579,23 @@ it too, picked at random from `ERRANDS` in `data/dialogue.js` ("I'm going
 to count out ten of anything at home, and see what's left over. You try
 it too?"): his own idea, not homework. Its button goes back to "Who's
 playing?".
+
+*Coming back.* Opening the game takes a child to the furthest point they
+reached, never back to a start they have passed. Never played: the film,
+then Scene 1 (above). Part way through the tutorial: its round 1. The
+tutorial done but not Chapter 1: Chapter 1, at the round they were on,
+with Grandma already gone along the row (`players.round_reached`, saved as
+each round is reached; the meter has a segment for each round still to
+play). Chapter 1 finished: the map, with their pin on the Fruit Stall, the
+Provision Store clear and nothing opening; if they left before they had
+seen it, Grandma's return and the cards first, then the map opening, as it
+would have. From the map the child chooses: "Carry on here" plays Chapter
+1 again from Grandma's lines, or they tap the next place. Playing
+something again is always their choice, never where the game puts them,
+so a replay saves no rounds: leaving one, they come back to the map. On a
+phone held upright the map starts with the pin and the furthest open
+place both in view. If `round_reached` can't be read (the column not
+added yet), Chapter 1 starts at its beginning.
 
 *Blob's hint button*, bottom left: in the tutorial each tap gives the next
 step (a question, then the empty spaces outlined, then Blob trying the
@@ -686,7 +704,7 @@ auth.users ─ profiles ─ players ─ stall_progress
                           class (optional), monster,  the child has cleared
                           character (Zizi's look),
                           game_name, first_play_done,
-                          scene1_done
+                          scene1_done, round_reached
 ```
 
 - `players` holds a nickname the grown-up gave, a **coarse age band**

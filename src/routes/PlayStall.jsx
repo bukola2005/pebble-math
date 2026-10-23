@@ -42,6 +42,7 @@ import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
 import { earnLantern } from "../lib/lanterns";
 import { after, cancel, isPaused, usePaused } from "../lib/pause";
+import { saveRoundReached } from "../lib/players";
 import { clearStall } from "../lib/progress";
 import { playCorrect, playCrack, playMeterFull, primeSound } from "../lib/sound";
 import { speak, useReadAloud } from "../lib/speech";
@@ -163,6 +164,14 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               back. "Carry on here" on the Fruit Stall plays Chapter 1
               again.
 
+  Coming back, a child starts at the furthest point they reached. Part
+  way through Chapter 1 the first time, that is the round they were on
+  (players.round_reached, saved as each round is reached), with Grandma
+  already gone along the row. With Chapter 1 finished, it is the map, with
+  nothing opening; if they left before they saw it, Grandma's return and
+  the cards first, then the map, opening. Playing it again is only ever
+  the child's choice: "Carry on here", on the map.
+
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
 
@@ -179,12 +188,13 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
 
 /*
   The stall starts afresh (a new `run`) when the tutorial ends, as
-  Chapter 1, and again from the map's "Carry on here", with what the child
-  has done today added to what was loaded.
+  Chapter 1, and again from the map's "Carry on here" (a `replay`, from
+  Chapter 1's start), with what the child has done today added to what was
+  loaded.
 */
 export default function PlayStall() {
   const { player, newcomer } = useOutletContext();
-  const [run, setRun] = useState({ n: 0, cleared: [], lanterns: 0 });
+  const [run, setRun] = useState({ n: 0, cleared: [], lanterns: 0, replay: false });
   const now = run.n
     ? {
         ...player,
@@ -197,20 +207,34 @@ export default function PlayStall() {
       key={run.n}
       player={now}
       newcomer={run.n ? false : newcomer}
-      onAgain={({ cleared, lanterns }) =>
-        setRun((r) => ({ n: r.n + 1, cleared: [...r.cleared, ...cleared], lanterns: r.lanterns + lanterns }))
+      replay={run.replay}
+      onAgain={({ cleared, lanterns, replay = false }) =>
+        setRun((r) => ({ n: r.n + 1, cleared: [...r.cleared, ...cleared], lanterns: r.lanterns + lanterns, replay }))
       }
     />
   );
 }
 
-function FruitStall({ player, newcomer, onAgain }) {
+function FruitStall({ player, newcomer, replay, onAgain }) {
   const clearedBefore = !newcomer && (player.cleared_stalls ?? []).includes(STALL_ID);
   // Once the tutorial is done, the stall is Chapter 1.
   const chapterOne = clearedBefore;
   const roundCount = chapterOne ? CHAPTER_ONE_ROUNDS.length : ROUND_COUNT;
   const setUp = (index) => (chapterOne ? setUpChapterRound(index) : setUpRound(index, player.age_band));
-  const [round, setRound] = useState(() => setUp(0));
+  const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID);
+  // Where this visit starts, the furthest point they reached (see above):
+  //   start   the beginning: the tutorial's, or Chapter 1's, with Grandma's
+  //           lines (and so from "Carry on here")
+  //   round   part way through Chapter 1: the round they were on
+  //   ending  Chapter 1 finished, but they left before the map
+  //   map     Chapter 1 finished, and the map seen
+  const reached = Math.min(player.round_reached ?? 0, roundCount - 1);
+  let resume = "start";
+  if (chapterOne && !replay && chapterDoneBefore) resume = reached > 0 ? "ending" : "map";
+  else if (chapterOne && !replay && reached > 0) resume = "round";
+  const [round, setRound] = useState(() =>
+    setUp(resume === "round" ? reached : resume === "ending" ? roundCount - 1 : 0)
+  );
   const [crates, setCrates] = useState(() => round.crateIds ?? []); // the full crates on the table (Chapter 1)
   const [packed, setPacked] = useState(false); // this round's full basket is now one of them
   // Stage B: what has gone into the customer's order, whether a crate has
@@ -221,20 +245,22 @@ function FruitStall({ player, newcomer, onAgain }) {
   const [wall, setWall] = useState(false);
   const [crackReady, setCrackReady] = useState(false);
   const [orderTaken, setOrderTaken] = useState(false);
-  const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID);
-  const [chapterJustCleared, setChapterJustCleared] = useState(false);
+  // Chapter 1 finished the first time: today, or last time, if they left
+  // before its ending.
+  const [chapterJustCleared, setChapterJustCleared] = useState(resume === "ending");
   const [lanternsToday, setLanternsToday] = useState(0); // earned this visit (data/lanterns.js)
   // Chapter 1: Grandma's two lines, then she goes along the row to ask,
-  // and comes back at the end.
+  // and comes back at the end. (Coming back part way through, she has
+  // already gone.)
   const [introStep, setIntroStep] = useState(0);
-  const [grandmaAway, setGrandmaAway] = useState(false);
+  const [grandmaAway, setGrandmaAway] = useState(resume === "round");
   // Chapter 1: the number the child has said for "How many is that?"
   const [said, setSaid] = useState(null);
   // Stage B: Done, and the customer found it right.
   const [orderReady, setOrderReady] = useState(false);
   // The map, at the end: once reached, the errand comes as the child
   // leaves it, over it.
-  const [mapReached, setMapReached] = useState(false);
+  const [mapReached, setMapReached] = useState(resume === "map");
   // Chapter 1's hint: every crate shows its 10 for a few seconds.
   const [tensKey, setTensKey] = useState(null);
   // Stage C's reading round: handed over, and the number going in.
@@ -242,7 +268,9 @@ function FruitStall({ player, newcomer, onAgain }) {
   const [entry, setEntry] = useState(null); // { tens, ones, active }
   const [inBasket, setInBasket] = useState(() => round.prefilled);
   const [counted, setCounted] = useState([]);
-  const [phase, setPhase] = useState(newcomer ? "award" : "ask");
+  const [phase, setPhase] = useState(
+    newcomer ? "award" : ({ round: "play", ending: "back", map: "map" }[resume] ?? "ask")
+  );
   const [cleared, setCleared] = useState(clearedBefore);
   const [beat, setBeat] = useState(0);
   const [hintStep, setHintStep] = useState(0);
@@ -264,8 +292,9 @@ function FruitStall({ player, newcomer, onAgain }) {
   const later = (fn, ms) => timers.current.push(after(fn, ms));
   useEffect(() => () => timers.current.forEach(cancel), []);
 
-  // The progress meter (see above).
-  const [meterTotal] = useState(() => roundCount);
+  // The progress meter (see above): none on a visit that starts after the
+  // last round.
+  const [meterTotal] = useState(() => (resume === "ending" || resume === "map" ? 0 : roundCount - round.index));
   const [meterFilled, setMeterFilled] = useState(0);
   const [meterGlow, setMeterGlow] = useState(false);
   const [bursts, setBursts] = useState([]); // sparkles on their way to it
@@ -401,8 +430,10 @@ function FruitStall({ player, newcomer, onAgain }) {
   // meter fills and the meter glows, then (in Chapter 1) Grandma comes
   // back with her lantern, and then the end.
   const afterRound = () => {
-    if (round.index + 1 < roundCount) startRound(round.index + 1);
-    else {
+    if (round.index + 1 < roundCount) {
+      if (chapterOne && !chapterDoneBefore) saveWhereTheyAre(round.index + 1);
+      startRound(round.index + 1);
+    } else {
       primeSound(); // from this tap, so the sounds may play
       setPhase("finishing");
       fillMeter(() => {
@@ -554,6 +585,18 @@ function FruitStall({ player, newcomer, onAgain }) {
       setDelivered((now) => ({ ...now, loose: now.loose.filter((x) => x !== id) }));
     }
     return true;
+  };
+
+  // Chapter 1, the first time through: the round they are on, saved as
+  // they reach it, so a child who leaves comes back to it. Back to 0 once
+  // they have seen the map (OpeningCard). A replay saves nothing: coming
+  // back from one, they go to the map.
+  const saveWhereTheyAre = (index) => {
+    saveRoundReached(player.id, index)
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save where they got to.", error);
+      })
+      .catch((error) => console.warn("Couldn't save where they got to.", error));
   };
 
   // Chapter 1 cleared: saved the moment it happens, so a child who closes
@@ -919,7 +962,7 @@ function FruitStall({ player, newcomer, onAgain }) {
         earned={earned}
         lanterns={player.lanterns == null ? null : player.lanterns + lanternsToday}
         onHome={phase === "map" ? () => setPhase("end") : undefined}
-        meter={{ total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef }}
+        meter={meterTotal ? { total: meterTotal, filled: meterFilled, glow: meterGlow, ref: meterRef } : null}
       />
 
       <main id="main" className="pm-stall__stage">
@@ -1122,6 +1165,7 @@ function FruitStall({ player, newcomer, onAgain }) {
       {phase === "opening" && (
         <OpeningCard
           onDone={() => {
+            saveWhereTheyAre(0);
             setMapReached(true);
             setPhase("map");
           }}
@@ -1145,6 +1189,7 @@ function FruitStall({ player, newcomer, onAgain }) {
             onAgain({
               cleared: [...(cleared ? [STALL_ID] : []), ...(chapterJustCleared ? [CHAPTER_ONE_ID] : [])],
               lanterns: lanternsToday,
+              replay: true,
             })
           }
         />

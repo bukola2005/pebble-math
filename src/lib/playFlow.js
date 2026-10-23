@@ -1,6 +1,8 @@
+import { CHAPTER_ONE_ID } from "../data/fruitStall";
 import { LANTERN } from "../data/lanterns";
 import { BASKET, CRATE, MARKET_IMAGES, ORANGE, SELLER, SELLER_PORTRAIT } from "../data/market";
 import { INTRO_FILM, STORYBOOK } from "../data/media";
+import { MAP_ART } from "../data/places";
 import { ZIZI_DEFAULT, ZIZI_LOOKS, getZiziLook } from "../data/zizi";
 import { pickPlayableSource, preloadFile, preloadImage } from "./preload";
 
@@ -9,7 +11,8 @@ import { pickPlayableSource, preloadFile, preloadImage } from "./preload";
 
     film (first play) → avatar (choose a Zizi look) → name (build a game
     name) → story (Scene 1) → the Fruit Stall, where every later visit
-    starts until the map exists
+    starts: at the round they got to, or, once Chapter 1 is done, on the
+    market map (routes/PlayStall.jsx)
 
   Every step is its own route under /play/:playerId, and its own chunk of
   code. The loading screen fetches only what the next step needs; each step
@@ -94,6 +97,10 @@ export function stepTasks(step, player, keepFilm) {
         image(SELLER_PORTRAIT.src),
         image(LANTERN.lit.src),
         image(getZiziLook(player.character).src),
+        // With Chapter 1 done, the visit starts on the map.
+        ...((player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID)
+          ? [image(MAP_ART.src), image(LANTERN.unlit.src)]
+          : []),
       ];
     default:
       return [];

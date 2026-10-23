@@ -3,7 +3,7 @@ import { Navigate, Outlet, Route, Routes, useNavigate, useParams } from "react-r
 import CTAButton from "../components/CTAButton";
 import PlayLoading from "../components/PlayLoading";
 import { countLanterns } from "../lib/lanterns";
-import { getPlayer } from "../lib/players";
+import { getPlayer, getRoundReached } from "../lib/players";
 import { listClearedStalls } from "../lib/progress";
 import { nextStep } from "../lib/playFlow";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
@@ -25,13 +25,15 @@ const PlayStall = lazy(() => import("./PlayStall"));
  * context:
  *
  *   player       the row, kept up to date as steps save things, plus
- *                `cleared_stalls` (from stall_progress)
+ *                `cleared_stalls` (from stall_progress), `lanterns` and
+ *                `round_reached` (where they got to in Chapter 1)
  *   goNext(p)    record what a step just saved, then go to the next step
  *   filmUrl      the film, if the loading screen already downloaded it
  *   keepFilm(u)  for the loading screen to hand that copy over
  *   newcomer     true when this visit began before Scene 1 was played:
  *                the stall then gives them the basket and the tutorial.
- *                A child who comes back later goes straight to the stall.
+ *                A child who comes back later goes straight to the stall,
+ *                which starts where they got to (routes/PlayStall.jsx).
  *
  * Row Level Security means another account's player simply isn't found, and
  * the child goes back to "Who's playing?".
@@ -57,18 +59,24 @@ export default function PlaySessionShell() {
     // Which stalls they have cleared comes alongside, as
     // `player.cleared_stalls`. If that can't be read, the game still
     // starts, as if none were cleared yet. So does how many lanterns they
-    // have, as `player.lanterns` (null if it can't be read).
+    // have, as `player.lanterns` (null if it can't be read), and the round
+    // they got to in Chapter 1, as `player.round_reached` (0, its start, if
+    // it can't be read).
     const cleared = listClearedStalls(playerId).catch((error) => ({ data: [], error }));
     const lanterns = countLanterns(playerId).catch((error) => ({ data: null, error }));
-    Promise.all([getPlayer(playerId), cleared, lanterns])
-      .then(([{ data, error }, stalls, lamps]) => {
+    const reached = getRoundReached(playerId)
+      .then(({ data, error }) => ({ data: data?.round_reached ?? 0, error }))
+      .catch((error) => ({ data: 0, error }));
+    Promise.all([getPlayer(playerId), cleared, lanterns, reached])
+      .then(([{ data, error }, stalls, lamps, spot]) => {
         if (!active) return;
         if (stalls.error) console.warn("Couldn't read which stalls are cleared.", stalls.error);
         if (lamps.error) console.warn("Couldn't read the lanterns.", lamps.error);
+        if (spot.error) console.warn("Couldn't read where they got to.", spot.error);
         if (error) setFailure(error);
         else if (!data) setMissing(true);
         else {
-          setPlayer({ ...data, cleared_stalls: stalls.data, lanterns: lamps.data });
+          setPlayer({ ...data, cleared_stalls: stalls.data, lanterns: lamps.data, round_reached: spot.data });
           setNewcomer(!data.scene1_done);
           // Every visit starts at the loading screen, even a reload in the
           // middle of a step, so the step's pictures are in before it shows

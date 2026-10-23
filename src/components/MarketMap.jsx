@@ -56,13 +56,14 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
   }, [opening]);
 
   // On a narrow screen the map scrolls sideways: start with the child's
-  // pin, and the place opening, both in view (centred between them).
+  // pin, and the furthest open place (the one opening, if one is), both in
+  // view (centred between them).
   useEffect(() => {
     const scroller = scrollRef.current;
     const board = boardRef.current;
     if (!scroller || !board || board.offsetWidth <= scroller.clientWidth) return;
     const here = PLACES.find((place) => place.id === HERE);
-    const next = PLACES.find((place) => place.id === opening) ?? here;
+    const next = PLACES.filter((place) => isOpen(place, cleared)).pop() ?? here;
     const middle = (here.x + next.x) / 2;
     scroller.scrollLeft = Math.max(0, (board.offsetWidth * middle) / 100 - scroller.clientWidth / 2);
   }, [opening]);

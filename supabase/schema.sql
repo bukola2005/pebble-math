@@ -39,6 +39,9 @@ create table if not exists public.profiles (
 --   first_play_done  false until the child has watched (or skipped) the
 --                 opening film
 --   scene1_done   false until the child has played the market's first scene
+--   round_reached the round the child is on in Chapter 1, the first time
+--                 through (from 0), so they come back to it; back to 0
+--                 once they have seen the map at its end
 -- Band and class values are mirrored in src/data/players.js.
 -- ----------------------------------------------------------------------
 create table if not exists public.players (
@@ -56,6 +59,7 @@ create table if not exists public.players (
                            and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$'),
   first_play_done boolean not null default false,
   scene1_done  boolean not null default false,
+  round_reached smallint not null default 0 check (round_reached between 0 and 20),
   created_at   timestamptz not null default now()
 );
 
@@ -72,6 +76,8 @@ alter table public.players
 alter table public.players
   add column if not exists game_name text check (char_length(game_name) between 3 and 40
                                                  and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$');
+alter table public.players
+  add column if not exists round_reached smallint not null default 0 check (round_reached between 0 and 20);
 -- Kindergarten joined the class levels. Primary 4 to 6 stay allowed for
 -- children added before the form stopped offering them.
 alter table public.players drop constraint if exists players_class_level_check, add constraint players_class_level_check check (class_level in ('kindergarten', 'primary-1', 'primary-2', 'primary-3', 'primary-4', 'primary-5', 'primary-6'));
