@@ -68,12 +68,30 @@ saved, not just right or wrong. (Where swapping changes nothing, as in 22,
 the place-value one is the tens and ones side by side as they are said,
 202.)
 
+The order never disappears. The customer's number stays on screen the
+whole round, and the only way on is Done, once something has been placed.
+What the child places is counted for them as they place it, in oranges,
+not things: a crate adds ten, so two crates and three loose go 10, 20,
+21, 22, 23. That rising count is the lesson, counting on in tens and then
+ones, and it lets the child check their own work before Done, as a trader
+would. It shows what they placed; it never says what to place. (Not in
+the reading round, where it would be the answer.)
+
+When Blob asks about crates and loose oranges, the loose ones are one
+group, and each group is labelled with its number as he names it: 10 on
+each crate, 8 on the loose pile. The child counts what is in front of
+them instead of holding it in their head.
+
 Hints are on request, never on screen waiting: nothing is always on,
-everything is asked for, and the test rounds have nothing. In practice, a
-tapped crate shows a quiet 10 for a moment, and that is all it does: it
-never says what to do next and never adds up. Blob's hint button is there
-for a child who is stuck. A hint a child chooses to tap is a different
-thing from a hint sitting on screen answering before they've thought.
+everything is asked for. But help is always there to ask for, in every
+round, the test rounds too: a child who can't work it out and has no way
+to ask stops playing, and that is worse than an imperfect test. Blob's
+hint button gives the same small thing everywhere: every crate shows its
+10 for a few seconds. It never says what to do next, never adds anything
+up, never points at where things go. The log records whether it was used
+(`used_hint`): "solved it, asked for help" tells a teacher more than a
+bare pass or fail. A hint a child chooses to tap is a different thing from
+a hint sitting on screen answering before they've thought.
 
 ## Bring every idea back with different objects
 
@@ -129,6 +147,9 @@ the per-round record of hints isn't saved yet.
   helped enough to see further into the haze: a lantern is what lets them
   see, and two lanterns open the next place on the main path
   ([story.md](story.md)). Lanterns are light, not money: nothing is bought
-  with them. Money is a subject this game teaches, so it is never also the
-  reward. There are no locks and no levels, only places in one market.
+  with them, and a lantern a child has earned is never taken away; what a
+  place still needs is shown on the place. Money is a subject this game
+  teaches, so it is never also the reward. There are no locks and no
+  levels, only places in one market: a path that isn't open yet is roped
+  off.
   Money arrives at the Money Corner, designed alongside the naira wallet.

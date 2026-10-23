@@ -32,7 +32,7 @@ A parent or teacher opens the account. **A child never signs up, never gives an 
 - A class level, if the adult chooses to give one
 - A game name the child picks from a list of words we provide. The child never types it.
 - Which character and which monster were chosen
-- Which parts of the game the child has finished, and the lanterns they have earned: for each lantern, which part of the game it came from, whether it was for finishing a chapter, finishing its test rounds or coming back to play them again, and when
+- Which parts of the game the child has finished, which round they are on in the part they are playing, and the lanterns they have earned: for each lantern, which part of the game it came from, whether it was for finishing a chapter, finishing its test rounds or coming back to play them again, and when
 
 **Stored in the browser**
 

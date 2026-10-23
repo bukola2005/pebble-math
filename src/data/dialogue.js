@@ -105,8 +105,9 @@ export const FRUIT_STALL = {
 
   next: "Next",
 
-  // The end of a session, after round 5. Blob's errand (ERRANDS, below)
-  // comes first, and `endLine` under it.
+  // As the child leaves the map at the end of Chapter 1: Blob's errand
+  // (ERRANDS, below), and `endLine` under it when the cards before didn't
+  // just say it.
   endForNow: {
     errandLabel: "Something to try at home",
     endLine: "That's the end of the tutorial. More of the market is coming.",
@@ -143,9 +144,10 @@ export const CHAPTER_ONE = {
   // Stage B. A customer asks for a number, in digits ("15 oranges,
   // please."), never as crates and loose: what that is in crates and
   // loose is the child's to decide. The order goes on a cloth beside the
-  // basket, with nothing drawn on it.
+  // basket, with nothing drawn on it, and stays up all round as a strip:
+  // `orderStrip`. The number is the order.
   order: { speaker: "customer", text: "{want} oranges, please." },
-  orderGoal: "Fill the order",
+  orderStrip: "{want} oranges",
   // Only once the child has run out of loose oranges and reached for more.
   // Then (and in round 1 of Stage B, only then) a tapped crate opens.
   wall: { speaker: "blob", text: "Hmm. Not enough loose ones. What's inside a crate?" },
@@ -185,6 +187,25 @@ export const CHAPTER_ONE = {
     text: "Soon you can visit the rest of the market.",
     button: "Next",
   },
+};
+
+/**
+ * The market map (components/MarketMap.jsx), at the end of Chapter 1.
+ * A place's card says its name and what it teaches (data/places.js), or
+ * one of these.
+ */
+export const MAP_WORDS = {
+  label: "The market",
+  shutLabel: "A place still in the haze",
+  opening: "The haze is lifting off the {place}.",
+  shut: {
+    title: "The haze is still thick here",
+    text: "Blob's friends haven't reached this part of the market yet.",
+  },
+  notYet: "The haze has lifted here. Nobody is ready for you yet: soon!",
+  carryOn: "Carry on here",
+  notNow: "Not now",
+  allRight: "All right",
 };
 
 /** "One crate and five oranges", for Stage C's reading round. */

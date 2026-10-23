@@ -17,6 +17,8 @@ import { supabase } from "./supabase";
     game_name        the in-game name the child built from two word lists
     first_play_done  whether they have seen the opening film
     scene1_done      whether they have played Scene 1
+    round_reached    the round they are on in Chapter 1, the first time
+                     through, so they come back to it (0: its start)
   There is nothing here for a child's email, password, date of birth or any
   contact detail, and there never should be.
 */
@@ -79,6 +81,14 @@ export const chooseGameName = (id, gameName) =>
 
 export const finishScene1 = (id) =>
   changeOne(supabase.from("players").update({ scene1_done: true }).eq("id", id), "not_saved");
+
+// Read on its own, so that if it can't be (the column not added yet), the
+// game still starts: at the beginning of the chapter.
+export const getRoundReached = (id) =>
+  supabase.from("players").select("round_reached").eq("id", id).maybeSingle();
+
+export const saveRoundReached = (id, round) =>
+  changeOne(supabase.from("players").update({ round_reached: round }).eq("id", id), "not_saved");
 
 export const finishFirstPlay = (id) =>
   changeOne(

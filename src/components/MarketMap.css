@@ -1,0 +1,369 @@
+/* The market map: one clear picture, the haze over it in CSS (from the
+   map demo). Over the stall, under the corner buttons. */
+.pm-map {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #2b1f3f;
+  animation: pm-map-in 0.6s var(--pm-ease) both;
+}
+
+@keyframes pm-map-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.pm-map__scroll {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* The whole map in view, as big as the screen allows. */
+.pm-map__board {
+  position: relative;
+  width: min(100vw, calc(100dvh * 1920 / 1072));
+  aspect-ratio: 1920 / 1072;
+  overflow: hidden;
+}
+
+/* A phone held upright: the map as tall as the screen, scrolled sideways. */
+@media (max-aspect-ratio: 1 / 1) {
+  .pm-map__scroll {
+    place-items: stretch start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .pm-map__board {
+    width: auto;
+    height: 100%;
+  }
+}
+
+.pm-map__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The haze: a purple veil over everything, and a lighter one over that. */
+.pm-map__veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(160deg, #5b3a85, #452c66 55%, #3a2557);
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+
+.pm-map__veil--light {
+  background: #7b5aa6;
+  opacity: 0.2;
+  mix-blend-mode: normal;
+}
+
+/* An open place: the clear picture again, through a soft hole. */
+.pm-map__clear {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--map);
+  background-size: 100% 100%;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+
+.pm-map__clear.is-on {
+  opacity: 1;
+}
+
+.pm-map__chains {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pm-map__chain {
+  fill: none;
+  stroke: #e8d7b4;
+  stroke-width: 1.6;
+  stroke-dasharray: 4 3.5;
+  opacity: 0.45;
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+.pm-map__chain.is-gone {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* A rope between two posts across the path, where the next place isn't
+   open yet; it drops away when it opens. */
+.pm-map__rope {
+  position: absolute;
+  width: clamp(20px, 2.2%, 32px);
+  aspect-ratio: 32 / 22;
+  translate: -50% -50%;
+  color: #efe0c2;
+  opacity: 0.85;
+  pointer-events: none;
+  transition:
+    transform 0.7s cubic-bezier(0.3, 1.3, 0.5, 1),
+    opacity 0.8s ease 0.2s;
+}
+
+.pm-map__rope.is-gone {
+  transform: translateY(20px) rotate(22deg);
+  opacity: 0;
+}
+
+.pm-map__rope svg,
+.pm-map__shut svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pm-map__wisp {
+  position: absolute;
+  width: 5.5%;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.pm-map__wisp path {
+  fill: none;
+  stroke: #cbb0e6;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  animation: pm-map-drift 8s ease-in-out infinite;
+}
+
+@keyframes pm-map-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-7px);
+    opacity: 0.2;
+  }
+}
+
+/* A place: a tap target at least 48px, the mark in the middle of it. */
+.pm-map__spot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  translate: -50% -50%;
+  cursor: pointer;
+  transition: scale 0.15s var(--pm-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-map__spot:hover {
+  scale: 1.15;
+}
+
+.pm-map__spot:focus-visible {
+  outline: 3px solid var(--pm-white);
+  outline-offset: 2px;
+}
+
+.pm-map__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fdf3e0;
+  box-shadow:
+    0 0 0 2px rgba(60, 40, 20, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.pm-map__shut {
+  width: 26px;
+  height: 18px;
+  color: #efe0c2;
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* The child's pin: their face, standing on the place, bobbing gently. */
+.pm-map__spot.is-here {
+  width: 56px;
+  height: 70px;
+  translate: -50% -82%;
+}
+
+.pm-map__pin {
+  width: 48px;
+  height: 61px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  animation: pm-map-bob 2.2s ease-in-out infinite;
+}
+
+@keyframes pm-map-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* A place's two lanterns: dark on the next place, which needs them; lit
+   on a place they have opened. */
+.pm-map__place-lantern {
+  position: absolute;
+  width: auto;
+  height: 7%;
+  translate: -50% -50%;
+  pointer-events: none;
+  animation: pm-map-in 0.6s var(--pm-ease) both;
+}
+
+.pm-map__place-lantern.is-lit {
+  filter: drop-shadow(0 0 10px rgba(255, 214, 150, 0.95));
+}
+
+.pm-map__place-lantern.is-dark {
+  filter: brightness(0.8) saturate(0.7) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Two lit lanterns floating up to the place opening, to light its own. */
+.pm-map__lantern {
+  position: absolute;
+  z-index: 1;
+  left: var(--from-x);
+  top: 104%;
+  width: auto;
+  height: 7%;
+  translate: -50% -50%;
+  opacity: 0;
+  filter: drop-shadow(0 0 14px rgba(255, 214, 150, 0.95));
+  pointer-events: none;
+  transition:
+    left 1.3s cubic-bezier(0.3, 0.7, 0.3, 1),
+    top 1.3s cubic-bezier(0.3, 0.7, 0.3, 1),
+    opacity 0.6s ease;
+}
+
+.pm-map__lantern.is-arriving {
+  left: var(--to-x);
+  top: var(--to-y);
+  opacity: 1;
+}
+
+
+/* A place's card. */
+.pm-map__sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 12, 34, 0.45);
+  animation: pm-map-in 0.2s var(--pm-ease) both;
+}
+
+.pm-map__card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(340px, 100%);
+  padding: 20px 22px;
+  border-radius: 24px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 4px var(--pm-garden-leaf),
+    0 18px 40px rgba(20, 14, 40, 0.4);
+  text-align: center;
+}
+
+.pm-map__card-title {
+  font-family: var(--pm-font-display);
+  font-size: 1.375rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+}
+
+.pm-map__card-text {
+  font-size: var(--pm-body);
+  line-height: 1.45;
+  color: var(--pm-ink-muted);
+}
+
+.pm-map__card-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pm-map__go,
+.pm-map__not-now {
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: var(--pm-r-pill);
+  font-family: var(--pm-font-display);
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+
+.pm-map__go {
+  border: 0;
+  background: var(--pm-orange);
+  box-shadow: var(--pm-shadow-orange);
+  color: var(--pm-ink-on-orange);
+}
+
+.pm-map__not-now {
+  border: 2px solid var(--pm-purple);
+  background: transparent;
+  color: var(--pm-ink);
+}
+
+.pm-map__go:focus-visible,
+.pm-map__not-now:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-map__clear,
+  .pm-map__chain,
+  .pm-map__rope,
+  .pm-map__lantern {
+    transition-duration: 0.01ms;
+  }
+
+  .pm-map__pin,
+  .pm-map__wisp path {
+    animation: none;
+  }
+
+  .pm-map__lantern {
+    display: none;
+  }
+}

@@ -15,6 +15,8 @@ import "./PlayHud.css";
  * until it closes (ProfilePanel). `earned` is what it shows them as
  * having: the stall_progress ids they have cleared, today's included;
  * `lanterns` how many lanterns, today's included (null if unknown).
+ * `onHome`, when given, is what the home button does instead of going
+ * straight back to "Who's playing?" (the map's sign-off).
  *
  * At a stall, `meter` adds the progress meter: a ring around the child's
  * face, one segment per round with small gaps between, filling clockwise
@@ -72,6 +74,7 @@ export default function PlayHud({
   meter = null,
   earned = player.cleared_stalls ?? [],
   lanterns = player.lanterns ?? null,
+  onHome = null,
 }) {
   const navigate = useNavigate();
   const muted = useMuted();
@@ -90,7 +93,7 @@ export default function PlayHud({
       <button
         type="button"
         className="pm-hud__button"
-        onClick={() => navigate("/play")}
+        onClick={() => (onHome ? onHome() : navigate("/play"))}
         aria-label="Back to Who’s playing?"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -178,7 +181,13 @@ export default function PlayHud({
       </div>
 
       {profileOpen && (
-        <ProfilePanel player={player} zizi={zizi} earned={earned} lanterns={lanterns} onClose={closeProfile} />
+        <ProfilePanel
+          player={player}
+          zizi={zizi}
+          earned={earned}
+          lanterns={lanterns}
+          onClose={closeProfile}
+        />
       )}
     </div>
   );

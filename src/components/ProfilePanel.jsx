@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { friendsFor } from "../data/friends";
-import { LANTERN, lanternsShown } from "../data/lanterns";
+import { LANTERN } from "../data/lanterns";
 import { rewardsFor } from "../data/rewards";
 import { setPaused } from "../lib/pause";
 import { RewardPicture } from "./RewardItems";
@@ -14,14 +14,14 @@ import "./ProfilePanel.css";
     Friends    seven, Blob first, the rest dark silhouettes until they
                join. First and biggest: it is how close the child is to
                finding their mother.
-    Lanterns   lit for the ones they have, dark for the ones still needed
-               to open the next place.
+    Lanterns   every one they have earned, lit, for good. Nothing earned
+               is taken away; what a place still needs is on the map.
     Keepsakes  Grandma's gifts, only the ones they have. Not a set: never
                an empty space.
 
   `earned` is the stall_progress ids they have; `lanterns` how many
-  lanterns (null when that couldn't be read: the section is left out
-  rather than show none).
+  lanterns they have earned (left out when there are none yet, or when
+  that couldn't be read).
 
   The game pauses while it is open (lib/pause.js) and goes on exactly
   where it was when it closes: with the close button, Escape, or a tap
@@ -49,7 +49,7 @@ export default function ProfilePanel({ player, zizi, earned, lanterns, onClose }
   };
 
   const friends = friendsFor(earned);
-  const lamps = lanterns == null ? null : lanternsShown(lanterns);
+  const lamps = lanterns > 0 ? lanterns : 0;
   const keepsakes = rewardsFor(earned);
 
   return (
@@ -100,22 +100,16 @@ export default function ProfilePanel({ player, zizi, earned, lanterns, onClose }
         </section>
 
         <div className="pm-profile__pair">
-          {lamps && (
+          {lamps > 0 && (
             <section className="pm-profile__lanterns" aria-labelledby="pm-profile-lanterns">
               <h3 id="pm-profile-lanterns" className="pm-profile__heading">
                 Lanterns
               </h3>
               <ul className="pm-profile__lantern-row">
-                {Array.from({ length: lamps.lit }, (_, i) => (
+                {Array.from({ length: lamps }, (_, i) => (
                   <li key={`lit-${i}`} className="pm-profile__lantern is-lit">
                     <img src={LANTERN.lit.src} width={LANTERN.lit.w} height={LANTERN.lit.h} alt="" draggable={false} />
                     <span className="pm-sr-only">Lit</span>
-                  </li>
-                ))}
-                {Array.from({ length: lamps.dark }, (_, i) => (
-                  <li key={`dark-${i}`} className="pm-profile__lantern is-dark">
-                    <img src={LANTERN.unlit.src} width={LANTERN.unlit.w} height={LANTERN.unlit.h} alt="" draggable={false} />
-                    <span className="pm-sr-only">Not lit yet</span>
                   </li>
                 ))}
               </ul>
