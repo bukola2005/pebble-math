@@ -48,7 +48,8 @@ src/
     PlayAvatar.jsx          /play/:id/avatar: choose Zizi's look, on the storybook
     PlayName.jsx            /play/:id/name: build a game name from two word lists
     PlayStory.jsx           /play/:id/story: Scene 1, the dim market, with Blob
-    PlayStall.jsx           /play/:id/stall/fruit: the basket, the tutorial, round one
+    PlayStall.jsx           /play/:id/stall/fruit: the basket, the tutorial, Chapter 1
+    PlayShop.jsx            /play/:id/stall/provision: the Provision Store, Chapter 2
     Protected*.jsx          each page above behind its sign-in check
   context/AuthContext.jsx   AuthProvider + useAuth: session, user, loading, signUp, signIn, signOut
   lib/
@@ -94,6 +95,11 @@ src/
     Sparkles.jsx            the small stars that fly to the basket's count and the meter
     BasketGame.jsx          oranges on the table, the basket and its crate of ten:
                             tap to count, drag to move
+    ShelfGame.jsx           the Provision Store's delivery, shelf unit and counter:
+                            tins and cartons of ten, dragged onto a shelf or the counter
+    StallCards.jsx          what every stall shows around its rounds: the order
+                            strip, the trader back with a lantern, a friend joining,
+                            Blob's errand
     HintButton.jsx          Blob's face in the corner: one step of help per tap
     CoachMark.jsx           one tutorial beat: one highlight, an arrow, Blob's bubble
     BasketAward.jsx         the card that gives the child their basket
@@ -126,6 +132,7 @@ src/
                             and Blob's errands for the end of a session
   data/fruitStall.js        the tutorial's five rounds (round 1's order by age band)
                             and Chapter 1's rounds
+  data/provisionStore.js    Chapter 2's rounds, its art, and "How many more?"'s numbers
   data/market.js            the market's art: the six layers, basket, orange, crate,
                             and the seller
   styles/game.css           the game screens' own tokens (garden green, paper)
@@ -152,8 +159,11 @@ public/ui/lantern-*.webp    the lantern, lit and unlit (the same lamp, cut to on
 public/friends/*.webp       dark silhouettes of the six friends still to join, made
                             from their art (a few KB each instead of the full pictures)
 public/art/*.webp           the market map, clear (market-map-day: the map screen; the
-                            haze is drawn in CSS), a misty one not used, and the blank
-                            storybook behind the avatar screen
+                            haze is drawn in CSS), a misty one not used, the blank
+                            storybook behind the avatar screen, and the Provision
+                            Store: the shop (stall-provision, in the fruit stall's
+                            place), a tin, a carton of ten, the empty shelf unit and
+                            Baba (portrait-shopkeeper)
 source-art/                 full-size masters, kept out of git and out of the build
 public/fonts/               Plus Jakarta Sans and Fredoka One, with their licences,
                             served from this site
@@ -595,7 +605,72 @@ something again is always their choice, never where the game puts them,
 so a replay saves no rounds: leaving one, they come back to the map. On a
 phone held upright the map starts with the pin and the furthest open
 place both in view. If `round_reached` can't be read (the column not
-added yet), Chapter 1 starts at its beginning.
+added yet), Chapter 1 starts at its beginning. Once a child has stepped
+into the Provision Store, the same holds there instead (below).
+
+**The Provision Store** (`routes/PlayShop.jsx`, `components/ShelfGame.jsx`,
+`data/provisionStore.js`): Chapter 2, Baba's shop. Tapping the Provision
+Store on the map, once Chapter 1 has opened it, says "Let's go", and the
+child is in the same market, the same light: the Fruit Stall's sky, far
+houses, palms, ground and near leaves, with the shop standing in the fruit
+stall's place, on the same ground line, its counter as high as the fruit
+stall's table. Baba is what the child calls him, like Grandma: not a name.
+He asks them to fill his shelves and mind the shop, and goes along the row
+to ask. He has no figure in the scene, only his face in the box and on his
+card.
+
+It has Chapter 1's shape exactly (the same stages, meter, lanterns and map
+ending) and one new idea: **difference**, "this shelf holds 30, it has 18,
+how many more fit?", the other half of subtraction from Chapter 1's "give
+me 15" ([docs/learning-rules.md](docs/learning-rules.md)). Every shelf of
+the shelf unit holds ten tins, five at the back and five in front, and a
+carton holds ten, so a carton fills an empty shelf exactly; the unit is
+cut from the one picture into a top, shelves and feet, and stacked to hold
+10, 30 or 40. The delivery stands on a mat on the ground: cartons at the
+back, loose tins in front. A carton dragged onto the shelf goes to the
+first empty shelf (and won't go on a part-full one); a tin goes to the
+first gap. Nothing outlines the gaps: bare wood is the empty space. The
+shelf's tag counts tins, a carton adding 10.
+
+- Stage A, three shelves of ten (6, 3 and 8 on them): a strip says "This
+  shelf holds 10 tins" all round. Full, it glows, and Blob: "It had 6… and
+  it holds 10. How many more did it need?", with three numbers to tap,
+  then "4 more!" after the child.
+- Stage B: shelves of 30 and 40 (20, 24 and 23 on them), and a customer:
+  "15 tins, please." with 3 cartons and 2 loose. The order goes on the
+  shop's own counter top, on a small cloth, and the counter counts tins.
+  Cracking a carton is not taught again: a tapped carton opens whenever
+  the child likes, and only if they are stuck (no loose tins, and a carton
+  won't do) does Blob wonder, after a touch or two seconds, "Hmm. Not
+  enough loose ones. What's inside a carton?" Then, as in Chapter 1, "1
+  carton… and 7 loose. How many is that?" about what is left.
+- Stage C, three tests with nothing but the hint button: "This shelf holds
+  30 tins. How many more fit?", answered by putting that many on the
+  counter (its count hidden: it would be the answer); Done checks the
+  cartons, then the loose tins, and a right answer goes up onto the shelf
+  and fills it. Then a customer's 24 from 3 cartons and 1 loose, and a
+  shelf of 40 with 35.
+
+Every tap on "How many more did it need?" and every Done is saved in
+`attempts`, as in Chapter 1, with `holds` (the shelf's size) in a shelf
+round. Blob's hint button is there in every round: every carton shows its
+10, and each shelf what it holds, for three seconds.
+
+At the end Baba comes back with news warmer than Grandma's: someone along
+the row thinks they saw a woman asking after a child, nobody saw which way
+she went, but somebody is looking for them. His lantern, and the first
+time one more, for minding the shop alone. Then the first time, Sprout,
+the next of Blob's friends, joins the search (no keepsakes: Grandma's were
+a one-off), and the map: the child's pin moves to the Provision Store and
+the haze lifts off the Produce Yard. Blob's errand for the shop is about
+gaps ("Next time I see a shelf, I'm going to count how many more would
+fill it").
+
+Stepping into the shop is saved (a `provision-store` row in
+`stall_progress`): from then on every visit starts there, at the round
+the child was on, or on the map once Chapter 2 is done, and
+`round_reached` is Chapter 2's. From the map, "Carry on here" on either
+place plays its chapter again, and what was done today goes with them.
 
 *Blob's hint button*, bottom left: in the tutorial each tap gives the next
 step (a question, then the empty spaces outlined, then Blob trying the
@@ -637,8 +712,8 @@ face and game name, then what the story counts
 - **Friends**, first and with the most room: seven spaces, Blob in colour
   and the six still to join as dark silhouettes of their own shapes, under
   "Blob's friends are helping us look." One joins at each new place
-  (`data/friends.js`); for now that is only Blob. It is how close the
-  child is to finding their mother.
+  (`data/friends.js`): Sprout (green) at the end of the Provision Store.
+  It is how close the child is to finding their mother.
 - **Lanterns**: every lantern they have earned, lit, for good. Nothing
   earned is ever taken away; what a place still needs is shown on the map,
   as dark lanterns on that place.
@@ -654,7 +729,8 @@ one for finishing its test rounds (Stage C), and one more every time the
 child comes back and does the test rounds again: only for coming back,
 never for being fast or right first time. Two open the next place on the
 main path: at the end of Chapter 1 the map's Provision Store lights with
-the two it earns (a place's `opensAfter` in `data/places.js`). They stay
+the two it earns, at the end of Chapter 2 the Produce Yard (a place's
+`opensAfter` in `data/places.js`). They stay
 lit in the child's profile, and on the place they opened. Extras will open
 optional places off the main road (not built). Finishing a chapter once
 always earns the two needed to go on. Each lantern earned is a row in `lanterns`
@@ -700,8 +776,9 @@ picks their profile from a list.
 
 ```
 auth.users ─ profiles ─ players ─ stall_progress
- (adult)     name, role   display name, age band,     one row per stall
-                          class (optional), monster,  the child has cleared
+ (adult)     name, role   display name, age band,     one row per stall or
+                          class (optional), monster,  chapter the child has
+                                                      cleared, or place reached
                           character (Zizi's look),
                           game_name, first_play_done,
                           scene1_done, round_reached

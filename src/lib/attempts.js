@@ -13,6 +13,10 @@ import { supabase } from "./supabase";
     "B"      Done on a Stage B order
     "B-ask"  Blob's "How many is that?" in Stage B
     "C"      a test round
+  The same in Chapter 2 (the Provision Store), where "A-ask" and a shelf
+  round's "B-ask" are Blob's "How many more did it need?", and `holds`
+  says how big the shelf was: `asked` is how many more it needed, so it
+  had `holds - asked`.
 */
 
 /**
@@ -25,6 +29,8 @@ import { supabase } from "./supabase";
  *               over on a Stage B cloth), or null
  *   failedStep  "crates", "loose" or "total"; null when it was right
  *   usedHint    whether they tapped the hint in this round before answering
+ *   holds       the Provision Store: the shelf's size, in a shelf round.
+ *               Sent only when there is one.
  */
 export async function recordAttempt({
   playerId,
@@ -37,6 +43,7 @@ export async function recordAttempt({
   total = null,
   failedStep = null,
   usedHint = false,
+  holds = null,
 }) {
   const { error } = await supabase.from("attempts").insert({
     player_id: playerId,
@@ -49,6 +56,7 @@ export async function recordAttempt({
     total,
     failed_step: failedStep,
     used_hint: usedHint,
+    ...(holds != null ? { holds } : {}),
   });
   return { error };
 }

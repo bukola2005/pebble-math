@@ -1,0 +1,350 @@
+/* ----------------------------------------------------------------------
+   The Provision Store's play area, over the painted scene. Everything is
+   placed in pixels from where the shop picture is (ShelfGame.jsx): the
+   delivery on the ground, the shelf unit beside the shop, and the shop's
+   own counter top.
+   ---------------------------------------------------------------------- */
+
+/* --- the delivery: a mat on the ground ------------------------------------------- */
+.pm-delivery {
+  position: absolute;
+  z-index: 0;
+  border-radius: 18px 18px 8px 8px;
+  background:
+    repeating-linear-gradient(90deg, rgba(110, 72, 34, 0) 0 7px, rgba(110, 72, 34, 0.12) 7px 9px),
+    repeating-linear-gradient(0deg, rgba(110, 72, 34, 0) 0 7px, rgba(110, 72, 34, 0.1) 7px 9px),
+    linear-gradient(180deg, #d9b98a, #c79e68);
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.25),
+    0 8px 12px rgba(70, 40, 20, 0.25);
+  animation: pm-tray-in 0.45s var(--pm-ease-pop) both;
+}
+
+/* --- cartons and tins ---------------------------------------------------------- */
+.pm-carton {
+  position: absolute;
+  z-index: 2;
+  aspect-ratio: 440 / 374;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.pm-carton__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 5px 4px rgba(70, 40, 20, 0.3));
+}
+
+.pm-tin {
+  position: absolute;
+  z-index: 3;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.pm-tin img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 2px rgba(70, 35, 10, 0.3));
+}
+
+.pm-carton.is-movable,
+.pm-tin.is-movable {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-carton:focus-visible,
+.pm-tin:focus-visible {
+  outline: 3px solid var(--pm-purple-700);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.pm-carton.is-dragging,
+.pm-tin.is-dragging {
+  z-index: 40;
+  cursor: grabbing;
+}
+
+.pm-tin.is-dragging img,
+.pm-carton.is-dragging .pm-carton__art {
+  transform: translateY(calc(var(--lift, 0px) * -1)) scale(1.12);
+  filter: drop-shadow(0 16px 10px rgba(70, 35, 10, 0.3));
+}
+
+.pm-carton.is-returning,
+.pm-tin.is-returning {
+  z-index: 30;
+  transition: transform 0.4s var(--pm-ease-pop);
+}
+
+/* A carton's 10: with the hint, for three seconds; as Blob names it, for
+   as long as he does. */
+.pm-carton__tag {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--pm-paper);
+  box-shadow: 0 0 0 2px #7a4a24;
+  font-family: var(--pm-font-display);
+  font-size: 0.875rem;
+  color: var(--pm-ink);
+}
+
+.pm-carton__tag.is-hint {
+  animation: pm-tens-peek 3.2s var(--pm-ease) both;
+}
+
+/* Once Blob has wondered what's inside a carton, the cartons breathe a
+   little light. Nothing before that: the child finds the need first. */
+.pm-carton.is-inviting .pm-carton__art {
+  animation: pm-crate-invite 1.6s ease-in-out infinite;
+}
+
+.pm-crack--carton {
+  aspect-ratio: 440 / 374;
+}
+
+/* --- the shelf unit -------------------------------------------------------------- */
+.pm-shelf {
+  position: absolute;
+  z-index: 1;
+}
+
+.pm-shelf__art {
+  display: flex;
+  flex-direction: column;
+  filter: drop-shadow(0 10px 10px rgba(60, 35, 15, 0.28));
+  transition: filter 0.2s var(--pm-ease);
+}
+
+.pm-shelf__piece {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+}
+
+.pm-shelf__piece img {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  user-select: none;
+}
+
+/* Something carried over it: it says "here". */
+.pm-shelf.is-ready .pm-shelf__art {
+  filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 16px rgba(255, 236, 170, 0.95));
+}
+
+/* Full: it glows. */
+.pm-shelf.is-done .pm-shelf__art {
+  animation: pm-shelf-done 0.9s ease-out both;
+}
+
+@keyframes pm-shelf-done {
+  40% {
+    filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 24px rgba(255, 236, 170, 0.95));
+  }
+}
+
+.pm-shelf__tin {
+  position: absolute;
+}
+
+.pm-shelf__tin img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 1.5px rgba(60, 35, 15, 0.35));
+}
+
+/* The back row, in the shelf's shadow. */
+.pm-shelf__tin.is-back img {
+  filter: brightness(0.86) drop-shadow(0 2px 1.5px rgba(60, 35, 15, 0.35));
+}
+
+/* What a shelf holds, on its right post. */
+.pm-shelf__ten {
+  position: absolute;
+  right: 0;
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  aspect-ratio: 1;
+  translate: 30% -50%;
+  border-radius: 50%;
+  background: var(--pm-paper);
+  box-shadow: 0 0 0 2px #7a4a24;
+  font-family: var(--pm-font-display);
+  font-size: 0.875rem;
+  color: var(--pm-ink);
+  animation: pm-pop-in 0.3s var(--pm-ease-pop) both;
+}
+
+.pm-shelf__ten.is-hint {
+  animation: pm-tens-peek 3.2s var(--pm-ease) both;
+}
+
+/* The shelf's count, in its top corner: the basket's tag, pinned on. */
+.pm-shelf__tag {
+  position: absolute;
+  left: -10px;
+  top: -12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 46px;
+  height: 46px;
+  padding: 0 6px;
+  border-radius: 8px 8px 12px 12px;
+  background: var(--pm-paper);
+  box-shadow:
+    0 0 0 2.5px #7a4a24,
+    0 4px 8px rgba(70, 40, 20, 0.35);
+  font-family: var(--pm-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--pm-ink);
+  animation: pm-count-pop 0.3s var(--pm-ease-pop) both;
+}
+
+/* "6 more!": the number, over the shelf. */
+.pm-shelf__answer {
+  left: 50%;
+  top: -10px;
+}
+
+/* --- the counter top --------------------------------------------------------------
+   The painted counter is the place; on it, a plain cloth where an order
+   goes. Nothing drawn on it but what the child puts there. */
+.pm-counter-top {
+  position: absolute;
+  z-index: 1;
+  border-radius: 14px;
+  transition:
+    opacity 0.5s var(--pm-ease),
+    transform 0.5s var(--pm-ease),
+    box-shadow 0.2s var(--pm-ease);
+}
+
+.pm-counter-top__cloth {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 14px;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0) 0 12px, rgba(255, 255, 255, 0.3) 12px 15px),
+    repeating-linear-gradient(0deg, #e9784f 0 4px, #f2b45f 4px 8px, #9d8ae0 8px 11px);
+  box-shadow: 0 3px 4px rgba(70, 40, 20, 0.3);
+  animation: pm-tray-in 0.45s var(--pm-ease-pop) both;
+}
+
+.pm-counter-top.is-ready {
+  box-shadow:
+    0 0 0 4px var(--pm-white),
+    0 0 22px rgba(255, 236, 170, 0.95);
+}
+
+.pm-counter-top.is-done {
+  animation: pm-order-done 0.8s ease-out both;
+}
+
+.pm-counter-top.is-taken {
+  opacity: 0;
+  transform: translateY(-16px) scale(0.94);
+  pointer-events: none;
+}
+
+.pm-counter-top .pm-carton,
+.pm-counter-top .pm-tin {
+  z-index: 1;
+}
+
+/* --- Blob's steps: everything but what he names goes dim ----------------------------
+   "It had 24…": the tins that were there glow, the new ones wait. */
+.pm-shop--spot-had .pm-shelf,
+.pm-shop--spot-holds .pm-shelf,
+.pm-shop--spot-added .pm-shelf {
+  z-index: 6;
+}
+
+.pm-shop--spot-had .pm-shelf__tin.is-had img,
+.pm-shop--spot-holds .pm-shelf__tin img,
+.pm-shop--spot-added .pm-shelf__tin.is-added img {
+  filter: drop-shadow(0 0 3px #fff7d6) drop-shadow(0 0 8px rgba(255, 220, 130, 0.9));
+}
+
+.pm-shop--spot-had .pm-shelf__tin.is-added img,
+.pm-shop--spot-added .pm-shelf__tin.is-had img {
+  filter: brightness(0.5) saturate(0.6);
+}
+
+/* "1 carton… and 7 loose.": the delivery comes up out of the dim. */
+.pm-shop--spot-cartons .pm-delivery,
+.pm-shop--spot-tins .pm-delivery,
+.pm-shop--spot-both .pm-delivery,
+.pm-shop--spot-cartons .pm-carton,
+.pm-shop--spot-tins .pm-carton,
+.pm-shop--spot-both .pm-carton,
+.pm-shop--spot-tins .pm-tin,
+.pm-shop--spot-both .pm-tin {
+  z-index: 6;
+}
+
+.pm-shop--spot-cartons .pm-carton__art,
+.pm-shop--spot-both .pm-carton__art,
+.pm-shop--spot-tins .pm-tin img,
+.pm-shop--spot-both .pm-tin img {
+  filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 12px rgba(255, 220, 130, 0.9));
+}
+
+.pm-shop--spot-tins .pm-carton__art {
+  filter: brightness(0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-delivery,
+  .pm-counter-top__cloth,
+  .pm-counter-top.is-done,
+  .pm-shelf.is-done .pm-shelf__art,
+  .pm-shelf__ten {
+    animation: none;
+  }
+
+  .pm-carton__tag.is-hint,
+  .pm-shelf__ten.is-hint {
+    animation: none;
+  }
+
+  .pm-carton.is-inviting .pm-carton__art {
+    animation: none;
+    filter: drop-shadow(0 0 8px rgba(255, 220, 130, 0.7));
+  }
+
+  .pm-counter-top {
+    transition: none;
+  }
+}

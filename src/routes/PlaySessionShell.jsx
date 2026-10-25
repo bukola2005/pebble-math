@@ -18,6 +18,7 @@ const PlayAvatar = lazy(() => import("./PlayAvatar"));
 const PlayName = lazy(() => import("./PlayName"));
 const PlayStory = lazy(() => import("./PlayStory"));
 const PlayStall = lazy(() => import("./PlayStall"));
+const PlayShop = lazy(() => import("./PlayShop"));
 
 /**
  * Everything at /play/:playerId and below: fetches the child's player row
@@ -39,8 +40,8 @@ const PlayStall = lazy(() => import("./PlayStall"));
  * the child goes back to "Who's playing?".
  *
  * The steps are routed here rather than in App.jsx: /play/:playerId itself
- * is the loading screen (PlayHub), then /intro, /avatar, /name, /story and
- * /stall/fruit.
+ * is the loading screen (PlayHub), then /intro, /avatar, /name, /story,
+ * /stall/fruit and /stall/provision.
  */
 export default function PlaySessionShell() {
   const { playerId } = useParams();
@@ -157,6 +158,7 @@ export default function PlaySessionShell() {
           <Route path="name" element={<PlayName />} />
           <Route path="story" element={<PlayStory />} />
           <Route path="stall/fruit" element={<PlayStall />} />
+          <Route path="stall/provision" element={<PlayShop />} />
           {/* Anything else under a player goes through the loading screen. */}
           <Route path="*" element={<Navigate to={`/play/${player.id}`} replace />} />
         </Route>

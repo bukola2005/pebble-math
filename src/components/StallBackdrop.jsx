@@ -6,14 +6,16 @@ import "./StallBackdrop.css";
  * stall, near) composed on a 1920×1080 stage that covers the screen.
  *
  * `dim` is the market under the haze, for Scene 1: darker, purpler, with
- * slow drifting haze. `close` keeps the stall big enough to play at on a
+ * slow drifting haze. `stall` puts another stall in the stall layer's
+ * place, `{ id, src, w, h }` (the Provision Store), with the rest of the
+ * market as it is. `close` keeps the stall big enough to play at on a
  * short screen (a phone on its side), at the cost of some sky. `seller`
  * stands the fruit seller behind the stall's right end. `stallRef`
  * reaches the stall layer, so the game can find its table.
  *
  * Decorative only; the screens say in words what matters.
  */
-export default function StallBackdrop({ dim = false, close = false, seller = false, sellerAway = false, stallRef }) {
+export default function StallBackdrop({ dim = false, close = false, seller = false, sellerAway = false, stall = null, stallRef }) {
   return (
     <div
       className={`pm-backdrop${dim ? " pm-backdrop--dim" : ""}${close ? " pm-backdrop--close" : ""}`}
@@ -37,10 +39,10 @@ export default function StallBackdrop({ dim = false, close = false, seller = fal
           <img
             key={layer.id}
             ref={layer.id === "stall" ? stallRef : undefined}
-            className={`pm-layer pm-layer--${layer.id}`}
-            src={layer.src}
-            width={layer.w}
-            height={layer.h}
+            className={`pm-layer pm-layer--${layer.id}${layer.id === "stall" && stall ? ` pm-layer--stall-${stall.id}` : ""}`}
+            src={layer.id === "stall" && stall ? stall.src : layer.src}
+            width={layer.id === "stall" && stall ? stall.w : layer.w}
+            height={layer.id === "stall" && stall ? stall.h : layer.h}
             alt=""
             draggable={false}
             decoding="async"

@@ -202,7 +202,12 @@ export function totalChoices(crates, loose, seed) {
   for (const option of [["added", tens + ones], ["ten more", right + 10]]) {
     if (picked.length < 3 && option[1] > 0 && !picked.some(([, value]) => value === option[1])) picked.push(option);
   }
-  // A small seeded shuffle.
+  const kinds = new Map(picked.map(([kind, value]) => [value, kind]));
+  return { right, choices: shuffled(picked, seed).map(([, value]) => value), kind: (value) => kinds.get(value) ?? "other" };
+}
+
+/** `list` in an order set by `seed`: the same seed, the same order. */
+export function shuffled(list, seed) {
   let t = seed >>> 0;
   const next = () => {
     t = (t + 0x6d2b79f5) >>> 0;
@@ -210,11 +215,10 @@ export function totalChoices(crates, loose, seed) {
     r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
-  const order = [...picked];
+  const order = [...list];
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(next() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
-  const kinds = new Map(picked.map(([kind, value]) => [value, kind]));
-  return { right, choices: order.map(([, value]) => value), kind: (value) => kinds.get(value) ?? "other" };
+  return order;
 }

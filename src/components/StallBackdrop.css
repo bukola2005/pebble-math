@@ -84,6 +84,12 @@
   transform: translateX(-50%);
 }
 
+/* The Provision Store, in the fruit stall's place: the same ground line,
+   and sized so its counter top is as high as the fruit stall's table. */
+.pm-layer--stall-provision {
+  height: 61.8%;
+}
+
 /* The fruit seller, behind the stall's right end, on the empty sand.
    Sized so the table comes to her waist. */
 .pm-layer--seller {

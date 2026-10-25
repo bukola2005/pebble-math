@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MAP_WORDS } from "../data/dialogue";
 import { LANTERN, LANTERNS_TO_OPEN } from "../data/lanterns";
-import { MAP_ART, PLACES, isOpen } from "../data/places";
+import { MAP_ART, PLACES, isOpen, placeReached } from "../data/places";
 import { after, cancel } from "../lib/pause";
 import { useReadAloud } from "../lib/speech";
 import "./MarketMap.css";
@@ -13,8 +13,8 @@ import "./MarketMap.css";
   line runs along the main path from place to place, roped off (a rope
   between two posts) where the next place isn't open yet; nothing in this
   market is locked. Places still in the haze have a wisp and a rope, open
-  ones a dot, and the place the child is at has their pin, with their
-  Zizi's face.
+  ones a dot, and the furthest place the child has finished has their
+  pin, with their Zizi's face (data/places.js, placeReached).
 
   Lanterns: what a place needs is shown on it. The next place along the
   path has two dark lanterns; a place they have opened keeps its two,
@@ -25,9 +25,10 @@ import "./MarketMap.css";
   its dark ones and light them, its haze pulls back and its rope drops.
   Without motion it is simply open, its lanterns lit.
 
-  A tap on a place opens its card: the Fruit Stall's has "Carry on here"
-  (`onCarryOn`); one open but not built yet says so; one still under the
-  haze says Blob's friends haven't reached it yet.
+  A tap on a place opens its card: one the child has finished has "Carry
+  on here", to play it again; one open and ready but not played yet has
+  "Let's go" (both `onGo(place)`); one open but not built yet says so; one
+  still under the haze says Blob's friends haven't reached it yet.
 */
 
 // A rope between two posts, across the path.
@@ -40,9 +41,8 @@ const ROPE = (
   </svg>
 );
 
-const HERE = "fruit"; // where the child is: the only place built so far
-
-export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) {
+export default function MarketMap({ zizi, cleared, opening = null, onGo }) {
+  const here = placeReached(cleared);
   // opening: "waiting" → "arriving" (the lanterns float in) → "lifting" → "open"
   const [step, setStep] = useState(opening ? "waiting" : "open");
   const [card, setCard] = useState(null);
@@ -62,9 +62,9 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
     const scroller = scrollRef.current;
     const board = boardRef.current;
     if (!scroller || !board || board.offsetWidth <= scroller.clientWidth) return;
-    const here = PLACES.find((place) => place.id === HERE);
-    const next = PLACES.filter((place) => isOpen(place, cleared)).pop() ?? here;
-    const middle = (here.x + next.x) / 2;
+    const pin = PLACES.find((place) => place.id === here);
+    const next = PLACES.filter((place) => isOpen(place, cleared)).pop() ?? pin;
+    const middle = (pin.x + next.x) / 2;
     scroller.scrollLeft = Math.max(0, (board.offsetWidth * middle) / 100 - scroller.clientWidth / 2);
   }, [opening]);
 
@@ -74,7 +74,7 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
   const next = PLACES.find((place) => !lifted(place));
   // Where a place's two lanterns stand: either side of it, a little above.
   const lanternAt = (place, k) => ({ left: `${place.x + (k ? 2.4 : -2.4)}%`, top: `${place.y - 5.5}%` });
-  const words = card == null ? null : cardWords(PLACES[card], lifted(PLACES[card]));
+  const words = card == null ? null : cardWords(PLACES[card], lifted(PLACES[card]), cleared);
 
   return (
     <section className="pm-map" aria-label={MAP_WORDS.label}>
@@ -147,12 +147,12 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
               <button
                 key={place.id}
                 type="button"
-                className={`pm-map__spot${place.id === HERE ? " is-here" : open ? " is-open" : " is-shut"}`}
+                className={`pm-map__spot${place.id === here ? " is-here" : open ? " is-open" : " is-shut"}`}
                 style={{ left: `${place.x}%`, top: `${place.y}%` }}
                 aria-label={open ? place.name : MAP_WORDS.shutLabel}
                 onClick={() => setCard(i)}
               >
-                {place.id === HERE ? (
+                {place.id === here ? (
                   <svg className="pm-map__pin" viewBox="0 0 30 38" aria-hidden="true">
                     <defs>
                       <clipPath id="pm-map-face">
@@ -230,24 +230,24 @@ export default function MarketMap({ zizi, cleared, opening = null, onCarryOn }) 
       )}
 
       {words && (
-        <MapCard
-          words={words}
-          onClose={() => setCard(null)}
-          onCarryOn={PLACES[card].built && lifted(PLACES[card]) ? onCarryOn : null}
-        />
+        <MapCard words={words} onClose={() => setCard(null)} onGo={words.go ? () => onGo(PLACES[card]) : null} />
       )}
     </section>
   );
 }
 
-/** What a place's card says: open and built, open and not built yet, or still under the haze. */
-function cardWords(place, open) {
+/**
+ * What a place's card says, and its button (`go`): finished, "Carry on
+ * here"; open and built, "Let's go"; open and not built yet, or still under
+ * the haze, nothing to go to.
+ */
+function cardWords(place, open, cleared) {
   if (!open) return { title: MAP_WORDS.shut.title, text: MAP_WORDS.shut.text };
   if (!place.built) return { title: place.name, text: MAP_WORDS.notYet };
-  return { title: place.name, text: place.teaches };
+  return { title: place.name, text: place.teaches, go: cleared.includes(place.chapter) ? MAP_WORDS.carryOn : MAP_WORDS.letsGo };
 }
 
-function MapCard({ words, onClose, onCarryOn }) {
+function MapCard({ words, onClose, onGo }) {
   const buttonRef = useRef(null);
   useReadAloud(`${words.title}. ${words.text}`, "narrator");
   useEffect(() => {
@@ -267,10 +267,10 @@ function MapCard({ words, onClose, onCarryOn }) {
         </h2>
         <p className="pm-map__card-text">{words.text}</p>
         <div className="pm-map__card-row">
-          {onCarryOn ? (
+          {onGo ? (
             <>
-              <button ref={buttonRef} type="button" className="pm-map__go" onClick={onCarryOn}>
-                {MAP_WORDS.carryOn}
+              <button ref={buttonRef} type="button" className="pm-map__go" onClick={onGo}>
+                {words.go}
               </button>
               <button type="button" className="pm-map__not-now" onClick={onClose}>
                 {MAP_WORDS.notNow}

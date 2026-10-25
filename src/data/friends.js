@@ -7,7 +7,9 @@ import { CHARACTERS } from "./characters";
 
   Blob is here from Scene 1, for the Fruit Stall. Each of the others joins
   at a new place: `place` is the stall_progress id that brings them, null
-  while their place isn't built, so for now only Blob has joined.
+  while their place isn't built. Sprout (green) joins at the end of the
+  Provision Store's Chapter 2. A friend's name is given when their place
+  is built.
 
   Until a friend joins they are a dark silhouette of their own shape
   (`unknown`, made from their art: public/friends/), so a child can see
@@ -18,7 +20,8 @@ const art = (id) => CHARACTERS.find((character) => character.id === id);
 
 export const FRIENDS = [
   { id: "blob", name: "Blob", art: art("purple"), place: "start" },
-  ...["green", "blue", "orange", "pink", "yellow", "teal"].map((id) => ({
+  { id: "green", name: "Sprout", art: art("green"), unknown: { src: "/friends/green-unknown.webp" }, place: "provision-store-chapter-2" },
+  ...["blue", "orange", "pink", "yellow", "teal"].map((id) => ({
     id,
     name: null, // given when their place is built
     art: art(id),

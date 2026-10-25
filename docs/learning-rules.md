@@ -153,3 +153,48 @@ the per-round record of hints isn't saved yet.
   levels, only places in one market: a path that isn't open yet is roped
   off.
   Money arrives at the Money Corner, designed alongside the naira wallet.
+
+## The Provision Store
+
+Built: Chapter 2, Baba's shop. Its idea is **difference**, the second
+meaning of subtraction. Chapter 1 taught taking away ("I need 15, give
+them to me"); this is "the shelf holds 30, you have 18, how many more
+fit?" Most children only ever meet the first, which is why "how many more"
+stops them for years. It is also the oldest question in the game, the
+tutorial's "How many MORE to fill the basket?", at a bigger scale with
+tins. Nothing on screen says so: the child is left to feel it.
+
+Every shelf of a shelf unit holds ten tins, five at the back and five in
+front, and a carton holds ten. So a carton fills an empty shelf exactly,
+and a part-full shelf shows its gaps as bare wood. The empty spaces do the
+work, as the basket's did; nothing outlines them.
+
+| Round | The shelf | What happens |
+|---|---|---|
+| A1 | 6 on a shelf of 10 | The child fills it from the loose tins, then Blob: "It had 6… and it holds 10. How many more did it need?" |
+| A2 | 3 on 10 | The same. |
+| A3 | 8 on 10 | The same. |
+| B1 | 20 on 30 | Whole tens: a carton fills it. |
+| B2 | 24 on 30 | Inside one ten: a carton won't go on a part-full shelf; 6 loose do. |
+| B3 | a customer, 15 tins | 3 cartons and 2 loose: not enough loose, so a carton must be opened. **Cracking comes back, and is not taught again**: no demo, no warning, nothing greyed out. Only if the child is stuck does Blob wonder aloud, after a touch or two seconds, as he did with crates. |
+| B4 | 23 on 40 | Crosses a ten, the hard one: 7 to finish the third shelf, a carton for the fourth. |
+| C1 | 18 on 30 | Test: the child puts as many as still fit on the counter; Done checks the cartons, then the loose tins. |
+| C2 | a customer, 24 tins | Test: 3 cartons and 1 loose; a carton has to be opened. |
+| C3 | 35 on 40 | Test. |
+
+The same rules as Chapter 1, unchanged: orders name a number, in digits
+("24 tins", never "twenty-four", never "two cartons and four loose"); the
+game never states a number the child could state; Baba is a shopkeeper
+who has gone to ask, not a teacher, and never explains; nothing rewards
+speed or being right first time.
+
+The three numbers for "How many more did it need?" diagnose. Past ten,
+as for "How many is that?": the digits swapped (12 gives 21) and the
+digits added (3). Inside ten, where those say nothing, the two ways "how
+many more" goes wrong: the tins on the part-full shelf instead of its gaps
+(24 on a shelf of 30 gives 4), and how many it had instead of how many
+more (24); the whole shelf (30) makes three when one of those is the
+answer itself. Which was tapped is saved, with the shelf's size.
+
+Brings back: cracking a crate (Chapter 1), as a carton; filling to ten
+(the tutorial's basket), as a shelf.

@@ -10,8 +10,9 @@
               or right first time.
     opening 2 open the next place on the main path: at the end of
               Chapter 1 the map's Provision Store lights with the two it
-              earns (data/places.js, `opensAfter`). Extras will open
-              optional places off the main road (not built yet).
+              earns, at the end of Chapter 2 the Produce Yard
+              (data/places.js, `opensAfter`). Extras will open optional
+              places off the main road (not built yet).
 
   Nothing earned is ever taken away. The profile shows every lantern a
   child has earned, lit, for good; what a place still needs is shown on

@@ -11,6 +11,9 @@
     opensAfter
            the stall_progress id after which two lanterns lift its haze
            (data/lanterns.js); none yet for places further along
+    chapter
+           the stall_progress id of its chapter, once finished: then the
+           child's pin can stand there, and its card says "Carry on here"
     built  whether there is anything to play there yet
     teaches
            a line for its card on the map
@@ -21,9 +24,9 @@
 export const MAP_ART = { src: "/art/market-map-day.webp", w: 1920, h: 1072 };
 
 export const PLACES = [
-  { id: "fruit", name: "Fruit Stall", x: 11, y: 80, r: 20, open: "start", built: true, teaches: "Making ten, and cracking a crate" },
-  { id: "shop", name: "Provision Store", x: 27, y: 62, r: 17, opensAfter: "fruit-stall-chapter-1", teaches: "Taking away, with tins" },
-  { id: "crates", name: "Produce Yard", x: 18, y: 21, r: 19, teaches: "Counting in groups" },
+  { id: "fruit", name: "Fruit Stall", x: 11, y: 80, r: 20, open: "start", chapter: "fruit-stall-chapter-1", built: true, teaches: "Making ten, and cracking a crate" },
+  { id: "shop", name: "Provision Store", x: 27, y: 62, r: 17, opensAfter: "fruit-stall-chapter-1", chapter: "provision-store-chapter-2", built: true, teaches: "How many more fit, with tins and shelves" },
+  { id: "crates", name: "Produce Yard", x: 18, y: 21, r: 19, opensAfter: "provision-store-chapter-2", teaches: "Counting in groups" },
   { id: "bakery", name: "Bakery", x: 48, y: 31, r: 18, teaches: "Trays and rows" },
   { id: "danfo", name: "Bus Stop", x: 44, y: 9, r: 16, teaches: "Seats and passengers" },
   { id: "money", name: "Money Corner", x: 72, y: 56, r: 17, teaches: "Counting up for change" },
@@ -33,6 +36,10 @@ export const PLACES = [
 /** Whether a place's haze has lifted, from the stall_progress ids a child has. */
 export const isOpen = (place, cleared = []) =>
   place.open === "start" || (place.opensAfter != null && cleared.includes(place.opensAfter));
+
+/** Where the child's pin stands: the furthest place whose chapter they have finished, else the Fruit Stall. */
+export const placeReached = (cleared = []) =>
+  PLACES.filter((place) => place.chapter && cleared.includes(place.chapter)).pop()?.id ?? PLACES[0].id;
 
 /** How many places are open (the Fruit Stall always is). */
 export const openCount = (cleared = []) => PLACES.filter((place) => isOpen(place, cleared)).length;
