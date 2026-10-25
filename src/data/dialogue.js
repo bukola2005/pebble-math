@@ -19,8 +19,9 @@
  * Who can speak. The child's Zizi is labelled with their game name, never
  * "Zizi". The fruit seller is the child's grandmother. In Chapter 1 she
  * goes along the row to ask about the child's mother, so the child minds
- * the stall and serves the customers alone. A line with no known speaker
- * (`narrator`) has no name above it.
+ * the stall and serves the customers alone. The shopkeeper at the
+ * Provision Store is Baba: like Grandma, what the child calls him, not a
+ * name. A line with no known speaker (`narrator`) has no name above it.
  *
  * A line may carry its own `voice` (lib/speech.js), for a way of saying
  * it: "blob-small" is Blob in a small voice.
@@ -29,6 +30,7 @@ export const SPEAKERS = {
   zizi: { label: "{name}", voice: "zizi" },
   blob: { label: "Blob", voice: "blob", portrait: "/characters/purple.webp" },
   seller: { label: "Grandma", voice: "seller", portrait: "/stall/seller-portrait.webp" },
+  shopkeeper: { label: "Baba", voice: "shopkeeper", portrait: "/art/portrait-shopkeeper.webp" },
   customer: { label: "Customer", voice: "customer" },
 };
 
@@ -190,7 +192,88 @@ export const CHAPTER_ONE = {
 };
 
 /**
- * The market map (components/MarketMap.jsx), at the end of Chapter 1.
+ * Chapter 2, the Provision Store (data/provisionStore.js): Baba's shop,
+ * with Chapter 1's shape. Stage A: how many more fit on a shelf of ten.
+ * Stage B: shelves of 30 and 40, and one customer whose order needs a
+ * carton opened. Stage C: three test rounds. Numbers are digits
+ * throughout ("24 tins"), never words.
+ */
+export const CHAPTER_TWO = {
+  // Once, as the chapter starts: Baba asks the child to fill his shelves
+  // and mind the shop, and goes along the row to ask about their mother.
+  intro: [
+    { speaker: "shopkeeper", text: "{name}! Grandma told me about you. My tins came, and my shelves are half empty." },
+    { speaker: "shopkeeper", text: "Can you fill them, and mind my shop? I'll go along the row and ask about your mother." },
+  ],
+  // A shelf round: up all round, as a strip, and read aloud.
+  shelfStrip: { who: "This shelf", text: "holds {holds} tins", say: "This shelf holds {holds} tins." },
+  // Once a shelf is full: what it had, then what it holds (each shelf's
+  // 10 showing), and Blob asks. He never says how many more: the child
+  // taps it (data/provisionStore.js, moreChoices), and only then does he
+  // say it after them.
+  shelfAsk: [
+    { show: "It had {had}…", say: "It had {had}…" },
+    { show: "It had {had}… and it holds {holds}.", say: "and it holds {holds}." },
+    { show: "It had {had}, and it holds {holds}. How many more did it need?", say: "How many more did it need?" },
+  ],
+  shelfSaid: { speaker: "blob", text: "{more} more!" },
+  // A customer asks for a number, in digits, never cartons and loose: what
+  // that is in cartons and loose is the child's to decide. It stays up all
+  // round as a strip. The tins go on the shop's counter.
+  order: { speaker: "customer", text: "{want} tins, please." },
+  orderStrip: "{want} tins",
+  // After the order: what is left, one step at a time, and Blob asks, as
+  // in Chapter 1. `{cartons}` is "1 carton", `{loose}` "7", `{sum}` "17".
+  cartonsAsk: [
+    { show: "{cartons}…", say: "{cartons}…" },
+    { show: "{cartons} and {loose} loose.", say: "and {loose} loose." },
+    { show: "{cartons} and {loose} loose. How many is that?", say: "How many is that?" },
+  ],
+  cartonsSaid: { speaker: "blob", text: "{sum}!" },
+  // Only once the child is stuck (no loose tins left, and a whole carton
+  // won't do) and has reached for something, or sat still two seconds.
+  // Cracking was met at the Fruit Stall: no demo, no warning before this.
+  wall: { speaker: "blob", text: "Hmm. Not enough loose ones. What's inside a carton?" },
+  // Said under Blob's errand as the child leaves the map, unless the cards
+  // before just said the market is opening.
+  endLine: "That's all at the Provision Store for now. More of the market is coming.",
+  // Stage C, three test rounds: nothing but the hint button. A shelf's
+  // question has no speaker: the shelf is in front of them.
+  test: {
+    shelf: { speaker: "narrator", text: "This shelf holds {holds} tins. How many more fit?" },
+    order: { speaker: "customer", text: "{want} tins, please." },
+    done: "Done",
+  },
+  // The end of Chapter 2: Baba comes back from asking along the row, and
+  // his news is warmer than Grandma's. Someone has seen something, though
+  // nothing that points at a place: the whole market is still looking.
+  // His lantern, and the first time one more, for minding the shop alone;
+  // after that, one for coming back. `news` is said the first time only.
+  back: {
+    title: "Baba is back!",
+    news: [
+      "Someone along the row thinks they saw a woman asking after a child.",
+      "Nobody saw which way she went. But somebody is looking for you, {name}.",
+    ],
+    first: [
+      "Take my lantern, so you can see a little further.",
+      "And this one is for minding my shop all by yourself.",
+    ],
+    again: ["No more news yet. Thank you for coming back to help. Take another lantern."],
+    point: "Look, over there. More of the market!",
+    button: "Next",
+  },
+  // The first time Chapter 2 is finished: Blob's next friend joins the
+  // search (data/friends.js). In Blob's voice: he knows them.
+  friend: {
+    title: "{friend} is here!",
+    lines: ["{friend}! It's me, Blob!", "{friend} is one of my friends, and will help us look."],
+    button: "Next",
+  },
+};
+
+/**
+ * The market map (components/MarketMap.jsx), at the end of a chapter.
  * A place's card says its name and what it teaches (data/places.js), or
  * one of these.
  */
@@ -204,6 +287,7 @@ export const MAP_WORDS = {
   },
   notYet: "The haze has lifted here. Nobody is ready for you yet: soon!",
   carryOn: "Carry on here",
+  letsGo: "Let's go",
   notNow: "Not now",
   allRight: "All right",
 };
@@ -228,6 +312,12 @@ export const ERRANDS = {
     "I'm going to count out ten of anything at home, and see what's left over. You try it too?",
     "I'm going to make a pile of seven stones, and see how many more make ten. You try it too?",
     "Next time fruit goes into a bag, I'm going to count to ten and see how many are left. You try it too?",
+  ],
+  "provision-store": [
+    "Next time I see a shelf, I'm going to count how many more would fill it. You try it too?",
+    "I'm going to line up ten cups, take some away, and see how many more make ten again. You try it too?",
+    "Next time someone puts tins or cups away, I'm going to count the gaps. You try it too?",
+    "I'm going to fill a box with ten things, and count how many more it needs each time. You try it too?",
   ],
 };
 

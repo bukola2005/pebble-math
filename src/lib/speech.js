@@ -63,6 +63,7 @@ const STYLE = {
   blob: { pitch: 1.12, rate: 0.95 },
   "blob-small": { pitch: 1.08, rate: 0.82, volume: 0.6 },
   seller: { pitch: 0.92, rate: 0.92 },
+  shopkeeper: { pitch: 0.8, rate: 0.9 },
   customer: { pitch: 1.0, rate: 0.95 },
   narrator: { pitch: 1.05, rate: 0.95 },
 };

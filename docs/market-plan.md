@@ -33,7 +33,7 @@ Passengers get on and off. How many on the bus now? The shortest, most repeatabl
 *Brings back:* making ten, as a full bus.
 
 ### 3. Provision Store — subtraction, by cracking a crate
-**Year:** Primary 1 to 2 · **Objects:** tins, sachets, bread, soap
+**Year:** Primary 1 to 2 · **Objects:** tins, sachets, bread, soap · **Status:** built as Chapter 2: difference ("how many more fit?") with tins and shelves, and cracking a carton brought back (see [learning-rules.md](learning-rules.md))
 
 A customer takes things off the shelf. What's left?
 

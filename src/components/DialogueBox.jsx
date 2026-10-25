@@ -68,7 +68,7 @@ export default function DialogueBox({
   };
 
   return (
-    <section className="pm-dialogue" aria-label={`${label} says`}>
+    <section className="pm-dialogue" aria-label={label ? `${label} says` : undefined}>
       <svg className="pm-dialogue__defs" aria-hidden="true" focusable="false">
         <filter id="pm-painted-edge" x="-4%" y="-8%" width="108%" height="116%">
           <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" />

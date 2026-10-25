@@ -137,6 +137,14 @@
   }
 }
 
+/* At the Provision Store the shelf stands on the right: Blob comes up on
+   the sand at the left instead. */
+.pm-shop-screen .pm-stall__blob {
+  right: auto;
+  left: 4%;
+  bottom: 20%;
+}
+
 /* A phone held upright has no spare sand: Blob is in the box's portrait. */
 @media (max-aspect-ratio: 1 / 1) {
   .pm-stall__blob {
@@ -370,10 +378,10 @@
   outline-offset: 4px;
 }
 
-/* --- Grandma is back, with her lantern ---------------------------------------------
-   Each lantern arrives with the line that brings it: down from above,
-   settling, its light coming up. */
-.pm-stall__back-grandma {
+/* --- the trader is back, with their lantern -------------------------------------------
+   Their news first, if there is any; then each lantern arrives with the
+   line that brings it: down from above, settling, its light coming up. */
+.pm-stall__back-trader {
   width: 84px;
   height: 84px;
   border-radius: 50%;
@@ -426,7 +434,17 @@
   }
 }
 
-/* She points: over there. */
+.pm-stall__back-news {
+  display: grid;
+  gap: 8px;
+}
+
+.pm-stall__back-news .pm-stall__end-text {
+  margin: 0;
+  color: var(--pm-ink);
+}
+
+/* They point: over there. */
 .pm-stall__back-point {
   margin: 0;
   font-family: var(--pm-font-display);
@@ -442,6 +460,21 @@
   margin-left: 6px;
   vertical-align: -6px;
   color: var(--pm-purple-700);
+}
+
+/* --- a friend of Blob's joins the search ---------------------------------------------- */
+.pm-stall__friend {
+  width: auto;
+  height: 150px;
+  filter: drop-shadow(0 8px 10px rgba(40, 20, 60, 0.25));
+  animation: pm-friend-arrive 0.7s var(--pm-ease-pop) both;
+}
+
+@keyframes pm-friend-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.85);
+  }
 }
 
 /* --- the end: Blob's errand ----------------------------------------------------------------- */
@@ -505,8 +538,25 @@
     font-size: 1.2rem;
   }
 
-  .pm-stall__back-grandma {
+  .pm-stall__back-trader {
     display: none;
+  }
+
+  /* With news to tell, the news and the lanterns side by side, so the
+     card fits without scrolling. */
+  .pm-stall__back-card:has(.pm-stall__back-news) {
+    width: min(700px, 100%);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 22px;
+  }
+
+  .pm-stall__back-card:has(.pm-stall__back-news) > :not(.pm-stall__back-news, .pm-stall__back-lanterns) {
+    grid-column: 1 / -1;
+  }
+
+  .pm-stall__friend {
+    height: 96px;
   }
 
   .pm-stall__back-lantern {
@@ -528,5 +578,9 @@
   .pm-stall__back-lantern {
     animation: none;
     filter: drop-shadow(0 0 12px rgba(255, 214, 150, 0.9));
+  }
+
+  .pm-stall__friend {
+    animation: none;
   }
 }

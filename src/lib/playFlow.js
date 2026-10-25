@@ -1,8 +1,10 @@
+import { FRIENDS } from "../data/friends";
 import { CHAPTER_ONE_ID } from "../data/fruitStall";
 import { LANTERN } from "../data/lanterns";
-import { BASKET, CRATE, MARKET_IMAGES, ORANGE, SELLER, SELLER_PORTRAIT } from "../data/market";
+import { BASKET, CRATE, MARKET_IMAGES, MARKET_LAYERS, ORANGE, SELLER, SELLER_PORTRAIT } from "../data/market";
 import { INTRO_FILM, STORYBOOK } from "../data/media";
 import { MAP_ART } from "../data/places";
+import { CARTON, CHAPTER_TWO_ID, SHELF, SHOPKEEPER_PORTRAIT, SHOP_ART, SHOP_ID, TIN } from "../data/provisionStore";
 import { ZIZI_DEFAULT, ZIZI_LOOKS, getZiziLook } from "../data/zizi";
 import { pickPlayableSource, preloadFile, preloadImage } from "./preload";
 
@@ -12,20 +14,23 @@ import { pickPlayableSource, preloadFile, preloadImage } from "./preload";
     film (first play) → avatar (choose a Zizi look) → name (build a game
     name) → story (Scene 1) → the Fruit Stall, where every later visit
     starts: at the round they got to, or, once Chapter 1 is done, on the
-    market map (routes/PlayStall.jsx)
+    market map (routes/PlayStall.jsx) → the Provision Store, once they
+    have stepped into it from the map, where every visit starts from then
+    on (routes/PlayShop.jsx)
 
   Every step is its own route under /play/:playerId, and its own chunk of
   code. The loading screen fetches only what the next step needs; each step
   then warms the one after it in the background while the child is busy.
 */
 
-/** Where this child goes next: the first step they haven't done, else the stall. */
+/** Where this child goes next: the first step they haven't done, else the furthest stall they have reached. */
 export function nextStep(player) {
   if (!player.first_play_done) return "intro";
   // An old value from before Zizi (a monster id) counts as no look yet.
   if (!ZIZI_LOOKS.some((look) => look.id === player.character)) return "avatar";
   if (!player.game_name) return "name";
   if (!player.scene1_done) return "story";
+  if ((player.cleared_stalls ?? []).includes(SHOP_ID)) return "stall/provision";
   return "stall/fruit";
 }
 
@@ -37,7 +42,12 @@ const STEP_CODE = {
   name: () => import("../routes/PlayName"),
   story: () => import("../routes/PlayStory"),
   "stall/fruit": () => import("../routes/PlayStall"),
+  "stall/provision": () => import("../routes/PlayShop"),
 };
+
+// The market scene without the fruit stall, for the Provision Store, which stands in its place.
+const FRUIT_STALL_ART = MARKET_LAYERS.find((layer) => layer.id === "stall").src;
+const SHOP_SCENE = MARKET_IMAGES.filter((src) => src !== FRUIT_STALL_ART);
 
 // Rough sizes in bytes. They only balance the bar between files until each
 // file reports its real size; how full the bar is comes from real loading.
@@ -101,6 +111,21 @@ export function stepTasks(step, player, keepFilm) {
         ...((player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID)
           ? [image(MAP_ART.src), image(LANTERN.unlit.src)]
           : []),
+      ];
+    case "stall/provision":
+      return [
+        code("stall/provision"),
+        ...SHOP_SCENE.map(image),
+        image(SHOP_ART.src),
+        image(TIN.src),
+        image(CARTON.src),
+        image(SHELF.src),
+        image(SHOPKEEPER_PORTRAIT.src),
+        image(LANTERN.lit.src),
+        image(LANTERN.unlit.src),
+        image(MAP_ART.src),
+        image(FRIENDS.find((friend) => friend.place === CHAPTER_TWO_ID).art.src),
+        image(getZiziLook(player.character).src),
       ];
     default:
       return [];

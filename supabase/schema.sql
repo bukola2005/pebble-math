@@ -39,9 +39,11 @@ create table if not exists public.profiles (
 --   first_play_done  false until the child has watched (or skipped) the
 --                 opening film
 --   scene1_done   false until the child has played the market's first scene
---   round_reached the round the child is on in Chapter 1, the first time
---                 through (from 0), so they come back to it; back to 0
---                 once they have seen the map at its end
+--   round_reached the round the child is on in the chapter they are
+--                 playing the first time (from 0), so they come back to
+--                 it: Chapter 1's, or, once they have stepped into the
+--                 Provision Store, Chapter 2's. Back to 0 once they have
+--                 seen the map at a chapter's end
 -- Band and class values are mirrored in src/data/players.js.
 -- ----------------------------------------------------------------------
 create table if not exists public.players (
@@ -159,9 +161,12 @@ create policy "players_delete_own" on public.players
 
 -- ----------------------------------------------------------------------
 -- stall_progress: one row per market stall, or stall chapter, a child has
--- cleared: 'fruit-stall' for the Fruit Stall's tutorial,
--- 'fruit-stall-chapter-1' for its Chapter 1. Adding one is one more id in
--- the check.
+-- cleared or reached: 'fruit-stall' for the Fruit Stall's tutorial,
+-- 'fruit-stall-chapter-1' for its Chapter 1, 'provision-store' once a
+-- child has stepped into the Provision Store, 'provision-store-chapter-2'
+-- for its Chapter 2. The id is checked for its shape only (lower case,
+-- words joined by hyphens), never against a list: every new place brings
+-- new ids, and a list would need altering each time.
 --
 -- It has no profile_id of its own, so its policies check that the player
 -- the row is for belongs to the caller. There is no update or delete:
@@ -169,14 +174,13 @@ create policy "players_delete_own" on public.players
 -- ----------------------------------------------------------------------
 create table if not exists public.stall_progress (
   player_id  uuid not null references public.players (id) on delete cascade,
-  stall_id   text not null check (stall_id in ('fruit-stall', 'fruit-stall-chapter-1')),
+  stall_id   text not null check (stall_id ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(stall_id) <= 64),
   cleared_at timestamptz not null default now(),
   primary key (player_id, stall_id)
 );
 
--- For a database made before Chapter 1: the Fruit Stall's tutorial is
--- 'fruit-stall', its Chapter 1 'fruit-stall-chapter-1'.
-alter table public.stall_progress drop constraint if exists stall_progress_stall_id_check, add constraint stall_progress_stall_id_check check (stall_id in ('fruit-stall', 'fruit-stall-chapter-1'));
+-- For a database made when the check was a list of ids.
+alter table public.stall_progress drop constraint if exists stall_progress_stall_id_check, add constraint stall_progress_stall_id_check check (stall_id ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(stall_id) <= 64);
 
 alter table public.stall_progress enable row level security;
 revoke all on public.stall_progress from anon;
@@ -204,9 +208,12 @@ create policy "stall_progress_insert_own" on public.stall_progress
 -- what went wrong: its digits swapped, its digits added, or, for a number
 -- like 22, the tens and ones side by side, 202); each Done on a Stage B
 -- order (stage 'B': `asked` the number ordered, `total` what was on the
--- cloth); and each answer in the test rounds (stage 'C'). Collected now so
--- the data is there when the teacher dashboard is built; nothing shows it
--- yet.
+-- cloth); and each answer in the test rounds (stage 'C'). Chapter 2, the
+-- Provision Store, uses the same stages; `crates` there is cartons of ten
+-- tins, and in a shelf round `holds` is the shelf's size and `asked` how
+-- many more it needed (Blob's "How many more did it need?" is 'A-ask' or
+-- 'B-ask'). Collected now so the data is there when the teacher dashboard
+-- is built; nothing shows it yet.
 -- Like stall_progress, its policies check that the player belongs to the
 -- caller, and it has no update or delete; deleting the player removes it.
 -- stall_id and stage are not checked against a list: every new chapter
@@ -224,6 +231,7 @@ create table if not exists public.attempts (
   total       smallint check (total between 0 and 999),
   failed_step text check (failed_step in ('crates', 'loose', 'total')),
   used_hint   boolean not null default false,
+  holds       smallint check (holds between 1 and 99),
   created_at  timestamptz not null default now()
 );
 
@@ -236,6 +244,8 @@ alter table public.attempts drop constraint if exists attempts_total_check, add 
 -- And without the hint column: help is always there, and whether it was
 -- used is recorded.
 alter table public.attempts add column if not exists used_hint boolean not null default false;
+-- And without the Provision Store's shelf size.
+alter table public.attempts add column if not exists holds smallint check (holds between 1 and 99);
 
 alter table public.attempts enable row level security;
 revoke all on public.attempts from anon;

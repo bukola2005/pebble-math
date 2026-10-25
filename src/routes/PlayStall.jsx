@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import BasketAward from "../components/BasketAward";
 import BasketGame from "../components/BasketGame";
 import CoachMark from "../components/CoachMark";
@@ -10,6 +10,7 @@ import PlayHud from "../components/PlayHud";
 import RewardItems from "../components/RewardItems";
 import Sparkles, { SPARKLES_LAND_MS } from "../components/Sparkles";
 import StallBackdrop from "../components/StallBackdrop";
+import { EndForNow, OrderStrip, TraderBack } from "../components/StallCards";
 import {
   ERRANDS,
   FRUIT_STALL,
@@ -34,15 +35,16 @@ import {
   setUpRound,
   totalChoices,
 } from "../data/fruitStall";
-import { LANTERN } from "../data/lanterns";
 import { ORANGE, SELLER_PORTRAIT } from "../data/market";
 import { MAP_ART, PLACES } from "../data/places";
+import { SHOP_ID } from "../data/provisionStore";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
 import { earnLantern } from "../lib/lanterns";
 import { after, cancel, isPaused, usePaused } from "../lib/pause";
 import { saveRoundReached } from "../lib/players";
+import { prefetchStep } from "../lib/playFlow";
 import { clearStall } from "../lib/progress";
 import { playCorrect, playCrack, playMeterFull, primeSound } from "../lib/sound";
 import { speak, useReadAloud } from "../lib/speech";
@@ -162,7 +164,8 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               clear, the child's pin on it, and, the first time, the two
               lanterns floating to the Provision Store as its haze pulls
               back. "Carry on here" on the Fruit Stall plays Chapter 1
-              again.
+              again; "Let's go" on the Provision Store goes there
+              (routes/PlayShop.jsx).
 
   Coming back, a child starts at the furthest point they reached. Part
   way through Chapter 1 the first time, that is the round they were on
@@ -170,7 +173,9 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
   already gone along the row. With Chapter 1 finished, it is the map, with
   nothing opening; if they left before they saw it, Grandma's return and
   the cards first, then the map, opening. Playing it again is only ever
-  the child's choice: "Carry on here", on the map.
+  the child's choice: "Carry on here", on the map. Once they have stepped
+  into the Provision Store, a visit starts there instead, and
+  round_reached is its chapter's (routes/PlayShop.jsx).
 
   Blob's hint button gives one step of help per tap, and how many a
   child used is noted for each round (lib/stallLog.js, in memory only).
@@ -190,18 +195,25 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
   The stall starts afresh (a new `run`) when the tutorial ends, as
   Chapter 1, and again from the map's "Carry on here" (a `replay`, from
   Chapter 1's start), with what the child has done today added to what was
-  loaded.
+  loaded. "Carry on here" on the Provision Store's map comes here as a
+  replay too, with what was done there today (the route's state), and the
+  map's "Let's go" takes all of it to the Provision Store.
 */
 export default function PlayStall() {
   const { player, newcomer } = useOutletContext();
-  const [run, setRun] = useState({ n: 0, cleared: [], lanterns: 0, replay: false });
-  const now = run.n
-    ? {
-        ...player,
-        cleared_stalls: [...new Set([...(player.cleared_stalls ?? []), ...run.cleared])],
-        lanterns: player.lanterns == null ? null : player.lanterns + run.lanterns,
-      }
-    : player;
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const [run, setRun] = useState(() => ({
+    n: 0,
+    cleared: state?.cleared ?? [],
+    lanterns: state?.lanterns ?? 0,
+    replay: Boolean(state?.replay),
+  }));
+  const now = {
+    ...player,
+    cleared_stalls: [...new Set([...(player.cleared_stalls ?? []), ...run.cleared])],
+    lanterns: player.lanterns == null ? null : player.lanterns + run.lanterns,
+  };
   return (
     <FruitStall
       key={run.n}
@@ -211,11 +223,17 @@ export default function PlayStall() {
       onAgain={({ cleared, lanterns, replay = false }) =>
         setRun((r) => ({ n: r.n + 1, cleared: [...r.cleared, ...cleared], lanterns: r.lanterns + lanterns, replay }))
       }
+      onShop={({ cleared, lanterns }) =>
+        navigate(`/play/${player.id}/stall/provision`, {
+          replace: true,
+          state: { cleared: [...run.cleared, ...cleared], lanterns: run.lanterns + lanterns },
+        })
+      }
     />
   );
 }
 
-function FruitStall({ player, newcomer, replay, onAgain }) {
+function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const clearedBefore = !newcomer && (player.cleared_stalls ?? []).includes(STALL_ID);
   // Once the tutorial is done, the stall is Chapter 1.
   const chapterOne = clearedBefore;
@@ -228,7 +246,9 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
   //   round   part way through Chapter 1: the round they were on
   //   ending  Chapter 1 finished, but they left before the map
   //   map     Chapter 1 finished, and the map seen
-  const reached = Math.min(player.round_reached ?? 0, roundCount - 1);
+  // (Once they have stepped into the Provision Store, round_reached is its
+  // chapter's, not this one's.)
+  const reached = (player.cleared_stalls ?? []).includes(SHOP_ID) ? 0 : Math.min(player.round_reached ?? 0, roundCount - 1);
   let resume = "start";
   if (chapterOne && !replay && chapterDoneBefore) resume = reached > 0 ? "ending" : "map";
   else if (chapterOne && !replay && reached > 0) resume = "round";
@@ -902,6 +922,11 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
     // `values` belongs to the round, which doesn't change during it.
   }, [phase, lineStep, paused]);
 
+  // On the map, the Provision Store is fetched in the background, for "Let's go".
+  useEffect(() => {
+    if (phase === "map") prefetchStep("stall/provision", player);
+  }, [phase]);
+
   // --- what is on screen ---------------------------------------------------------------
   const playing = phase === "question" || phase === "play";
   // Round 5's second line lights the one empty space.
@@ -1053,8 +1078,11 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
               on the cloth. */}
           {stageB && (phase === "play" || phase === "done") && (
             <OrderStrip
-              values={values}
+              who={SPEAKERS.customer.label}
+              text={fillLine(CHAPTER_ONE.orderStrip, values)}
+              say={fillLine(CHAPTER_ONE.order.text, values)}
               onDone={phase === "play" && !orderReady && handedOver > 0 ? checkOrder : null}
+              doneLabel={CHAPTER_ONE.test.done}
               note={wrongTaps > 0 ? FRUIT_STALL.countAgain : null}
               noteKey={wrongTaps}
             />
@@ -1151,7 +1179,10 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
       ))}
 
       {phase === "back" && (
-        <GrandmaBack
+        <TraderBack
+          words={CHAPTER_ONE.back}
+          portrait={SELLER_PORTRAIT}
+          voice={SPEAKERS.seller.voice}
           first={chapterJustCleared}
           onDone={() => {
             if (chapterJustCleared) setPhase("opening");
@@ -1175,6 +1206,8 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
           the child leaves it (the corner's home button), over the map. */}
       {phase === "end" && (
         <EndForNow
+          errands={ERRANDS[STALL_ID]}
+          labels={FRUIT_STALL.endForNow}
           sayEnd={!chapterJustCleared}
           endLine={chapterOne ? CHAPTER_ONE.endLine : undefined}
           onDone={() => navigate("/play")}
@@ -1185,13 +1218,11 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
           zizi={zizi}
           cleared={earned}
           opening={opening}
-          onCarryOn={() =>
-            onAgain({
-              cleared: [...(cleared ? [STALL_ID] : []), ...(chapterJustCleared ? [CHAPTER_ONE_ID] : [])],
-              lanterns: lanternsToday,
-              replay: true,
-            })
-          }
+          onGo={(place) => {
+            const today = { cleared: [...(cleared ? [STALL_ID] : []), ...(chapterJustCleared ? [CHAPTER_ONE_ID] : [])], lanterns: lanternsToday };
+            if (place.id === "fruit") onAgain({ ...today, replay: true });
+            else onShop(today);
+          }}
         />
       )}
 
@@ -1214,67 +1245,6 @@ function FruitStall({ player, newcomer, replay, onAgain }) {
           onAdvance={advanceTutorial}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * The end of Chapter 1: Grandma is back from asking along the row, with no
- * news yet. Her lantern arrives (and the first time one more, for serving
- * the customers alone; after that, one for coming back), each with the
- * line that brings it, and she points at the next part of the market.
- * In her voice. Without motion the lanterns are simply there.
- */
-function GrandmaBack({ first, onDone }) {
-  const buttonRef = useRef(null);
-  const { title, point, button } = CHAPTER_ONE.back;
-  const lines = first ? CHAPTER_ONE.back.first : CHAPTER_ONE.back.again;
-
-  useReadAloud(`${title} ${lines.join(" ")} ${point}`, SPEAKERS.seller.voice);
-
-  useEffect(() => {
-    buttonRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  return (
-    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-back-title">
-      <div className="pm-stall__end-card pm-stall__back-card">
-        <img
-          className="pm-stall__back-grandma"
-          src={SELLER_PORTRAIT.src}
-          width={SELLER_PORTRAIT.w}
-          height={SELLER_PORTRAIT.h}
-          alt=""
-          draggable={false}
-        />
-        <h2 id="pm-back-title" className="pm-stall__end-title">
-          {title}
-        </h2>
-        <ul className="pm-stall__back-lanterns">
-          {lines.map((text, i) => (
-            <li key={text} className="pm-stall__back-beat" style={{ "--beat": i }}>
-              <img
-                className="pm-stall__back-lantern"
-                src={LANTERN.lit.src}
-                width={LANTERN.lit.w}
-                height={LANTERN.lit.h}
-                alt=""
-                draggable={false}
-              />
-              <p className="pm-stall__end-text">{text}</p>
-            </li>
-          ))}
-        </ul>
-        <p className="pm-stall__back-point">
-          {point}
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12h13m-5-5 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </p>
-        <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
-          {button}
-        </button>
-      </div>
     </div>
   );
 }
@@ -1308,81 +1278,6 @@ function OpeningCard({ onDone }) {
           {button}
         </button>
       </div>
-    </div>
-  );
-}
-
-/**
- * The end of a session: Blob's errand, one small thing to try away from
- * the screen, picked at random from data/dialogue.js. `sayEnd` adds that
- * this is as far as the market goes for now, unless the card before just
- * said so.
- */
-function EndForNow({ sayEnd, endLine = FRUIT_STALL.endForNow.endLine, onDone }) {
-  const buttonRef = useRef(null);
-  const { errandLabel, button } = FRUIT_STALL.endForNow;
-  const [errand] = useState(() => {
-    const list = ERRANDS[STALL_ID];
-    return list[Math.floor(Math.random() * list.length)];
-  });
-
-  useReadAloud(sayEnd ? `${errand} ${endLine}` : errand, SPEAKERS.blob.voice);
-
-  useEffect(() => {
-    buttonRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  return (
-    <div className="pm-stall__end" role="dialog" aria-modal="true" aria-labelledby="pm-end-errand">
-      <div className="pm-stall__end-card">
-        <div className="pm-stall__errand">
-          <img className="pm-stall__errand-blob" src={SPEAKERS.blob.portrait} alt="" draggable={false} />
-          <div>
-            <p className="pm-stall__errand-label">{errandLabel}</p>
-            <h2 id="pm-end-errand" className="pm-stall__errand-text">
-              {errand}
-            </h2>
-          </div>
-        </div>
-        {sayEnd && <p className="pm-stall__end-quiet">{endLine}</p>}
-        <button ref={buttonRef} type="button" className="pm-stall__end-button" onClick={onDone}>
-          {button}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Stage B's order, up for the whole round: who asked, and the number
- * ("23 oranges"), read aloud as the customer says it. Done appears once
- * something is on the cloth; the customer's "Hmm, let me count these
- * again." comes under it.
- */
-function OrderStrip({ values, onDone, note, noteKey }) {
-  useReadAloud(fillLine(CHAPTER_ONE.order.text, values), SPEAKERS.customer.voice);
-
-  // Said each time it is given, even when it hasn't changed.
-  useEffect(() => {
-    if (note) speak(note, SPEAKERS.customer.voice);
-  }, [note, noteKey]);
-
-  return (
-    <div className="pm-stall__order" role="group" aria-label={SPEAKERS.customer.label}>
-      <p className="pm-stall__order-words">
-        <span className="pm-stall__order-who">{SPEAKERS.customer.label}</span>
-        <span className="pm-stall__order-want">{fillLine(CHAPTER_ONE.orderStrip, values)}</span>
-      </p>
-      {onDone && (
-        <button type="button" className="pm-stall__order-done" onClick={onDone}>
-          {CHAPTER_ONE.test.done}
-        </button>
-      )}
-      {note && (
-        <p key={noteKey} className="pm-stall__order-note" aria-live="polite">
-          {note}
-        </p>
-      )}
     </div>
   );
 }
