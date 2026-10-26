@@ -176,7 +176,7 @@ work, as the basket's did; nothing outlines them.
 | A3 | 8 on 10 | The same. |
 | B1 | 20 on 30 | Whole tens: a carton fills it. |
 | B2 | 24 on 30 | Inside one ten: a carton won't go on a part-full shelf; 6 loose do. |
-| B3 | a customer, 15 tins | 3 cartons and 2 loose: not enough loose, so a carton must be opened. **Cracking comes back, and is not taught again**: no demo, no warning, nothing greyed out. Only if the child is stuck does Blob wonder aloud, after a touch or two seconds, as he did with crates. |
+| B3 | a customer, 15 tins | 3 cartons and 2 loose: not enough loose, so a carton must be opened. **Cracking comes back, and is not taught again**: no demo, no warning, nothing greyed out. Only if the child is stuck does Blob wonder aloud, after a touch or two seconds, as he did with crates. Then Blob reads back what the child put together: "1 carton… and 5 loose. How many is that?" |
 | B4 | 23 on 40 | Crosses a ten, the hard one: 7 to finish the third shelf, a carton for the fourth. |
 | C1 | 18 on 30 | Test: the child puts as many as still fit on the counter; Done checks the cartons, then the loose tins. |
 | C2 | a customer, 24 tins | Test: 3 cartons and 1 loose; a carton has to be opened. |
@@ -187,6 +187,20 @@ The same rules as Chapter 1, unchanged: orders name a number, in digits
 game never states a number the child could state; Baba is a shopkeeper
 who has gone to ask, not a teacher, and never explains; nothing rewards
 speed or being right first time.
+
+**A difference round ends on the difference.** "4 more!" is the last
+thing said; there is no "how many is that?" after it, which would turn the
+round into adding and muddle which operation is being practised. "How
+many is that?" belongs to the order rounds, where the child puts a
+quantity together and reading it back is the question, and it is about
+what they put together, not what is left.
+
+**Choosing is counting.** Tins are moved several at a time: a tap
+chooses one, which lifts and shows 1, then 2, 3, in the order chosen
+(tapped again, it is put down and the rest renumber), and dragging any
+chosen tin carries them all, which go only if all of them fit. A child
+choosing five and watching 1, 2, 3, 4, 5 appear is counting, so this
+saves the trips, not the thinking. A carton always moves alone.
 
 The three numbers for "How many more did it need?" diagnose. Past ten,
 as for "How many is that?": the digits swapped (12 gives 21) and the

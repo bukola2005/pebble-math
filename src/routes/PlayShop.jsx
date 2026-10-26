@@ -58,31 +58,37 @@ const STAGE_START = Object.fromEntries(
     play      a shelf unit, part full, and a strip that stays up: "This
               shelf holds 30 tins". The child carries cartons and loose
               tins from the delivery onto it; a carton fills an empty
-              shelf, a tin the first gap; what doesn't fit springs back.
-              The shelf's tag counts tins (24, 25, 26...).
+              shelf, tins the first gaps; what doesn't fit springs back.
+              Tapping loose tins chooses them, 1, 2, 3, and dragging any
+              chosen one carries them all. The shelf's tag counts tins
+              (24, 25, 26...).
     full      it glows, and its segment of the meter fills
     summary   Blob: "It had 24… and it holds 30. How many more did it
               need?" one step at a time, the tins that were there
               lighting, then the whole shelf with each shelf's 10. The
               child taps one of three numbers (moreChoices); a wrong one
               gets "Hmm, let me count these again." Only after the right
-              one does Blob say it after them ("6 more!").
+              one does Blob say it after them ("6 more!"), and the round
+              ends there: on the difference.
   Stage B's order round: a customer wants 15 tins, and there are 3
   cartons and 2 loose. Cracking a carton is not taught again: no demo, no
   warning, nothing greyed out; a tapped carton opens, any time. If the
   child gets stuck (no loose tins, and a carton won't do), Blob wonders
   out loud after a touch or two seconds, as he did with crates.
-    play      tins and cartons go onto the shop's counter; anything over
-              springs back; anything on it can be taken back. The counter
-              counts tins. Done, once something is on it: the customer
-              checks it.
-    done      the customer takes it
-    summary   Blob: "1 carton… and 7 loose. How many is that?", as in
-              Chapter 1, about what is left.
+    play      tins and cartons go onto the customer's cloth, beside the
+              delivery; anything over springs back; anything on it can be
+              taken back. The cloth counts tins. Done, once something is
+              on it: the customer checks it.
+    done      it glows
+    summary   Blob reads it back with the child: "1 carton… and 5 loose.
+              How many is that?" (its count hidden now). What the child
+              put together is the question; what is left is not asked.
+              Then the customer takes it.
   Stage C, three tests, nothing but the hint button: no Blob, no
   counting aloud. Shelf rounds ask "This shelf holds 30 tins. How many
-  more fit?": the child puts that many on the counter (its count hidden:
-  it would be the answer), Done checks the cartons then the loose tins,
+  more fit?": the child puts that many on the counter beside the delivery
+  (its count hidden: it would be the answer), Done checks the cartons then
+  the loose tins,
   and if it's right they go up onto the shelf and fill it. The order
   round is a customer's order, and needs a carton opened. Wrong answers
   get "Hmm, let me count these again." Every answer is saved
@@ -165,8 +171,8 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   const [cartons, setCartons] = useState(() => round.cartonIds); // in the delivery
   const [tins, setTins] = useState(() => round.tinIds); // loose, in the delivery
   const [placed, setPlaced] = useState([]); // on the shelf: { id, kind, level } or { id, kind, slot }
-  const [delivered, setDelivered] = useState({ cartons: [], tins: [] }); // on the counter
-  const [counted, setCounted] = useState([]);
+  const [delivered, setDelivered] = useState({ cartons: [], tins: [] }); // in the place for the order
+  const [chosen, setChosen] = useState([]); // loose tins tapped, in order
   const [wall, setWall] = useState(false);
   const [orderReady, setOrderReady] = useState(false);
   const [orderTaken, setOrderTaken] = useState(false);
@@ -181,7 +187,6 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   const [phase, setPhase] = useState({ round: "play", ending: "back", map: "map" }[resume] ?? "ask");
   const [wrongTaps, setWrongTaps] = useState(0);
   const [lineStep, setLineStep] = useState(0);
-  const [stall, setStall] = useState(null); // the shop picture, once it's in the page
   // Whether their "been here" row is saved: only then are rounds saved.
   const [entered, setEntered] = useState(enteredBefore);
   const paused = usePaused();
@@ -241,7 +246,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
         then?.();
       }
     };
-    const from = (origin ?? gameRef.current?.shelfTag() ?? gameRef.current?.counter())?.getBoundingClientRect();
+    const from = (origin ?? gameRef.current?.shelfTag() ?? gameRef.current?.place())?.getBoundingClientRect();
     const to = meterRef.current?.querySelector(`[data-segment="${i}"]`)?.getBoundingClientRect();
     if (!from || !to || reducedMotion()) {
       land();
@@ -273,7 +278,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   );
   const handedOver = delivered.cartons.length * TINS_PER_CARTON + delivered.tins.length;
   const stillWanted = round.kind === "order" ? round.want - handedOver : 0;
-  const target = phase !== "play" ? null : stageC || round.kind === "order" ? "counter" : "shelf";
+  const target = phase !== "play" ? null : stageC || round.kind === "order" ? "place" : "shelf";
 
   const values = {
     name: player.game_name,
@@ -281,18 +286,26 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     had: round.had,
     want: round.want,
     more: round.want,
-    cartons: `${cartons.length} ${cartons.length === 1 ? "carton" : "cartons"}`,
-    loose: tins.length,
-    sum: cartons.length * TINS_PER_CARTON + tins.length,
+    // After an order: what the child put together.
+    cartons: `${delivered.cartons.length} ${delivered.cartons.length === 1 ? "carton" : "cartons"}`,
+    loose: delivered.tins.length,
+    sum: delivered.cartons.length * TINS_PER_CARTON + delivered.tins.length,
   };
   // Blob's steps once a shelf is full, or after an order, and his question.
-  const stepped = phase === "summary" ? (shelfRound ? CHAPTER_TWO.shelfAsk : CHAPTER_TWO.cartonsAsk) : null;
+  const stepped =
+    phase !== "summary"
+      ? null
+      : shelfRound
+        ? CHAPTER_TWO.shelfAsk
+        : delivered.cartons.length
+          ? CHAPTER_TWO.cartonsAsk
+          : CHAPTER_TWO.looseAsk;
   const askingTotal = stepped && lineStep >= stepped.length && said == null;
   const options =
     phase === "summary"
       ? shelfRound
         ? moreChoices(round.holds, round.had, round.seed)
-        : totalChoices(cartons.length, tins.length, round.seed)
+        : totalChoices(delivered.cartons.length, delivered.tins.length, round.seed)
       : null;
 
   const startRound = (index) => {
@@ -302,7 +315,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     setTins(next.tinIds);
     setPlaced([]);
     setDelivered({ cartons: [], tins: [] });
-    setCounted([]);
+    setChosen([]);
     setWall(false);
     setOrderReady(false);
     setOrderTaken(false);
@@ -340,50 +353,54 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   };
 
   // --- what the child does ----------------------------------------------------------
-  const tap = (id) => setCounted((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+  // A tap on a loose tin chooses it (the next number), or puts it down
+  // (and the rest renumber).
+  const choose = (id) => setChosen((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
 
-  // Onto the shelf: a carton to the first shelf with nothing on it, a tin
-  // to the first gap. What doesn't fit springs back.
-  const placeOnShelf = (id, kind) => {
+  // Gone from the delivery, to the shelf or the place.
+  const takeFromDelivery = (items) => {
+    const ids = items.map((item) => item.id);
+    setCartons((list) => list.filter((x) => !ids.includes(x)));
+    setTins((list) => list.filter((x) => !ids.includes(x)));
+    setChosen((list) => list.filter((x) => !ids.includes(x)));
+  };
+
+  // Onto the shelf: a carton to the first shelf with nothing on it, tins
+  // to the first gaps. Several chosen tins go only if all of them fit;
+  // otherwise they all spring back.
+  const placeOnShelf = (items) => {
     if (phase !== "play" || !shelfRound || stageC) return false;
-    let item = null;
-    if (kind === "carton") {
+    let next = null;
+    if (items[0].kind === "carton") {
       if (emptyLevel == null) return false;
-      item = { id, kind, level: emptyLevel };
+      next = [{ ...items[0], level: emptyLevel }];
     } else {
-      const slot = Array.from({ length: round.holds }, (_, s) => s).find((s) => !taken.has(s));
-      if (slot == null) return false;
-      item = { id, kind, slot };
+      const free = Array.from({ length: round.holds }, (_, s) => s).filter((s) => !taken.has(s));
+      if (free.length < items.length) return false;
+      next = items.map((item, i) => ({ ...item, slot: free[i] }));
     }
     primeSound(); // from this drop, for the "yes" when the shelf is full
-    setPlaced((list) => [...list, item]);
-    if (kind === "carton") setCartons((list) => list.filter((x) => x !== id));
-    else {
-      setTins((list) => list.filter((x) => x !== id));
-      setCounted((list) => list.filter((x) => x !== id));
-    }
+    setPlaced((list) => [...list, ...next]);
+    takeFromDelivery(items);
     return true;
   };
 
-  // Onto the counter: an order's tins, or a test's answer. In Stage B
-  // anything that would make more than the order springs back; Stage C's
-  // counter takes anything.
-  const deliver = (id, kind) => {
+  // Into the place for the order: a customer's order, or a test's answer.
+  // In Stage B, anything that would make more than the order springs
+  // back; Stage C's counter takes anything.
+  const deliver = (items) => {
     if (phase !== "play" || orderReady) return false;
-    if (stageB && handedOver + (kind === "carton" ? TINS_PER_CARTON : 1) > round.want) return false;
-    if (kind === "carton") {
-      setCartons((list) => list.filter((x) => x !== id));
-      setDelivered((now) => ({ ...now, cartons: [...now.cartons, id] }));
-    } else {
-      setTins((list) => list.filter((x) => x !== id));
-      setDelivered((now) => ({ ...now, tins: [...now.tins, id] }));
-      setCounted((list) => list.filter((x) => x !== id));
-    }
+    const adding = items.reduce((n, item) => n + (item.kind === "carton" ? TINS_PER_CARTON : 1), 0);
+    if (stageB && handedOver + adding > round.want) return false;
+    const cartonIds = items.filter((item) => item.kind === "carton").map((item) => item.id);
+    const tinIds = items.filter((item) => item.kind === "tin").map((item) => item.id);
+    setDelivered((now) => ({ cartons: [...now.cartons, ...cartonIds], tins: [...now.tins, ...tinIds] }));
+    takeFromDelivery(items);
     primeSound();
     return true;
   };
 
-  // Back off the counter, to the delivery.
+  // Back off the place, to the delivery.
   const takeBack = (id, kind) => {
     if (phase !== "play" || orderReady) return false;
     if (kind === "carton") {
@@ -435,8 +452,8 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     attempt({
       stage: `${round.stage}-ask`,
       asked: right,
-      crates: shelfRound ? onShelf : cartons.length,
-      loose: shelfRound ? placed.length - onShelf : tins.length,
+      crates: shelfRound ? onShelf : delivered.cartons.length,
+      loose: shelfRound ? placed.length - onShelf : delivered.tins.length,
       total: value,
       failedStep: value === right ? null : "total",
     });
@@ -488,7 +505,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   const finishTest = () => {
     recordRound({ playerId: player.id, stallId: CHAPTER_TWO_ID, round: round.number, hintsUsed: tally.current.hints, wrongAnswers: tally.current.wrong });
     setPhase("done");
-    fillMeter(null, shelfRound ? gameRef.current?.shelf() : gameRef.current?.counter());
+    fillMeter(null, shelfRound ? gameRef.current?.shelf() : gameRef.current?.place());
     if (round.index === roundCount - 1) {
       clearChapter();
       earnChapterLantern("teaching");
@@ -581,7 +598,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     const id = after(() => {
       recordRound({ playerId: player.id, stallId: CHAPTER_TWO_ID, round: round.number, hintsUsed: tally.current.hints, wrongAnswers: null });
       setPhase(next);
-      fillMeter(null, next === "done" ? gameRef.current?.counter() : null);
+      fillMeter(null, next === "done" ? gameRef.current?.place() : null);
     }, 500);
     return () => cancel(id);
   }, [phase, room, orderReady, round]);
@@ -596,19 +613,20 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     return () => cancel(say);
   }, [phase]);
 
-  // An order glows and the customer takes it. In Stage B Blob then says
-  // what is left; Stage C just goes on.
+  // An order glows. In Stage B Blob then reads it back with the child,
+  // and it is taken after (nextStep); in Stage C it is taken, and the game
+  // goes on.
   useEffect(() => {
     if (phase !== "done") return undefined;
+    if (!stageC) {
+      const say = after(() => {
+        setLineStep(1);
+        setPhase("summary");
+      }, 1000);
+      return () => cancel(say);
+    }
     const take = after(() => setOrderTaken(true), 900);
-    const go = after(() => {
-      if (stageC) {
-        afterRound();
-        return;
-      }
-      setLineStep(1);
-      setPhase("summary");
-    }, 1600);
+    const go = after(afterRound, 1600);
     return () => {
       cancel(take);
       cancel(go);
@@ -650,22 +668,30 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   const steppedLine = stepped && lineStep > 0 ? { speaker: "blob", text: stepped[Math.min(lineStep, stepped.length) - 1].show } : null;
   const blobSays = wallLine
     ? CHAPTER_TWO.wall
-    : said != null
-      ? shelfRound
-        ? CHAPTER_TWO.shelfSaid
-        : CHAPTER_TWO.cartonsSaid
-      : steppedLine;
-  const spotlight =
-    phase !== "summary"
+    : phase !== "summary"
       ? null
       : said != null
         ? shelfRound
-          ? "added"
-          : "both"
-        : (shelfRound ? [null, "had", "holds", "holds"] : [null, "cartons", "tins", "both"])[Math.min(lineStep, 3)];
+          ? CHAPTER_TWO.shelfSaid
+          : CHAPTER_TWO.cartonsSaid
+        : steppedLine;
+  // What Blob's steps light: the shelf (what it had, what it holds, what
+  // went on), or the order the child put together.
+  const steps = shelfRound
+    ? [null, "had", "holds", "holds"]
+    : delivered.cartons.length
+      ? [null, "place-cartons", "place-tins", "place-both"]
+      : [null, "place-tins", "place-both", "place-both"];
+  const spotlight = phase !== "summary" ? null : said != null ? (shelfRound ? "added" : "place-both") : steps[Math.min(lineStep, 3)];
   const nextStep = () => {
     if (stepped && lineStep < stepped.length) setLineStep((n) => n + 1);
-    else afterRound();
+    else if (shelfRound) afterRound();
+    else {
+      // The customer takes the order, and the next round comes.
+      setPhase("taking");
+      setOrderTaken(true);
+      later(afterRound, 700);
+    }
   };
   // What the child has: what was saved before, and what they did today.
   const earned = [
@@ -691,7 +717,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
         }
       }}
     >
-      <StallBackdrop close stall={SHOP_ART} stallRef={setStall} />
+      <StallBackdrop close stall={SHOP_ART} />
       <PlayHud
         player={player}
         earned={earned}
@@ -705,33 +731,35 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
 
         <ShelfGame
           ref={gameRef}
-          stall={stall}
           seed={round.seed}
           cartons={cartons}
           tins={tins}
-          counted={counted}
+          chosen={chosen}
           shelf={shelfRound ? { holds: round.holds, had: round.had, placed, done: phase === "full" || (stageC && phase === "done") } : null}
-          counter={
+          place={
             round.kind === "order" || stageC
               ? {
                   cartons: delivered.cartons,
                   tins: delivered.tins,
-                  // Not in a shelf test, where it would be the answer.
-                  counts: !(stageC && shelfRound),
-                  done: phase === "done" && !shelfRound,
+                  // A test's counter; a customer's cloth.
+                  counter: stageC,
+                  // Not in a shelf test, where it would be the answer, nor
+                  // while Blob asks how many it is.
+                  counts: !(stageC && shelfRound) && phase !== "summary",
+                  done: (phase === "done" || phase === "summary") && !shelfRound,
                   taken: orderTaken && !shelfRound,
                 }
               : null
           }
           target={target}
           canDrag={playing}
-          canTap={playing && !stageC}
+          canChoose={playing}
           canCrack={canCrack}
           inviteCrack={wallLine}
           hintKey={tensKey}
           spotlight={spotlight}
           answer={said}
-          onTap={tap}
+          onChoose={choose}
           onPlace={target === "shelf" ? placeOnShelf : deliver}
           onReturn={takeBack}
           onCrack={crackOpen}
@@ -754,7 +782,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
             />
           )}
 
-          {/* Stage B's order, up all round, and Done once something is on the counter. */}
+          {/* Stage B's order, up all round, and Done once something is on the cloth. */}
           {round.kind === "order" && stageB && (phase === "play" || phase === "done") && (
             <OrderStrip
               who={SPEAKERS.customer.label}

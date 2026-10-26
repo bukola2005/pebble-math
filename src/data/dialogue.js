@@ -219,15 +219,22 @@ export const CHAPTER_TWO = {
   shelfSaid: { speaker: "blob", text: "{more} more!" },
   // A customer asks for a number, in digits, never cartons and loose: what
   // that is in cartons and loose is the child's to decide. It stays up all
-  // round as a strip. The tins go on the shop's counter.
+  // round as a strip. The tins go on the customer's cloth.
   order: { speaker: "customer", text: "{want} tins, please." },
   orderStrip: "{want} tins",
-  // After the order: what is left, one step at a time, and Blob asks, as
-  // in Chapter 1. `{cartons}` is "1 carton", `{loose}` "7", `{sum}` "17".
+  // After an order, before the customer takes it: Blob reads back what the
+  // child put together, one step at a time, and asks how many that is.
+  // Only in an order round: a shelf round ends on how many more it
+  // needed. `{cartons}` is "1 carton", `{loose}` "5", `{sum}` "15";
+  // `looseAsk` when there is no carton in it.
   cartonsAsk: [
     { show: "{cartons}…", say: "{cartons}…" },
     { show: "{cartons} and {loose} loose.", say: "and {loose} loose." },
     { show: "{cartons} and {loose} loose. How many is that?", say: "How many is that?" },
+  ],
+  looseAsk: [
+    { show: "{loose} loose…", say: "{loose} loose…" },
+    { show: "{loose} loose. How many is that?", say: "How many is that?" },
   ],
   cartonsSaid: { speaker: "blob", text: "{sum}!" },
   // Only once the child is stuck (no loose tins left, and a whole carton

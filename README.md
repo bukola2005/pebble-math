@@ -488,7 +488,10 @@ lesson.
 "15 oranges, please.", "23 oranges, please." and "8 oranges, please."
 (32 - 15, 41 - 23, 23 - 8), each with crates and a few loose oranges on
 the table and an empty basket, stepped left to make room for a plain
-cloth beside it, with nothing drawn on it. The order is never put away:
+cloth beside it, with nothing drawn on it but a pale cream edge, always
+there, and a row more room than the order needs, so it is plainly the
+place for the order before anything is on it (the counter in Stage C has
+the same edge). The order is never put away:
 it stays up all round as a small strip at the top, "Customer · 23
 oranges" (there is no Next to dismiss it, and no "Fill the order": the
 number is the order). The child carries crates and loose oranges to the
@@ -626,27 +629,45 @@ me 15" ([docs/learning-rules.md](docs/learning-rules.md)). Every shelf of
 the shelf unit holds ten tins, five at the back and five in front, and a
 carton holds ten, so a carton fills an empty shelf exactly; the unit is
 cut from the one picture into a top, shelves and feet, and stacked to hold
-10, 30 or 40. The delivery stands on a mat on the ground: cartons at the
-back, loose tins in front. A carton dragged onto the shelf goes to the
-first empty shelf (and won't go on a part-full one); a tin goes to the
+10, 30 or 40. Everything to handle is in one band along the ground, close
+together, so every drag is short: the shelf unit, the delivery on a mat
+(cartons at the back, loose tins in front), and, where there is an order,
+the place it goes, a rectangle with a pale cream edge that is always there
+(a cloth for a customer, a counter top in the tests), with room to spare.
+On a phone held upright the delivery and the place share the ground and
+the shelf stands just behind them. A carton dragged onto the shelf goes to
+the first empty shelf (and won't go on a part-full one); a tin goes to the
 first gap. Nothing outlines the gaps: bare wood is the empty space. The
 shelf's tag counts tins, a carton adding 10.
+
+Tins are chosen by tapping: a tapped tin lifts a little and shows 1, the
+next 2, and so on; a chosen one tapped again is put down, and the rest
+renumber. Dragging any chosen tin carries them all together, and they go
+only if all of them fit (otherwise they all spring back, still chosen);
+dragging a tin that isn't chosen carries just that one, and a carton
+always moves alone. Choosing five and watching 1, 2, 3, 4, 5 appear is
+counting: it saves the trips without saving the thinking.
 
 - Stage A, three shelves of ten (6, 3 and 8 on them): a strip says "This
   shelf holds 10 tins" all round. Full, it glows, and Blob: "It had 6… and
   it holds 10. How many more did it need?", with three numbers to tap,
-  then "4 more!" after the child.
+  then "4 more!" after the child. A shelf round ends there, on the
+  difference: nothing else is asked.
 - Stage B: shelves of 30 and 40 (20, 24 and 23 on them), and a customer:
   "15 tins, please." with 3 cartons and 2 loose. The order goes on the
-  shop's own counter top, on a small cloth, and the counter counts tins.
-  Cracking a carton is not taught again: a tapped carton opens whenever
-  the child likes, and only if they are stuck (no loose tins, and a carton
-  won't do) does Blob wonder, after a touch or two seconds, "Hmm. Not
-  enough loose ones. What's inside a carton?" Then, as in Chapter 1, "1
-  carton… and 7 loose. How many is that?" about what is left.
+  customer's cloth beside the delivery, which counts tins. Cracking a
+  carton is not taught again: a tapped carton opens whenever the child
+  likes, and only if they are stuck (no loose tins, and a carton won't do)
+  does Blob wonder, after a touch or two seconds, "Hmm. Not enough loose
+  ones. What's inside a carton?" When the order is right, before the
+  customer takes it, Blob reads it back with the child: "1 carton… and 5
+  loose. How many is that?" (the cloth's count hidden while he asks). The
+  child put that quantity together, so reading it back is the question;
+  what is left is not asked.
 - Stage C, three tests with nothing but the hint button: "This shelf holds
   30 tins. How many more fit?", answered by putting that many on the
-  counter (its count hidden: it would be the answer); Done checks the
+  counter beside the delivery (its count hidden: it would be the answer);
+  Done checks the
   cartons, then the loose tins, and a right answer goes up onto the shelf
   and fills it. Then a customer's 24 from 3 cartons and 1 loose, and a
   shelf of 40 with 35.

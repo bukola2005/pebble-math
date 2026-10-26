@@ -690,12 +690,13 @@ button.pm-stack-crate:focus-visible {
 }
 
 /* --- the customer's order, on a cloth --------------------------------------------------
-   What it still wants is a dotted outline, like the basket's empty
-   spaces; what has come is the real thing. */
+   Nothing drawn on it but what has come. Its pale cream edge is always
+   there, so it is plainly a place, whatever is behind it. */
 .pm-order {
   position: absolute;
   /* Under the table's oranges, should they ever meet. */
   z-index: 0;
+  border: 3px solid var(--pm-paper);
   border-radius: 26px;
   background:
     repeating-linear-gradient(

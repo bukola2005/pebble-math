@@ -268,7 +268,9 @@ function closedCrate(b) {
   Stage B: the customer's order, on a cloth beside the basket. Crates
   along the top, loose oranges below, four to a row. `wants` is how much
   room to make (the number as crates and loose, or more loose if the
-  child brings them); nothing is drawn where nothing is yet.
+  child brings them), with a row to spare and always four across, so the
+  cloth is plainly a place before anything is on it; nothing is drawn
+  where nothing is yet.
 */
 const ORDER_GAP = 14;
 
@@ -277,7 +279,7 @@ function orderLayout(o, wants) {
   const gap = 6;
   const perRow = 4;
   const room = o.width - pad * 2;
-  const rows = Math.ceil(wants.loose / perRow);
+  const rows = Math.ceil(wants.loose / perRow) + 1;
   let crateWidth = wants.crates ? Math.min((room - (wants.crates - 1) * gap) / wants.crates, room * 0.62, 120) : 0;
   let size = Math.min((room - (perRow - 1) * gap) / perRow, 46);
   // Shrunk to fit the ground in front of the table, if it has to be.
@@ -290,7 +292,7 @@ function orderLayout(o, wants) {
   const looseTop = pad + (wants.crates ? crateHeight + 10 : 0);
   const height = looseTop + rows * size + Math.max(rows - 1, 0) * gap + pad;
   const cratesWidth = wants.crates * crateWidth + Math.max(wants.crates - 1, 0) * gap;
-  const across = Math.min(wants.loose, perRow);
+  const across = perRow;
   const inner = Math.max(cratesWidth, across * size + Math.max(across - 1, 0) * gap);
   return {
     left: o.left,
