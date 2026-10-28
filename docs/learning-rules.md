@@ -200,7 +200,10 @@ chooses one, which lifts and shows 1, then 2, 3, in the order chosen
 (tapped again, it is put down and the rest renumber), and dragging any
 chosen tin carries them all, which go only if all of them fit. A child
 choosing five and watching 1, 2, 3, 4, 5 appear is counting, so this
-saves the trips, not the thinking. A carton always moves alone.
+saves the trips, not the thinking. A carton always moves alone. The
+fruit stall's oranges work exactly the same way, in the tutorial and in
+every stage of Chapter 1 (a crate always moves alone), so a child who
+learns it in one place finds it in the other.
 
 The three numbers for "How many more did it need?" diagnose. Past ten,
 as for "How many is that?": the digits swapped (12 gives 21) and the

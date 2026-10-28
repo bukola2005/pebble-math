@@ -646,7 +646,8 @@ renumber. Dragging any chosen tin carries them all together, and they go
 only if all of them fit (otherwise they all spring back, still chosen);
 dragging a tin that isn't chosen carries just that one, and a carton
 always moves alone. Choosing five and watching 1, 2, 3, 4, 5 appear is
-counting: it saves the trips without saving the thinking.
+counting: it saves the trips without saving the thinking. The fruit
+stall's oranges work the same way.
 
 - Stage A, three shelves of ten (6, 3 and 8 on them): a strip says "This
   shelf holds 10 tins" all round. Full, it glows, and Blob: "It had 6… and
@@ -702,13 +703,21 @@ either, and never sounds as if he is keeping one back. How many hints a child
 used, and how many wrong numbers they tapped, is noted per round in
 `lib/stallLog.js`, in memory only, shaped to be saved later.
 
-Tapping an orange counts it: a number badge, 1, 2, 3, in the order tapped.
-Tapping a counted orange clears it and the rest renumber. That's the
-child's scratchpad and changes nothing. Dragging is what moves an orange.
-An orange let go anywhere but over the basket springs back. One in the
-basket can't be picked up again, so nothing is counted twice. Both work
-with a finger, a mouse or a pen (pointer events). With a keyboard, Enter
-counts the focused orange and B puts it in the basket.
+Tapping an orange chooses it, exactly as tins are chosen at the
+Provision Store (below): it lifts a little and shows its number, 1, 2,
+3, in the order tapped; tapping a chosen orange puts it down and the rest
+renumber. Dragging any chosen orange carries all of them, and they go
+only if all of them fit (the basket's ten spaces, round 1's order, a
+Stage B order): otherwise they all spring back, still chosen. Dragging an
+orange that isn't chosen carries just that one, and a crate always moves
+alone. It works in every round, the tutorial's, and Chapter 1's Stages
+A, B and C; in Stage B the oranges in the basket (a cracked crate's ten)
+can be chosen too, with smaller numbers, as they are packed close. An
+orange let go anywhere but over the basket springs back. One in the
+basket can't be picked up again (until Stage B), so nothing is counted
+twice. Both work with a finger, a mouse or a pen (pointer events). With a
+keyboard, Enter chooses the focused orange and B puts it, and any chosen
+with it, in the basket.
 
 **Every line is in `data/dialogue.js`**, to edit without touching code, and
 is read aloud with the browser's own voice (`lib/speech.js`) until real

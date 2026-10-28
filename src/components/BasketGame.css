@@ -77,6 +77,19 @@
     0 0 0 8px var(--pm-purple-700);
 }
 
+/* Chosen: it lifts a little, with its number. */
+.pm-orange.is-chosen {
+  z-index: 3;
+}
+
+.pm-orange.is-chosen .pm-orange__body {
+  transform: translateY(-14%) rotate(var(--tilt, 0deg));
+}
+
+.pm-orange.is-chosen .pm-orange__body img {
+  filter: drop-shadow(0 10px 6px rgba(70, 35, 10, 0.32));
+}
+
 /* Picked up: it grows a little and lifts, with a softer, lower shadow. */
 .pm-orange.is-dragging {
   z-index: 40;
@@ -682,6 +695,27 @@ button.pm-stack-crate:focus-visible {
 .pm-basket__orange.is-returning {
   z-index: 30;
   transition: transform 0.4s var(--pm-ease-pop);
+}
+
+/* Chosen in the basket: it rises a little out of it, with its number,
+   both smaller than on the table, where the oranges are packed close and
+   the ones behind still need to be reached. */
+.pm-basket__orange.is-chosen img {
+  translate: 0 -8%;
+}
+
+.pm-basket__orange .pm-orange__badge {
+  top: -6px;
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 4px;
+  border-radius: 11px;
+  box-shadow: 0 0 0 2px var(--pm-white), var(--pm-shadow-sm);
+  font-size: 0.8125rem;
+  line-height: 21px;
 }
 
 /* While one is carried out, the basket rides above the rest. */

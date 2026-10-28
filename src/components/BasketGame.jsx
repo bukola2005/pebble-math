@@ -9,17 +9,23 @@ import "./BasketGame.css";
   child's basket on the ground just in front of it, so every drag is a
   short one, down off the table and in.
 
-  Two separate things a child can do with an orange:
-    tap   counts it. A number badge appears (1, 2, 3...); tapping a
-          counted orange clears it and the rest renumber. A scratchpad for
-          the child: it changes nothing in the game.
-    drag  moves it. Dropped on the basket it goes in, and the basket's own
-          count, on a tag on its rim, goes up. Dropped anywhere else it
-          springs back. An orange in the basket can't be picked up again,
-          so nothing is ever counted twice.
+  Two things a child can do with an orange, the same as with the
+  Provision Store's tins (ShelfGame.jsx):
+    tap   chooses it (where `canChoose`): it lifts a little and a number
+          badge appears, 1, 2, 3, in the order chosen (`chosen`); tapping
+          a chosen orange puts it down and the rest renumber. Choosing is
+          counting: the numbers are the child's.
+    drag  moves it. Dragging any chosen orange carries all the chosen
+          ones together, and they go only if all of them fit; dragging
+          one that isn't chosen carries just that one. Dropped on the
+          basket it goes in, and the basket's own count, on a tag on its
+          rim, goes up. Dropped anywhere else it springs back. An orange
+          in the basket can't be picked up again (until Stage B), so
+          nothing is ever counted twice. A crate always moves alone.
 
   Both work by touch, mouse and pen (pointer events). With a keyboard:
-  Enter counts the focused orange, B puts it in the basket.
+  Enter chooses the focused orange, B puts it (and any chosen with it) in
+  the basket.
 
   In Chapter 1 there are also full crates on the table (`crates`), each
   ten oranges in two rows of five, stacked at the table's left end. When
@@ -46,7 +52,7 @@ import "./BasketGame.css";
 
   Everything is placed from where the stall picture is on screen, so the
   oranges sit on its table at any screen size. The parent owns the state
-  (which oranges are counted, which are in the basket); this component
+  (which oranges are chosen, which are in the basket); this component
   owns how it feels.
 */
 
@@ -434,9 +440,9 @@ export default function BasketGame({
   seed,
   oranges,
   inBasket,
-  counted,
+  chosen = [],
   canDrag,
-  canTap = true,
+  canChoose = true,
   basketHidden = false,
   dim = false,
   gapsUpTo = 0,
@@ -456,7 +462,7 @@ export default function BasketGame({
   total = 0,
   showTotal = true,
   demoKey = 0,
-  onTap,
+  onChoose,
   onDrop,
   onLeave,
   onDeliver,
@@ -569,16 +575,34 @@ export default function BasketGame({
   }, [demoKey]);
 
   // --- dragging ---------------------------------------------------------------
+  // What a drag (or B) on an orange carries: all the chosen ones, if it is
+  // one of them; otherwise just it. A crate always moves alone.
+  const orangeEl = (id) => tableEls.current.get(id) ?? basketEls.current.get(id);
+  const carried = (id, kind) => (kind === "orange" && chosen.includes(id) ? chosen.filter((o) => orangeEl(o)) : [id]);
+  const bodyOf = (el) => el.querySelector(".pm-orange__body, .pm-crate__art") ?? el;
+  // Sends what was dropped: each thing flies from where it was. Several
+  // go together, or none.
+  const send = (group, kind, rects) => {
+    group.forEach((id, i) => flights.current.set(id, { from: rects[i], delay: i * 30 }));
+    const ok = order ? onDeliver(group.map((id) => ({ id, kind }))) : onDrop(group);
+    if (ok && !order) justPlaced.current = group[group.length - 1];
+    if (!ok) group.forEach((id) => flights.current.delete(id));
+    return ok;
+  };
+
   const start = (event, id, kind = "orange") => {
     suppressClick.current = false;
-    if (!canDrag || drag.current) return; // one orange at a time
+    if (!canDrag || drag.current) return; // one drag at a time
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const el = event.currentTarget;
     el.setPointerCapture?.(event.pointerId);
+    const group = carried(id, kind);
     drag.current = {
       id,
       kind,
       el,
+      group,
+      els: group.length > 1 ? group.map(orangeEl) : [el],
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
@@ -602,14 +626,16 @@ export default function BasketGame({
       const home = d.el.getBoundingClientRect();
       d.cx = home.left + home.width / 2;
       d.cy = home.top + home.height / 2;
-      // On a touch screen the orange rides above the finger, so the child
-      // can see what they are carrying.
+      // On a touch screen what is carried rides above the finger, so the
+      // child can see it.
       d.lift = d.touch ? home.height * 0.5 : 0;
-      d.el.style.setProperty("--lift", `${d.lift}px`);
-      d.el.classList.add("is-dragging");
+      for (const el of d.els) {
+        el.style.setProperty("--lift", `${d.lift}px`);
+        el.classList.add("is-dragging");
+      }
       // An orange taken out of the basket, or anything taken off the
       // counter, rides above everything else.
-      if (d.el.closest(".pm-basket")) basketRef.current.classList.add("is-carrying");
+      if (d.els.some((el) => el.closest(".pm-basket"))) basketRef.current.classList.add("is-carrying");
       d.fromCounter = Boolean(d.el.closest(".pm-order"));
       if (d.fromCounter) orderRef.current.classList.add("is-carrying");
       // Generous: anywhere over the basket (in Stage B, the order), a
@@ -624,7 +650,7 @@ export default function BasketGame({
       };
     }
 
-    d.el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+    for (const el of d.els) el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
     const x = d.cx + dx;
     const y = d.cy + dy - d.lift;
     const over = x >= d.zone.left && x <= d.zone.right && y >= d.zone.top && y <= d.zone.bottom;
@@ -669,27 +695,21 @@ export default function BasketGame({
     }
 
     if (!cancelled && d.over) {
-      const body = d.el.querySelector(".pm-orange__body, .pm-crate__art") ?? d.el;
-      flights.current.set(d.id, { from: body.getBoundingClientRect() });
-      suppressClick.current = false; // it is about to leave; no click follows
-      if (order ? onDeliver(d.id, d.kind) : onDrop(d.id)) {
-        if (!order) justPlaced.current = d.id;
-        return;
-      }
-      flights.current.delete(d.id);
-      // Not wanted there: it springs back, and the click that follows the
-      // drag is not a tap (it would count an orange, or open a crate).
+      suppressClick.current = false; // they are about to leave; no click follows
+      if (send(d.group, d.kind, d.els.map((el) => bodyOf(el).getBoundingClientRect()))) return;
+      // Not wanted there (or not all of them fit): back they spring, and
+      // the click that follows the drag is not a tap (it would choose an
+      // orange, or open a crate).
       suppressClick.current = true;
     }
-    springHome(d.el);
+    d.els.forEach(springHome);
   };
 
+  // By keyboard: B sends it, and any chosen with it.
   const dropByKey = (id, el, kind = "orange") => {
     if (!canDrag) return;
-    flights.current.set(id, { from: el.getBoundingClientRect() });
-    if (order ? onDeliver(id, kind) : onDrop(id)) {
-      if (!order) justPlaced.current = id;
-    } else flights.current.delete(id);
+    const group = carried(id, kind);
+    send(group, kind, group.map((o) => bodyOf(group.length > 1 ? orangeEl(o) : el).getBoundingClientRect()));
   };
 
   // Stage C: back from the counter to the stall, by tap or key.
@@ -804,7 +824,7 @@ export default function BasketGame({
   return (
     <div className={`pm-game${dim ? " is-dim" : ""}${spotlight ? ` pm-game--spot-${spotlight}` : ""}`}>
       <p id="pm-orange-help" className="pm-sr-only">
-        {order ? "Press B to put it in the order." : "Press Enter to count it. Press B to put it in the basket."}
+        {`${canChoose ? "Press Enter to choose it, or put it down again. " : ""}Press B to put it, and any chosen with it, ${order ? "in the order" : "in the basket"}.`}
       </p>
       {order && (
         <p id="pm-crate-help" className="pm-sr-only">
@@ -1093,21 +1113,22 @@ export default function BasketGame({
 
       {onTable.map((id) => {
         const spot = layout.spots[id];
-        const badge = counted.indexOf(id) + 1;
+        const badge = chosen.indexOf(id) + 1;
         const at = aside ? aside.spot(asideAt.get(id)) : null;
         return (
           <button
             key={id}
             ref={keep(tableEls, id)}
             type="button"
-            className={`pm-orange${aside ? " is-set-aside" : ""}`}
+            className={`pm-orange${aside ? " is-set-aside" : ""}${badge ? " is-chosen" : ""}`}
             data-id={id}
             style={
               at
                 ? { left: at.x, top: at.y, width: aside.size, height: aside.size }
                 : { left: spot.x, top: spot.y, width: layout.size, height: layout.size }
             }
-            aria-label={badge ? `Orange, counted ${badge}` : "Orange"}
+            aria-label={badge ? `Orange, chosen ${badge}` : "Orange"}
+            aria-pressed={canChoose ? badge > 0 : undefined}
             aria-describedby="pm-orange-help"
             onPointerDown={(event) => start(event, id)}
             onPointerMove={move}
@@ -1119,7 +1140,7 @@ export default function BasketGame({
                 suppressClick.current = false;
                 return;
               }
-              if (canTap) onTap(id);
+              if (canChoose) onChoose(id);
             }}
             onKeyDown={(event) => {
               if (event.key === "b" || event.key === "B") {
@@ -1147,31 +1168,48 @@ export default function BasketGame({
         style={{ left: b.left, top: b.top, width: b.width, height: b.height }}
       >
         <img className="pm-basket__art" src={BASKET.src} width={BASKET.w} height={BASKET.h} alt="" draggable={false} />
-        {inSlots.map((slot) =>
-          order ? (
-            // Stage B: oranges can be taken back out, to the order.
+        {inSlots.map((slot) => {
+          const badge = chosen.indexOf(slot.id) + 1;
+          return order ? (
+            // Stage B: oranges can be chosen and taken back out, to the order.
             <span
               key={slot.id}
               ref={keep(basketEls, slot.id)}
-              className="pm-basket__orange is-movable"
+              className={`pm-basket__orange is-movable${badge ? " is-chosen" : ""}`}
               style={{ left: `${slot.x - 11}%`, top: `${slot.y - 13}%` }}
               role="button"
               tabIndex={0}
-              aria-label="Orange in the basket"
+              aria-label={badge ? `Orange in the basket, chosen ${badge}` : "Orange in the basket"}
+              aria-pressed={canChoose ? badge > 0 : undefined}
               aria-describedby="pm-orange-help"
               onPointerDown={(event) => start(event, slot.id)}
               onPointerMove={move}
               onPointerUp={(event) => end(event)}
               onPointerCancel={(event) => end(event, true)}
               onLostPointerCapture={(event) => end(event, true)}
+              onClick={() => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  return;
+                }
+                if (canChoose) onChoose(slot.id);
+              }}
               onKeyDown={(event) => {
-                if (event.key === "b" || event.key === "B") {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  if (canChoose) onChoose(slot.id);
+                } else if (event.key === "b" || event.key === "B") {
                   event.preventDefault();
                   dropByKey(slot.id, event.currentTarget);
                 }
               }}
             >
               <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
+              {badge > 0 && (
+                <span key={badge} className="pm-orange__badge" aria-hidden="true">
+                  {badge}
+                </span>
+              )}
             </span>
           ) : (
             <span
@@ -1182,8 +1220,8 @@ export default function BasketGame({
             >
               <img src={ORANGE.src} width={ORANGE.w} height={ORANGE.h} alt="" draggable={false} />
             </span>
-          )
-        )}
+          );
+        })}
         {/* The basket's front wall again, over the oranges, so they sit in it. */}
         <img
           className="pm-basket__art pm-basket__front"
