@@ -4,7 +4,7 @@ import AuthLayout from "../components/AuthLayout";
 import AuthField from "../components/AuthField";
 import CTAButton from "../components/CTAButton";
 import { useAuth } from "../context/AuthContext";
-import { authErrorMessage } from "../lib/authErrors";
+import { BAD_EMAIL_MESSAGE, authErrorMessage, isBadEmail } from "../lib/authErrors";
 import {
   MIN_PASSWORD_LENGTH,
   NAME_MAX_LENGTH,
@@ -94,6 +94,7 @@ export default function SignUp() {
   const onSubmit = async (event) => {
     event.preventDefault();
     if (submitting || !agreed) return;
+    const form = event.currentTarget;
 
     const found = validate(values);
     const invalid = Object.keys(found);
@@ -101,7 +102,7 @@ export default function SignUp() {
     if (invalid.length > 0) {
       setFormError("Please fix the highlighted fields.");
       // Move to the first problem; its message is read with the field.
-      event.currentTarget.querySelector(`[name="${invalid[0]}"]`)?.focus();
+      form.querySelector(`[name="${invalid[0]}"]`)?.focus();
       return;
     }
 
@@ -117,6 +118,12 @@ export default function SignUp() {
 
       if (alreadyRegistered(data, error)) {
         setExistingEmail(values.email.trim());
+      } else if (isBadEmail(error)) {
+        // Supabase's check is stricter than ours. Said under the email
+        // field, where the parent has to look to fix it, and read out as
+        // the focus moves there.
+        setErrors((prev) => ({ ...prev, email: BAD_EMAIL_MESSAGE }));
+        form.querySelector('[name="email"]')?.focus();
       } else if (error) {
         setFormError(authErrorMessage(error));
       } else if (!data.session) {

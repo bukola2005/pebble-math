@@ -6,6 +6,28 @@
  * password and an unknown email both come back as `invalid_credentials`,
  * so the sign-in page can't be used to find out who has an account.
  */
+/** What to say when Supabase turns an email address down. */
+export const BAD_EMAIL_MESSAGE = "That email address doesn’t look right. Please check it.";
+
+/**
+ * Whether Supabase turned the email address itself down, so the form can
+ * say so under the email field. Two ways it does:
+ *   email_address_invalid  its address check (a domain it won't send to)
+ *   validation_failed      its format check, stricter than the form's own
+ *                          ("Unable to validate email address: invalid
+ *                          format"), a 400
+ * `validation_failed` is also used for other fields, so for that one the
+ * message has to be about the email; older servers send no code at all.
+ */
+export function isBadEmail(error) {
+  if (error?.code === "email_address_invalid") return true;
+  return (
+    error?.status === 400 &&
+    (error.code === "validation_failed" || !error.code) &&
+    /email/i.test(error.message ?? "")
+  );
+}
+
 export function authErrorMessage(error) {
   // The browser couldn't reach Supabase (offline, blocked, bad URL), or the
   // server answered with a 5xx. Either way, trying again is the right advice.
@@ -29,7 +51,7 @@ export function authErrorMessage(error) {
     case "otp_expired":
       return "This reset link has expired. Ask for a new one.";
     case "email_address_invalid":
-      return "That email address doesn’t look right.";
+      return BAD_EMAIL_MESSAGE;
     case "over_email_send_rate_limit":
     case "over_request_rate_limit":
       return "Too many attempts. Please wait a few minutes and try again.";
