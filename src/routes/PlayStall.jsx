@@ -287,7 +287,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const [handed, setHanded] = useState(false);
   const [entry, setEntry] = useState(null); // { tens, ones, active }
   const [inBasket, setInBasket] = useState(() => round.prefilled);
-  const [counted, setCounted] = useState([]);
+  const [chosen, setChosen] = useState([]); // oranges tapped, in order: what a drag carries
   const [phase, setPhase] = useState(
     newcomer ? "award" : ({ round: "play", ending: "back", map: "map" }[resume] ?? "ask")
   );
@@ -406,7 +406,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const trying = Boolean(tutorial?.dragTo);
 
   const clearRoundState = () => {
-    setCounted([]);
+    setChosen([]);
     setHintStep(0);
     setHintTaps(0);
     setHintShown(false);
@@ -468,12 +468,13 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   };
 
   const advanceTutorial = (point) => {
-    // "Tap one to count it": a tap on the highlighted orange counts it.
+    // "Tap one to count it": a tap on the highlighted orange counts it (it
+    // is chosen, with its 1).
     if (beat === 1 && point) {
       const el = gameRef.current?.nearestOrange();
       const r = el?.getBoundingClientRect();
       if (r && point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom) {
-        tap(el.dataset.id);
+        chooseOrange(el.dataset.id);
       }
     }
     if (beat < beats.length - 1) setBeat((b) => b + 1);
@@ -481,24 +482,29 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   };
 
   // --- what the child does ----------------------------------------------------------
-  const tap = (id) => {
+  // A tap on an orange chooses it (the next number), or puts it down (and
+  // the rest renumber). Dragging any chosen one carries them all.
+  const chooseOrange = (id) => {
     if (!id) return;
     setHintShown(false);
-    setCounted((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+    setChosen((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
   };
 
-  const drop = (id) => {
+  // Into the basket: all of them, or none. It holds ten, and in round 1
+  // it takes what the seller asked for, no more.
+  const drop = (ids) => {
     if (!(phase === "play" || trying)) return false;
-    if (inBasket.includes(id) || inBasket.length >= BASKET_HOLDS) return false;
+    const room = (round.practice ? round.target : BASKET_HOLDS) - inBasket.length;
+    if (ids.some((id) => inBasket.includes(id)) || ids.length > room) return false;
     primeSound(); // from this drop, for the "yes" when the round is answered
-    setInBasket((list) => [...list, id]);
-    setCounted((list) => list.filter((x) => x !== id));
+    setInBasket((list) => [...list, ...ids]);
+    setChosen((list) => list.filter((x) => !ids.includes(x)));
     setHintShown(false);
     if (phase === "tutorial") {
       // They tried it. The tutorial ends, that orange hops back out, and
       // round 1 starts properly.
       setPhase("practised");
-      later(() => gameRef.current?.flyBack(id), 900);
+      later(() => gameRef.current?.flyBack(ids[0]), 900);
       later(toTheSeller, 1350);
     }
     return true;
@@ -576,20 +582,19 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     } else tryAgain();
   };
 
-  // Stage B: something carried to the customer's cloth. It goes on, in
-  // any mix of crates and loose oranges, unless it would make more than
-  // the number asked for; then it springs back. Stage C's counter takes
-  // anything.
-  const deliver = (id, kind) => {
+  // Stage B: what was carried to the customer's cloth (a crate, or one or
+  // more loose oranges). It goes on, in any mix of crates and loose
+  // oranges, unless it would make more than the number asked for; then
+  // it all springs back. Stage C's counter takes anything.
+  const deliver = (items) => {
     if (!(stageB || stageC) || phase !== "play" || handed || orderReady) return false;
-    if (stageB && handedOver + (kind === "crate" ? BASKET_HOLDS : 1) > round.want) return false;
-    if (kind === "crate") {
-      setCrates((list) => list.filter((x) => x !== id));
-      setDelivered((now) => ({ ...now, crates: [...now.crates, id] }));
-    } else {
-      setDelivered((now) => ({ ...now, loose: [...now.loose, id] }));
-      setCounted((list) => list.filter((x) => x !== id));
-    }
+    const adding = items.reduce((n, item) => n + (item.kind === "crate" ? BASKET_HOLDS : 1), 0);
+    if (stageB && handedOver + adding > round.want) return false;
+    const crateIds = items.filter((item) => item.kind === "crate").map((item) => item.id);
+    const looseIds = items.filter((item) => item.kind !== "crate").map((item) => item.id);
+    if (crateIds.length) setCrates((list) => list.filter((x) => !crateIds.includes(x)));
+    setDelivered((now) => ({ crates: [...now.crates, ...crateIds], loose: [...now.loose, ...looseIds] }));
+    setChosen((list) => list.filter((x) => !looseIds.includes(x)));
     primeSound(); // from this drop, for the "yes" when the order is complete
     return true;
   };
@@ -999,9 +1004,9 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
           seed={round.seed}
           oranges={round.oranges}
           inBasket={inBasket}
-          counted={counted}
+          chosen={chosen}
           canDrag={phase === "play" || trying}
-          canTap={phase !== "award" && phase !== "tutorial" && !stageC}
+          canChoose={phase !== "award" && phase !== "tutorial"}
           // The basket appears when the tutorial introduces it, and is put
           // away for Stage C's tests.
           basketHidden={phase === "award" || (phase === "tutorial" && beat < 2) || stageC}
@@ -1056,7 +1061,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
           // In Chapter 1 the number only shows once the child has said it.
           showTotal={!chapterOne || said != null}
           demoKey={demoKey}
-          onTap={tap}
+          onChoose={chooseOrange}
           onDrop={drop}
           onLeave={leave}
           onDeliver={deliver}

@@ -137,12 +137,18 @@
   }
 }
 
-/* At the Provision Store the shelf stands on the right: Blob comes up on
-   the sand at the left instead. */
+/* At the Provision Store everything to handle is in one band along the
+   ground: Blob comes up above it, on the right. On a short screen he is
+   in the box's portrait only. */
 .pm-shop-screen .pm-stall__blob {
-  right: auto;
-  left: 4%;
-  bottom: 20%;
+  right: 3%;
+  bottom: 34%;
+}
+
+@media (max-height: 480px) {
+  .pm-shop-screen .pm-stall__blob {
+    display: none;
+  }
 }
 
 /* A phone held upright has no spare sand: Blob is in the box's portrait. */

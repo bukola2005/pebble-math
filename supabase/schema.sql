@@ -381,3 +381,85 @@ $$;
 
 revoke execute on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+
+-- ----------------------------------------------------------------------
+-- email_has_account(address): whether an account already uses this email
+-- address, so sign-up can say so as soon as the parent leaves the email
+-- field, not after they have filled in everything else. Sign-up itself
+-- already tells (routes/SignUp.jsx); this only tells sooner.
+--
+-- It is called before anyone signs in, so anon may call it, and it
+-- answers true or false and nothing else: never an id, a name or a date.
+-- Only a confirmed account counts: an address that signed up but never
+-- opened its link can sign up again, which sends the link again.
+--
+-- Rate limited, or it would be a free list of everyone who uses the game:
+-- 10 checks a minute for each caller, and 60 a minute for all callers
+-- together, because addresses can be rotated: that is the real ceiling,
+-- far above what genuine sign-ups need. Over either, it
+-- raises an error (HTTP 429), which the form treats like any failed
+-- check: it says nothing, and sign-up still tells them on submit.
+--
+-- The caller is their network address as Supabase's edge saw it:
+-- `cf-connecting-ip`, set by Cloudflare, else the last entry of
+-- x-forwarded-for (the first entry is whatever the caller chose to send).
+-- It is kept only as an md5 hash, in a table nothing but this function
+-- can reach, and only for a minute: every check clears out older ones.
+--
+-- `security definer` lets it read auth.users and write the log, which
+-- anon can't; `set search_path = ''` keeps a look-alike object in another
+-- schema from being picked up.
+-- ----------------------------------------------------------------------
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+
+create table if not exists private.email_checks (
+  caller     text not null,
+  checked_at timestamptz not null default now()
+);
+create index if not exists email_checks_caller_idx on private.email_checks (caller, checked_at);
+create index if not exists email_checks_time_idx on private.email_checks (checked_at);
+revoke all on private.email_checks from public, anon, authenticated;
+
+create or replace function public.email_has_account(address text)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  headers json := coalesce(nullif(current_setting('request.headers', true), ''), '{}')::json;
+  forwarded text[] := string_to_array(coalesce(headers ->> 'x-forwarded-for', ''), ',');
+  who text := md5(coalesce(
+    nullif(btrim(headers ->> 'cf-connecting-ip'), ''),
+    nullif(btrim(forwarded[cardinality(forwarded)]), ''),
+    'unknown'
+  ));
+begin
+  -- One check at a time for each caller, so two at once can't both slip
+  -- under the limit.
+  perform pg_advisory_xact_lock(hashtext('email_has_account ' || who));
+  delete from private.email_checks where checked_at < now() - interval '1 minute';
+  if (select count(*) from private.email_checks where caller = who) >= 10
+     or (select count(*) from private.email_checks) >= 60 then
+    raise exception 'Too many checks. Try again in a minute.' using errcode = 'PT429';
+  end if;
+  insert into private.email_checks (caller) values (who);
+
+  if address is null or char_length(address) > 320 then
+    return false;
+  end if;
+  return exists (
+    select 1
+    from auth.users u
+    where lower(u.email) = lower(btrim(address))
+      and u.email_confirmed_at is not null
+      and u.deleted_at is null
+  );
+end;
+$$;
+
+revoke execute on function public.email_has_account(text) from public;
+grant execute on function public.email_has_account(text) to anon, authenticated;

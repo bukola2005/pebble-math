@@ -1,8 +1,7 @@
 /* ----------------------------------------------------------------------
-   The Provision Store's play area, over the painted scene. Everything is
-   placed in pixels from where the shop picture is (ShelfGame.jsx): the
-   delivery on the ground, the shelf unit beside the shop, and the shop's
-   own counter top.
+   The Provision Store's play area, over the painted scene: the shelf, the
+   delivery and the place for an order, side by side in one band along the
+   ground, placed in pixels from the screen (ShelfGame.jsx).
    ---------------------------------------------------------------------- */
 
 /* --- the delivery: a mat on the ground ------------------------------------------- */
@@ -53,6 +52,7 @@
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 3px 2px rgba(70, 35, 10, 0.3));
+  transition: transform 0.2s var(--pm-ease-pop);
 }
 
 .pm-carton.is-movable,
@@ -71,6 +71,21 @@
   outline: 3px solid var(--pm-purple-700);
   outline-offset: 3px;
   border-radius: 8px;
+}
+
+/* A chosen tin lifts a little, with its number. */
+.pm-tin.is-chosen {
+  z-index: 4;
+}
+
+.pm-tin.is-chosen img {
+  transform: translateY(-16%);
+  filter: drop-shadow(0 9px 5px rgba(70, 35, 10, 0.32));
+}
+
+.pm-tin__badge {
+  top: -16%;
+  right: -12px;
 }
 
 .pm-carton.is-dragging,
@@ -124,10 +139,12 @@
   aspect-ratio: 440 / 374;
 }
 
-/* --- the shelf unit -------------------------------------------------------------- */
+/* --- the shelf unit --------------------------------------------------------------
+   Under the mat and the place: on a narrow screen it stands just behind
+   them. */
 .pm-shelf {
   position: absolute;
-  z-index: 1;
+  z-index: 0;
 }
 
 .pm-shelf__art {
@@ -236,51 +253,18 @@
   top: -10px;
 }
 
-/* --- the counter top --------------------------------------------------------------
-   The painted counter is the place; on it, a plain cloth where an order
-   goes. Nothing drawn on it but what the child puts there. */
-.pm-counter-top {
-  position: absolute;
+/* --- the place for an order ----------------------------------------------------------
+   The cloth or the counter (BasketGame.css), with its cream edge. What is
+   on it rides above the mat beside it. */
+.pm-shop-place .pm-carton,
+.pm-shop-place .pm-tin {
   z-index: 1;
-  border-radius: 14px;
-  transition:
-    opacity 0.5s var(--pm-ease),
-    transform 0.5s var(--pm-ease),
-    box-shadow 0.2s var(--pm-ease);
 }
 
-.pm-counter-top__cloth {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  height: 14px;
-  border-radius: 6px;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0) 0 12px, rgba(255, 255, 255, 0.3) 12px 15px),
-    repeating-linear-gradient(0deg, #e9784f 0 4px, #f2b45f 4px 8px, #9d8ae0 8px 11px);
-  box-shadow: 0 3px 4px rgba(70, 40, 20, 0.3);
-  animation: pm-tray-in 0.45s var(--pm-ease-pop) both;
-}
-
-.pm-counter-top.is-ready {
-  box-shadow:
-    0 0 0 4px var(--pm-white),
-    0 0 22px rgba(255, 236, 170, 0.95);
-}
-
-.pm-counter-top.is-done {
-  animation: pm-order-done 0.8s ease-out both;
-}
-
-.pm-counter-top.is-taken {
-  opacity: 0;
-  transform: translateY(-16px) scale(0.94);
-  pointer-events: none;
-}
-
-.pm-counter-top .pm-carton,
-.pm-counter-top .pm-tin {
-  z-index: 1;
+/* "15!": the number, over the order. */
+.pm-shop-place__answer {
+  left: 50%;
+  top: -30px;
 }
 
 /* --- Blob's steps: everything but what he names goes dim ----------------------------
@@ -302,49 +286,40 @@
   filter: brightness(0.5) saturate(0.6);
 }
 
-/* "1 carton… and 7 loose.": the delivery comes up out of the dim. */
-.pm-shop--spot-cartons .pm-delivery,
-.pm-shop--spot-tins .pm-delivery,
-.pm-shop--spot-both .pm-delivery,
-.pm-shop--spot-cartons .pm-carton,
-.pm-shop--spot-tins .pm-carton,
-.pm-shop--spot-both .pm-carton,
-.pm-shop--spot-tins .pm-tin,
-.pm-shop--spot-both .pm-tin {
+/* "1 carton… and 5 loose.": the order the child put together comes up
+   out of the dim. */
+.pm-shop--spot-place-cartons .pm-shop-place,
+.pm-shop--spot-place-tins .pm-shop-place,
+.pm-shop--spot-place-both .pm-shop-place {
   z-index: 6;
 }
 
-.pm-shop--spot-cartons .pm-carton__art,
-.pm-shop--spot-both .pm-carton__art,
-.pm-shop--spot-tins .pm-tin img,
-.pm-shop--spot-both .pm-tin img {
+.pm-shop--spot-place-cartons .pm-shop-place .pm-carton__art,
+.pm-shop--spot-place-both .pm-shop-place .pm-carton__art,
+.pm-shop--spot-place-tins .pm-shop-place .pm-tin img,
+.pm-shop--spot-place-both .pm-shop-place .pm-tin img {
   filter: drop-shadow(0 0 4px #fff7d6) drop-shadow(0 0 12px rgba(255, 220, 130, 0.9));
 }
 
-.pm-shop--spot-tins .pm-carton__art {
+.pm-shop--spot-place-tins .pm-shop-place .pm-carton__art {
   filter: brightness(0.6);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pm-delivery,
-  .pm-counter-top__cloth,
-  .pm-counter-top.is-done,
   .pm-shelf.is-done .pm-shelf__art,
-  .pm-shelf__ten {
-    animation: none;
-  }
-
+  .pm-shelf__ten,
   .pm-carton__tag.is-hint,
   .pm-shelf__ten.is-hint {
     animation: none;
   }
 
+  .pm-tin img {
+    transition: none;
+  }
+
   .pm-carton.is-inviting .pm-carton__art {
     animation: none;
     filter: drop-shadow(0 0 8px rgba(255, 220, 130, 0.7));
-  }
-
-  .pm-counter-top {
-    transition: none;
   }
 }
