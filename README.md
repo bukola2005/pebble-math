@@ -857,6 +857,28 @@ supabase/auth. An address that signed up but never confirmed gets the
 confirmation email again and keeps its first password; the "check your
 email" screen says so.
 
+**Before that, as soon as they leave the email field**, the form asks
+`email_has_account()` (in `supabase/schema.sql`, through
+`emailHasAccount` in `lib/account.js`), so a parent doesn't fill in
+everything else first. Under the email field, in the field-error style:
+"This email already has an account." with a Sign in link that carries the
+address over. It asks only for an address that looks like one and has
+changed since it was last asked about, 400ms after they leave the field,
+and calls it off if they come back to the field or edit it, so never while
+they type. Create account is never held up by it, and a check that fails,
+is slow or is refused says nothing (an error under the field would read as
+"your email is wrong"): the screen above still tells them on submit.
+
+The function answers true or false and nothing else, and counts only a
+confirmed account. Anyone can call it before signing in, so it is rate
+limited: 10 checks a minute for each caller and 60 a minute for all
+callers together, the real ceiling, since addresses can be rotated (over
+either, an error the form ignores). The caller is
+their network address as Supabase's edge saw it, `cf-connecting-ip`, else
+the last entry of `x-forwarded-for` (the first is whatever the caller
+chose to send), kept only as an md5 hash, for a minute, in
+`private.email_checks`, which nothing else can read.
+
 **The confirmation link** in the sign-up email lands on `/confirmed`, which
 never shows an error: no red, no status codes, nothing from Supabase, and
 the link's details are taken out of the address bar once read. One calm

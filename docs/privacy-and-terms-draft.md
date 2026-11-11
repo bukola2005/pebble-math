@@ -67,6 +67,8 @@ The guide's words are read aloud using voices built into the device. Nothing spo
 - **Supabase** stores the accounts and the game data, on servers in [REGION]. They process it on our instructions and do not use it for anything of their own. Their sign-in records include the IP address a sign-in came from, kept as a security measure.
 - **Vercel** serves the website itself. Like any web host, their records include the IP address each page was requested from.
 
+When someone types an email address while signing up, the site checks whether it already has an account, so it can say so straight away. To stop that check being used to find out who has an account, we keep a scrambled form of the network address it came from for one minute, then delete it.
+
 We do not load fonts, scripts or anything else from other companies' servers. Everything the site needs comes from the site itself.
 
 ## How long we keep it

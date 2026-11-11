@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import AuthField from "../components/AuthField";
 import CTAButton from "../components/CTAButton";
 import { useAuth } from "../context/AuthContext";
+import { emailHasAccount } from "../lib/account";
 import { BAD_EMAIL_MESSAGE, authErrorMessage, isBadEmail } from "../lib/authErrors";
 import {
   MIN_PASSWORD_LENGTH,
@@ -50,6 +51,16 @@ function validate({ role, fullName, email, password }) {
   real user, so it can't be told apart here. The "check your email" screen
   says what that means.
 */
+/** Under the email field when it has an account already: the field-error style, and a way straight to signing in. */
+const takenNote = (address) => (
+  <>
+    This email already has an account.{" "}
+    <Link className="pm-auth__link" to="/signin" state={{ email: address }}>
+      Sign in
+    </Link>
+  </>
+);
+
 function alreadyRegistered(data, error) {
   if (error) return error.code === "user_already_exists" || error.code === "email_exists";
   const identities = data?.user?.identities;
@@ -78,6 +89,19 @@ export default function SignUp() {
   const [confirmingEmail, setConfirmingEmail] = useState("");
   // Set to the address when it turns out to have an account already.
   const [existingEmail, setExistingEmail] = useState("");
+  // The early check on the email (checkEmail, below): its wait, the
+  // request in flight, and the last answer, with the address it was for.
+  const checkWait = useRef(null);
+  const checkInFlight = useRef(null);
+  const lastCheck = useRef(null);
+
+  const cancelCheck = () => {
+    window.clearTimeout(checkWait.current);
+    checkWait.current = null;
+    checkInFlight.current?.abort();
+    checkInFlight.current = null;
+  };
+  useEffect(() => cancelCheck, []);
 
   // Already signed in, or just signed up with confirmation switched off:
   // there's nothing to do here. Sign-up creates the session through the
@@ -91,9 +115,48 @@ export default function SignUp() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  /*
+    Does this email have an account already? Asked as soon as the parent
+    leaves the field (email_has_account in supabase/schema.sql), so they
+    needn't fill in everything else to find out. Only for an address that
+    looks like one and has changed since it was last asked about; 400ms
+    after they leave the field, and called off if they come back to it or
+    edit it, so never while they are typing. Nothing waits on it: Create
+    account works throughout. A check that fails, or is too slow, says
+    nothing (an error under the field would read as "your email is
+    wrong"), and submitting still tells them.
+  */
+  const checkEmail = () => {
+    cancelCheck();
+    const address = values.email.trim();
+    if (!isValidEmail(address)) return;
+    if (lastCheck.current?.address === address) {
+      if (lastCheck.current.taken) setErrors((prev) => ({ ...prev, email: takenNote(address) }));
+      return;
+    }
+    checkWait.current = window.setTimeout(async () => {
+      checkWait.current = null;
+      const controller = new AbortController();
+      checkInFlight.current = controller;
+      const taken = await emailHasAccount(address, controller.signal);
+      if (controller.signal.aborted) return;
+      checkInFlight.current = null;
+      if (taken == null) return;
+      lastCheck.current = { address, taken };
+      if (taken) setErrors((prev) => ({ ...prev, email: takenNote(address) }));
+    }, 400);
+  };
+
+  const changeEmail = (event) => {
+    cancelCheck();
+    change("email")(event);
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     if (submitting || !agreed) return;
+    // Submitting tells them anyway; an answer arriving now would only be late.
+    cancelCheck();
     const form = event.currentTarget;
 
     const found = validate(values);
@@ -274,7 +337,9 @@ export default function SignUp() {
           spellCheck={false}
           required
           value={values.email}
-          onChange={change("email")}
+          onChange={changeEmail}
+          onFocus={cancelCheck}
+          onBlur={checkEmail}
           error={errors.email}
         />
 
