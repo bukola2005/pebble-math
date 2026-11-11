@@ -44,6 +44,61 @@
   border-color: var(--pm-error);
 }
 
+/* A password field, with its show/hide button inside at the right. The
+   padding keeps typed text from running under the button. */
+.pm-field__control {
+  position: relative;
+}
+
+.pm-field__input--password {
+  padding-right: 60px;
+}
+
+/* Edge draws an eye of its own in password fields; one is enough. */
+.pm-field__input::-ms-reveal,
+.pm-field__input::-ms-clear {
+  display: none;
+}
+
+/* 48 x 44 to tap, round a 22px eye. */
+.pm-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pm-ink-muted);
+  cursor: pointer;
+}
+
+.pm-field__toggle:hover {
+  color: var(--pm-ink);
+}
+
+/* The input's ring (base.css): the same colour and weight, drawn close
+   so it stays inside the field's border. */
+.pm-field__toggle:focus-visible {
+  outline-offset: 0;
+  border-radius: 10px;
+}
+
+.pm-field__toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .pm-field__note {
   font-size: var(--pm-micro);
   line-height: 1.45;

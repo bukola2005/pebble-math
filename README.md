@@ -897,6 +897,16 @@ the session or from the link's own sign-in. The sign-in page fills it in
 and puts the cursor in the password box. When the address can't be read,
 usually after a used link, the form is simply empty.
 
+**Every password field has an eye** inside it, at the right, to show what
+was typed: sign-up, sign-in and both fields on the new-password page. It is
+`AuthField` itself that adds it, to any `type="password"`, so they all
+behave the same. It starts hidden, stays as the parent leaves it (nothing
+hides it again on a timer), and is a real `<button type="button">`, so it
+can't submit the form, labelled "Show password" or "Hide password". Pressing
+it leaves focus and the caret in the field, so they can carry on typing
+mid-word. A struck-through eye while hidden, an open eye while showing, both
+inline SVG. No password field appears anywhere a child goes.
+
 **Forgotten passwords.** "Forgot your password?" on sign-in →
 `/forgot-password` emails a reset link → `/reset-password` sets the new one.
 The request page reads the same whether or not the address has an account
