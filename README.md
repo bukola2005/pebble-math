@@ -719,6 +719,22 @@ twice. Both work with a finger, a mouse or a pen (pointer events). With a
 keyboard, Enter chooses the focused orange and B puts it, and any chosen
 with it, in the basket.
 
+**Blob finds out that several can be carried at once**, once per child,
+at the first customer's order they play: Chapter 1's Stage B, or, if they
+never saw it there, the Provision Store's first order, with tins. Almost
+no child finds it by accident. He doesn't teach it; he is lost too:
+"Wait. Watch this…", he taps two oranges, which lift and show 1 and 2,
+and "Oh! I can carry both at once." Then the child carries on. There is
+no button and no arrow, nothing waits for it, and the two he tapped stay
+chosen; his second line goes at the child's next touch. It is saved as he
+taps (`players.group_drag_known`), and so is a child carrying several at
+once themselves, anywhere, the tutorial included, the first time they do:
+that child never sees it. It needs two loose ones on the table, so if a
+child is past the first order (coming back part way through) it waits for
+the next order that has them. If the column can't be read (not added
+yet), he never does it, rather than do it every visit
+(`lib/carryTogether.js`).
+
 **Every line is in `data/dialogue.js`**, to edit without touching code, and
 is read aloud with the browser's own voice (`lib/speech.js`) until real
 recordings exist. The speaker button in the top corner mutes it (and the
@@ -811,7 +827,8 @@ auth.users ─ profiles ─ players ─ stall_progress
                                                       cleared, or place reached
                           character (Zizi's look),
                           game_name, first_play_done,
-                          scene1_done, round_reached
+                          scene1_done, round_reached,
+                          group_drag_known
 ```
 
 - `players` holds a nickname the grown-up gave, a **coarse age band**

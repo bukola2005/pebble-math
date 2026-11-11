@@ -24,6 +24,7 @@ import {
 } from "../data/provisionStore";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
+import { useCarryTogether } from "../lib/carryTogether";
 import { earnLantern } from "../lib/lanterns";
 import { after, cancel, isPaused, usePaused } from "../lib/pause";
 import { saveRoundReached } from "../lib/players";
@@ -278,6 +279,16 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   );
   const handedOver = delivered.cartons.length * TINS_PER_CARTON + delivered.tins.length;
   const stillWanted = round.kind === "order" ? round.want - handedOver : 0;
+  // The first customer's order here: Blob finds out that several can be
+  // carried at once, if the child never saw him do it at the Fruit Stall
+  // (lib/carryTogether.js).
+  const carry = useCarryTogether({
+    player,
+    ready: round.kind === "order" && stageB && phase === "play" ? round.index : null,
+    loose: tins,
+    chosen,
+    setChosen,
+  });
   const target = phase !== "play" ? null : stageC || round.kind === "order" ? "place" : "shelf";
 
   const values = {
@@ -382,6 +393,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     primeSound(); // from this drop, for the "yes" when the shelf is full
     setPlaced((list) => [...list, ...next]);
     takeFromDelivery(items);
+    carry.carried(items.length);
     return true;
   };
 
@@ -397,6 +409,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     setDelivered((now) => ({ cartons: [...now.cartons, ...cartonIds], tins: [...now.tins, ...tinIds] }));
     takeFromDelivery(items);
     primeSound();
+    carry.carried(items.length);
     return true;
   };
 
@@ -668,13 +681,15 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   const steppedLine = stepped && lineStep > 0 ? { speaker: "blob", text: stepped[Math.min(lineStep, stepped.length) - 1].show } : null;
   const blobSays = wallLine
     ? CHAPTER_TWO.wall
-    : phase !== "summary"
-      ? null
-      : said != null
-        ? shelfRound
-          ? CHAPTER_TWO.shelfSaid
-          : CHAPTER_TWO.cartonsSaid
-        : steppedLine;
+    : carry.line
+      ? carry.line
+      : phase !== "summary"
+        ? null
+        : said != null
+          ? shelfRound
+            ? CHAPTER_TWO.shelfSaid
+            : CHAPTER_TWO.cartonsSaid
+          : steppedLine;
   // What Blob's steps light: the shelf (what it had, what it holds, what
   // went on), or the order the child put together.
   const steps = shelfRound
@@ -832,7 +847,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
               noteKey={wrongTaps}
               silent={Boolean(stepped) && said == null}
               buttonLabel={FRUIT_STALL.next}
-              onNext={wallLine ? null : nextStep}
+              onNext={wallLine || carry.line ? null : nextStep}
             />
           )}
         </div>

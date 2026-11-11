@@ -41,6 +41,7 @@ import { SHOP_ID } from "../data/provisionStore";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
+import { useCarryTogether } from "../lib/carryTogether";
 import { earnLantern } from "../lib/lanterns";
 import { after, cancel, isPaused, usePaused } from "../lib/pause";
 import { saveRoundReached } from "../lib/players";
@@ -370,6 +371,15 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const handedOver = delivered.crates.length * BASKET_HOLDS + delivered.loose.length;
   const stillWanted = stageB ? round.want - handedOver : 0;
   const loose = stageB ? looseHere : onTable;
+  // The first customer's order a child plays: Blob finds out that several
+  // can be carried at once (lib/carryTogether.js), once, ever.
+  const carry = useCarryTogether({
+    player,
+    ready: stageB && phase === "play" ? round.index : null,
+    loose: round.oranges.filter((id) => !inBasket.includes(id) && !delivered.loose.includes(id)),
+    chosen,
+    setChosen,
+  });
   const values = {
     name: player.game_name,
     n: round.target,
@@ -500,6 +510,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     setInBasket((list) => [...list, ...ids]);
     setChosen((list) => list.filter((x) => !ids.includes(x)));
     setHintShown(false);
+    carry.carried(ids.length);
     if (phase === "tutorial") {
       // They tried it. The tutorial ends, that orange hops back out, and
       // round 1 starts properly.
@@ -596,6 +607,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     setDelivered((now) => ({ crates: [...now.crates, ...crateIds], loose: [...now.loose, ...looseIds] }));
     setChosen((list) => list.filter((x) => !looseIds.includes(x)));
     primeSound(); // from this drop, for the "yes" when the order is complete
+    carry.carried(items.length);
     return true;
   };
 
@@ -940,19 +952,22 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const steppedLine =
     stepped && lineStep > 0 ? { speaker: "blob", text: stepped[Math.min(lineStep, stepped.length) - 1].show } : null;
   // Stage B: Blob's question at the wall stays up, with no button, until a
-  // crate is opened.
+  // crate is opened. His finding out that several can be carried at once
+  // has no button either.
   const wallLine = phase === "play" && wall && !cracked;
   const blobSays = wallLine
     ? CHAPTER_ONE.wall
-    : phase === "question"
-      ? FRUIT_STALL.howManyMore
-      : phase === "won"
-        ? FRUIT_STALL.practiceWon
-        : said != null
-          ? CHAPTER_ONE.cratesSaid
-          : stepped
-            ? steppedLine
-            : null;
+    : carry.line
+      ? carry.line
+      : phase === "question"
+        ? FRUIT_STALL.howManyMore
+        : phase === "won"
+          ? FRUIT_STALL.practiceWon
+          : said != null
+            ? CHAPTER_ONE.cratesSaid
+            : stepped
+              ? steppedLine
+              : null;
   const spotlight =
     phase === "summary"
       ? (chapterOne ? [null, "crates", "loose", "both"] : [null, "crate", "tray", "both"])[Math.min(lineStep, 3)]
@@ -1162,7 +1177,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
               noteKey={wrongTaps}
               silent={Boolean(stepped) && said == null}
               buttonLabel={FRUIT_STALL.next}
-              onNext={wallLine ? null : nextStep}
+              onNext={wallLine || carry.line ? null : nextStep}
             />
           )}
         </div>

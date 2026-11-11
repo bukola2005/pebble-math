@@ -3,7 +3,7 @@ import { Navigate, Outlet, Route, Routes, useNavigate, useParams } from "react-r
 import CTAButton from "../components/CTAButton";
 import PlayLoading from "../components/PlayLoading";
 import { countLanterns } from "../lib/lanterns";
-import { getPlayer, getRoundReached } from "../lib/players";
+import { getGroupDragKnown, getPlayer, getRoundReached } from "../lib/players";
 import { listClearedStalls } from "../lib/progress";
 import { nextStep } from "../lib/playFlow";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
@@ -29,6 +29,7 @@ const PlayShop = lazy(() => import("./PlayShop"));
  *                `cleared_stalls` (from stall_progress), `lanterns` and
  *                `round_reached` (where they got to in Chapter 1)
  *   goNext(p)    record what a step just saved, then go to the next step
+ *   remember(p)  record what a step just saved, and stay on it
  *   filmUrl      the film, if the loading screen already downloaded it
  *   keepFilm(u)  for the loading screen to hand that copy over
  *   newcomer     true when this visit began before Scene 1 was played:
@@ -62,22 +63,28 @@ export default function PlaySessionShell() {
     // starts, as if none were cleared yet. So does how many lanterns they
     // have, as `player.lanterns` (null if it can't be read), and the round
     // they got to in Chapter 1, as `player.round_reached` (0, its start, if
-    // it can't be read).
+    // it can't be read). And whether they know several can be carried at
+    // once, as `player.group_drag_known` (true if it can't be read, so Blob
+    // doesn't show it on every visit: lib/carryTogether.js).
     const cleared = listClearedStalls(playerId).catch((error) => ({ data: [], error }));
     const lanterns = countLanterns(playerId).catch((error) => ({ data: null, error }));
     const reached = getRoundReached(playerId)
       .then(({ data, error }) => ({ data: data?.round_reached ?? 0, error }))
       .catch((error) => ({ data: 0, error }));
-    Promise.all([getPlayer(playerId), cleared, lanterns, reached])
-      .then(([{ data, error }, stalls, lamps, spot]) => {
+    const carrying = getGroupDragKnown(playerId)
+      .then(({ data, error }) => ({ data: error ? true : (data?.group_drag_known ?? true), error }))
+      .catch((error) => ({ data: true, error }));
+    Promise.all([getPlayer(playerId), cleared, lanterns, reached, carrying])
+      .then(([{ data, error }, stalls, lamps, spot, carry]) => {
         if (!active) return;
         if (stalls.error) console.warn("Couldn't read which stalls are cleared.", stalls.error);
         if (lamps.error) console.warn("Couldn't read the lanterns.", lamps.error);
         if (spot.error) console.warn("Couldn't read where they got to.", spot.error);
+        if (carry.error) console.warn("Couldn't read whether they know several can be carried at once.", carry.error);
         if (error) setFailure(error);
         else if (!data) setMissing(true);
         else {
-          setPlayer({ ...data, cleared_stalls: stalls.data, lanterns: lamps.data, round_reached: spot.data });
+          setPlayer({ ...data, cleared_stalls: stalls.data, lanterns: lamps.data, round_reached: spot.data, group_drag_known: carry.data });
           setNewcomer(!data.scene1_done);
           // Every visit starts at the loading screen, even a reload in the
           // middle of a step, so the step's pictures are in before it shows
@@ -118,9 +125,11 @@ export default function PlaySessionShell() {
     [player, navigate]
   );
 
+  const remember = useCallback((saved) => setPlayer((now) => ({ ...now, ...saved })), []);
+
   const context = useMemo(
-    () => ({ player, goNext, filmUrl, keepFilm, newcomer }),
-    [player, goNext, filmUrl, keepFilm, newcomer]
+    () => ({ player, goNext, remember, filmUrl, keepFilm, newcomer }),
+    [player, goNext, remember, filmUrl, keepFilm, newcomer]
   );
 
   if (missing) return <Navigate to="/play" replace />;

@@ -44,6 +44,10 @@ create table if not exists public.profiles (
 --                 it: Chapter 1's, or, once they have stepped into the
 --                 Provision Store, Chapter 2's. Back to 0 once they have
 --                 seen the map at a chapter's end
+--   group_drag_known  false until the child knows several can be carried
+--                 at once: Blob has found it out in front of them, at the
+--                 first customer's order, or they have done it themselves
+--                 (src/lib/carryTogether.js). Once true, he never does it
 -- Band and class values are mirrored in src/data/players.js.
 -- ----------------------------------------------------------------------
 create table if not exists public.players (
@@ -62,6 +66,7 @@ create table if not exists public.players (
   first_play_done boolean not null default false,
   scene1_done  boolean not null default false,
   round_reached smallint not null default 0 check (round_reached between 0 and 20),
+  group_drag_known boolean not null default false,
   created_at   timestamptz not null default now()
 );
 
@@ -80,6 +85,8 @@ alter table public.players
                                                  and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$');
 alter table public.players
   add column if not exists round_reached smallint not null default 0 check (round_reached between 0 and 20);
+alter table public.players
+  add column if not exists group_drag_known boolean not null default false;
 -- Kindergarten joined the class levels. Primary 4 to 6 stay allowed for
 -- children added before the form stopped offering them.
 alter table public.players drop constraint if exists players_class_level_check, add constraint players_class_level_check check (class_level in ('kindergarten', 'primary-1', 'primary-2', 'primary-3', 'primary-4', 'primary-5', 'primary-6'));

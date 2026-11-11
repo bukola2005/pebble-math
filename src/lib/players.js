@@ -19,6 +19,9 @@ import { supabase } from "./supabase";
     scene1_done      whether they have played Scene 1
     round_reached    the round they are on in Chapter 1, the first time
                      through, so they come back to it (0: its start)
+    group_drag_known whether they know several can be carried at once:
+                     Blob has found it out in front of them, or they
+                     have done it (lib/carryTogether.js)
   There is nothing here for a child's email, password, date of birth or any
   contact detail, and there never should be.
 */
@@ -89,6 +92,14 @@ export const getRoundReached = (id) =>
 
 export const saveRoundReached = (id, round) =>
   changeOne(supabase.from("players").update({ round_reached: round }).eq("id", id), "not_saved");
+
+// Read on its own too: if it can't be (the column not added yet), the
+// game still starts, and Blob never shows carrying several at once.
+export const getGroupDragKnown = (id) =>
+  supabase.from("players").select("group_drag_known").eq("id", id).maybeSingle();
+
+export const saveGroupDragKnown = (id) =>
+  changeOne(supabase.from("players").update({ group_drag_known: true }).eq("id", id), "not_saved");
 
 export const finishFirstPlay = (id) =>
   changeOne(

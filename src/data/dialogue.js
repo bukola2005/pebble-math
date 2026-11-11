@@ -118,6 +118,17 @@ export const FRUIT_STALL = {
 };
 
 /**
+ * Blob finds out, once, that several can be carried at once, at the first
+ * customer's order a child plays (lib/carryTogether.js). Between the two
+ * lines he taps two oranges (or tins), and they show 1 and 2. He is
+ * finding it out, not teaching it: no "now you try".
+ */
+export const CARRY_TOGETHER = {
+  watch: { speaker: "blob", text: "Wait. Watch this…" },
+  both: { speaker: "blob", text: "Oh! I can carry both at once." },
+};
+
+/**
  * Chapter 1, the Fruit Stall proper, for a child who has finished the
  * tutorial. Stage A: adding past ten, with full crates on the table.
  * Stage B: customers' orders, taking away, and cracking a crate open when
