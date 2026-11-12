@@ -3,7 +3,8 @@ import { Navigate, Outlet, Route, Routes, useNavigate, useParams } from "react-r
 import CTAButton from "../components/CTAButton";
 import PlayLoading from "../components/PlayLoading";
 import { countLanterns } from "../lib/lanterns";
-import { getPlayer, getRoundReached } from "../lib/players";
+import { TUTORIAL_ID } from "../data/fruitStall";
+import { getGroupDragKnown, getPlayer, getRoundReached, getTutorialProgress } from "../lib/players";
 import { listClearedStalls } from "../lib/progress";
 import { nextStep } from "../lib/playFlow";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
@@ -26,15 +27,18 @@ const PlayShop = lazy(() => import("./PlayShop"));
  * context:
  *
  *   player       the row, kept up to date as steps save things, plus
- *                `cleared_stalls` (from stall_progress), `lanterns` and
- *                `round_reached` (where they got to in Chapter 1)
+ *                `cleared_stalls` (from stall_progress), `lanterns`,
+ *                `tutorial_round` and `tutorial_done` (where they are in
+ *                the tutorial, and whether it is finished) and
+ *                `round_reached` (where they got to in the chapter after)
  *   goNext(p)    record what a step just saved, then go to the next step
+ *   remember(p)  record what a step just saved, and stay on it
  *   filmUrl      the film, if the loading screen already downloaded it
  *   keepFilm(u)  for the loading screen to hand that copy over
- *   newcomer     true when this visit began before Scene 1 was played:
- *                the stall then gives them the basket and the tutorial.
- *                A child who comes back later goes straight to the stall,
- *                which starts where they got to (routes/PlayStall.jsx).
+ *
+ * Nothing here remembers whether this is a child's first visit: where they
+ * start is read from what is saved, so a reload lands where they were
+ * (routes/PlayStall.jsx).
  *
  * Row Level Security means another account's player simply isn't found, and
  * the child goes back to "Who's playing?".
@@ -50,7 +54,6 @@ export default function PlaySessionShell() {
   const [failure, setFailure] = useState(null);
   const [missing, setMissing] = useState(false);
   const [filmUrl, setFilmUrl] = useState(null);
-  const [newcomer, setNewcomer] = useState(false);
   const filmUrlRef = useRef(null);
 
   useDocumentTitle("Play");
@@ -62,23 +65,45 @@ export default function PlaySessionShell() {
     // starts, as if none were cleared yet. So does how many lanterns they
     // have, as `player.lanterns` (null if it can't be read), and the round
     // they got to in Chapter 1, as `player.round_reached` (0, its start, if
-    // it can't be read).
+    // it can't be read). And whether they know several can be carried at
+    // once, as `player.group_drag_known` (true if it can't be read, so Blob
+    // doesn't show it on every visit: lib/carryTogether.js).
     const cleared = listClearedStalls(playerId).catch((error) => ({ data: [], error }));
     const lanterns = countLanterns(playerId).catch((error) => ({ data: null, error }));
     const reached = getRoundReached(playerId)
       .then(({ data, error }) => ({ data: data?.round_reached ?? 0, error }))
       .catch((error) => ({ data: 0, error }));
-    Promise.all([getPlayer(playerId), cleared, lanterns, reached])
-      .then(([{ data, error }, stalls, lamps, spot]) => {
+    // Where they are in the tutorial, and whether it is finished, as
+    // `player.tutorial_round` and `player.tutorial_done`. If those can't be
+    // read (the columns not added yet), the tutorial starts at its opening,
+    // and counts as finished if the Fruit Stall's row is there, as it did
+    // before the columns existed.
+    const tutorial = getTutorialProgress(playerId)
+      .then(({ data, error }) => ({ data: error ? null : data, error }))
+      .catch((error) => ({ data: null, error }));
+    const carrying = getGroupDragKnown(playerId)
+      .then(({ data, error }) => ({ data: error ? true : (data?.group_drag_known ?? true), error }))
+      .catch((error) => ({ data: true, error }));
+    Promise.all([getPlayer(playerId), cleared, lanterns, reached, carrying, tutorial])
+      .then(([{ data, error }, stalls, lamps, spot, carry, learning]) => {
         if (!active) return;
         if (stalls.error) console.warn("Couldn't read which stalls are cleared.", stalls.error);
         if (lamps.error) console.warn("Couldn't read the lanterns.", lamps.error);
         if (spot.error) console.warn("Couldn't read where they got to.", spot.error);
+        if (carry.error) console.warn("Couldn't read whether they know several can be carried at once.", carry.error);
+        if (learning.error) console.warn("Couldn't read where they are in the tutorial.", learning.error);
         if (error) setFailure(error);
         else if (!data) setMissing(true);
         else {
-          setPlayer({ ...data, cleared_stalls: stalls.data, lanterns: lamps.data, round_reached: spot.data });
-          setNewcomer(!data.scene1_done);
+          setPlayer({
+            ...data,
+            cleared_stalls: stalls.data,
+            lanterns: lamps.data,
+            round_reached: spot.data,
+            group_drag_known: carry.data,
+            tutorial_round: learning.data?.tutorial_round ?? 0,
+            tutorial_done: learning.data ? Boolean(learning.data.tutorial_done) : stalls.data.includes(TUTORIAL_ID),
+          });
           // Every visit starts at the loading screen, even a reload in the
           // middle of a step, so the step's pictures are in before it shows
           // and the steps can't be taken out of order.
@@ -118,9 +143,11 @@ export default function PlaySessionShell() {
     [player, navigate]
   );
 
+  const remember = useCallback((saved) => setPlayer((now) => ({ ...now, ...saved })), []);
+
   const context = useMemo(
-    () => ({ player, goNext, filmUrl, keepFilm, newcomer }),
-    [player, goNext, filmUrl, keepFilm, newcomer]
+    () => ({ player, goNext, remember, filmUrl, keepFilm }),
+    [player, goNext, remember, filmUrl, keepFilm]
   );
 
   if (missing) return <Navigate to="/play" replace />;

@@ -38,12 +38,26 @@ create table if not exists public.profiles (
 --                 only, letters and hyphens
 --   first_play_done  false until the child has watched (or skipped) the
 --                 opening film
---   scene1_done   false until the child has played the market's first scene
+--   scene1_done   false until the child has played the market's first
+--                 scene. It says that, and nothing about the tutorial
+--   tutorial_round  where the child is in the Fruit Stall's tutorial, so
+--                 they come back to it, on another day or when the page
+--                 reloads: 0, its opening (the basket, and Blob's beats);
+--                 then the round they are on, 1 to 5
+--   tutorial_done false until the child has finished the tutorial: the
+--                 one thing that says so. (The 'fruit-stall' row in
+--                 stall_progress is written with it, for what their
+--                 profile shows as earned; where they go is never read
+--                 from that row)
 --   round_reached the round the child is on in the chapter they are
 --                 playing the first time (from 0), so they come back to
 --                 it: Chapter 1's, or, once they have stepped into the
 --                 Provision Store, Chapter 2's. Back to 0 once they have
 --                 seen the map at a chapter's end
+--   group_drag_known  false until the child knows several can be carried
+--                 at once: Blob has found it out in front of them, at the
+--                 first customer's order, or they have done it themselves
+--                 (src/lib/carryTogether.js). Once true, he never does it
 -- Band and class values are mirrored in src/data/players.js.
 -- ----------------------------------------------------------------------
 create table if not exists public.players (
@@ -61,7 +75,10 @@ create table if not exists public.players (
                            and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$'),
   first_play_done boolean not null default false,
   scene1_done  boolean not null default false,
+  tutorial_round smallint not null default 0 check (tutorial_round between 0 and 20),
+  tutorial_done boolean not null default false,
   round_reached smallint not null default 0 check (round_reached between 0 and 20),
+  group_drag_known boolean not null default false,
   created_at   timestamptz not null default now()
 );
 
@@ -73,6 +90,10 @@ alter table public.players
 alter table public.players
   add column if not exists scene1_done boolean not null default false;
 alter table public.players
+  add column if not exists tutorial_round smallint not null default 0 check (tutorial_round between 0 and 20);
+alter table public.players
+  add column if not exists tutorial_done boolean not null default false;
+alter table public.players
   add column if not exists monster text check (monster in (
     'green', 'blue', 'orange', 'pink', 'yellow', 'teal', 'lavender'));
 alter table public.players
@@ -80,6 +101,8 @@ alter table public.players
                                                  and game_name ~ '^[A-Za-z-]+ [A-Za-z-]+$');
 alter table public.players
   add column if not exists round_reached smallint not null default 0 check (round_reached between 0 and 20);
+alter table public.players
+  add column if not exists group_drag_known boolean not null default false;
 -- Kindergarten joined the class levels. Primary 4 to 6 stay allowed for
 -- children added before the form stopped offering them.
 alter table public.players drop constraint if exists players_class_level_check, add constraint players_class_level_check check (class_level in ('kindergarten', 'primary-1', 'primary-2', 'primary-3', 'primary-4', 'primary-5', 'primary-6'));
@@ -197,6 +220,17 @@ create policy "stall_progress_insert_own" on public.stall_progress
   for insert to authenticated
   with check (exists (select 1 from public.players p
                       where p.id = player_id and p.profile_id = (select auth.uid())));
+
+-- A child who finished the tutorial before players.tutorial_done existed
+-- has the 'fruit-stall' row and nothing else to say so: carry it across,
+-- or they would be given the tutorial again. Run again later, this only
+-- ever turns it on, and only for a child with that row. (To put a test
+-- child back to the start, delete their rows too: the README has the SQL.)
+update public.players p
+   set tutorial_done = true
+ where not p.tutorial_done
+   and exists (select 1 from public.stall_progress s
+               where s.player_id = p.id and s.stall_id = 'fruit-stall');
 
 
 -- ----------------------------------------------------------------------

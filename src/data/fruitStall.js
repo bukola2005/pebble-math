@@ -153,6 +153,13 @@ export const FIRST_ORDER_ROUND = CHAPTER_ONE_ROUNDS.findIndex((round) => round.s
 /** The first Stage C round. */
 export const FIRST_TEST_ROUND = CHAPTER_ONE_ROUNDS.findIndex((round) => round.stage === "C");
 
+/**
+ * The tutorial's row in stall_progress, once it is finished: what the
+ * child's profile shows as earned. Whether the tutorial is finished is
+ * players.tutorial_done, never this row.
+ */
+export const TUTORIAL_ID = "fruit-stall";
+
 /** Chapter 1's row in stall_progress, once it is cleared. */
 export const CHAPTER_ONE_ID = "fruit-stall-chapter-1";
 

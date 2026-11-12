@@ -31,6 +31,7 @@ import {
   FIRST_ORDER_ROUND,
   FIRST_TEST_ROUND,
   ROUND_COUNT,
+  TUTORIAL_ID,
   setUpChapterRound,
   setUpRound,
   totalChoices,
@@ -41,9 +42,10 @@ import { SHOP_ID } from "../data/provisionStore";
 import { REWARDS } from "../data/rewards";
 import { getZiziLook } from "../data/zizi";
 import { recordAttempt } from "../lib/attempts";
+import { useCarryTogether } from "../lib/carryTogether";
 import { earnLantern } from "../lib/lanterns";
 import { after, cancel, isPaused, usePaused } from "../lib/pause";
-import { saveRoundReached } from "../lib/players";
+import { finishTutorial, saveRoundReached, saveTutorialRound } from "../lib/players";
 import { prefetchStep } from "../lib/playFlow";
 import { clearStall } from "../lib/progress";
 import { playCorrect, playCrack, playMeterFull, primeSound } from "../lib/sound";
@@ -51,7 +53,7 @@ import { speak, useReadAloud } from "../lib/speech";
 import { recordRound } from "../lib/stallLog";
 import "./PlayStall.css";
 
-const STALL_ID = "fruit-stall";
+const STALL_ID = TUTORIAL_ID;
 
 // The numeral tray for Stage C's reading round.
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
@@ -67,7 +69,7 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
   stands in front of it.
 
   Round 1 is practice, labelled so:
-    award     a child new here (just come from Scene 1) is given the basket
+    award     a child who hasn't begun the tutorial is given the basket
     tutorial  four beats, one highlight each, tap anywhere to move on;
               the last one lets them try a drag
     practised that orange hops back out of the basket
@@ -86,8 +88,9 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               Blob says what happened, one line at a time: "Hmm. The
               basket didn't fill this time." "Nine. One short of ten."
               (the empty space lights up) "Not every pile makes a ten.
-              That's fine." The tutorial is done, and the stall cleared:
-              stall_progress gets its row now.
+              That's fine." The tutorial is done: players.tutorial_done
+              is saved the moment the last orange is in, and
+              stall_progress gets its row, for the child's profile.
     finishing after round 5's Next: its segment of the meter fills and the
               whole meter glows
   And then straight into Chapter 1, the same stall, as if the child had
@@ -167,10 +170,19 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
               again; "Let's go" on the Provision Store goes there
               (routes/PlayShop.jsx).
 
-  Coming back, a child starts at the furthest point they reached. Part
-  way through Chapter 1 the first time, that is the round they were on
-  (players.round_reached, saved as each round is reached), with Grandma
-  already gone along the row. With Chapter 1 finished, it is the map, with
+  Coming back, or the page reloading, a child starts at the furthest
+  point they reached, read from what is saved and nothing else. In the
+  tutorial that is players.tutorial_round: 0, its opening (the basket,
+  and Blob's four beats, until the last is done); then the round they
+  are on, 1 to 5. Whether the tutorial is finished is
+  players.tutorial_done: never whether Scene 1 was played, and never a
+  stall_progress row. Part way through Chapter 1 the first time, it is
+  the round they were on (players.round_reached), with Grandma already
+  gone along the row. A round is reached the moment the one before it is
+  answered (in the tutorial, the order filled or the basket full; in
+  Chapter 1, the right number tapped, or a test handed over right), not
+  when Next is pressed after: a child who reloads never has to give a
+  right answer twice. With Chapter 1 finished, it is the map, with
   nothing opening; if they left before they saw it, Grandma's return and
   the cards first, then the map, opening. Playing it again is only ever
   the child's choice: "Carry on here", on the map. Once they have stepped
@@ -200,7 +212,7 @@ const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce
   map's "Let's go" takes all of it to the Provision Store.
 */
 export default function PlayStall() {
-  const { player, newcomer } = useOutletContext();
+  const { player } = useOutletContext();
   const { state } = useLocation();
   const navigate = useNavigate();
   const [run, setRun] = useState(() => ({
@@ -218,7 +230,6 @@ export default function PlayStall() {
     <FruitStall
       key={run.n}
       player={now}
-      newcomer={run.n ? false : newcomer}
       replay={run.replay}
       onAgain={({ cleared, lanterns, replay = false }) =>
         setRun((r) => ({ n: r.n + 1, cleared: [...r.cleared, ...cleared], lanterns: r.lanterns + lanterns, replay }))
@@ -233,16 +244,21 @@ export default function PlayStall() {
   );
 }
 
-function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
-  const clearedBefore = !newcomer && (player.cleared_stalls ?? []).includes(STALL_ID);
-  // Once the tutorial is done, the stall is Chapter 1.
-  const chapterOne = clearedBefore;
+function FruitStall({ player, replay, onAgain, onShop }) {
+  const { remember } = useOutletContext();
+  // Once the tutorial is done (players.tutorial_done), the stall is
+  // Chapter 1. Fixed for this run: the tutorial's last round saves it, and
+  // Chapter 1 then starts as a new run (PlayStall, above).
+  const [chapterOne] = useState(() => Boolean(player.tutorial_done));
+  // Where the tutorial starts (players.tutorial_round): 0, its opening;
+  // then the round they are on, 1 to 5.
+  const tutorialAt = chapterOne ? 0 : Math.min(Math.max(player.tutorial_round ?? 0, 0), ROUND_COUNT);
   const roundCount = chapterOne ? CHAPTER_ONE_ROUNDS.length : ROUND_COUNT;
   const setUp = (index) => (chapterOne ? setUpChapterRound(index) : setUpRound(index, player.age_band));
   const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_ONE_ID);
   // Where this visit starts, the furthest point they reached (see above):
-  //   start   the beginning: the tutorial's, or Chapter 1's, with Grandma's
-  //           lines (and so from "Carry on here")
+  //   start   Chapter 1's beginning, with Grandma's lines (and so from
+  //           "Carry on here"). In the tutorial: where tutorial_round says
   //   round   part way through Chapter 1: the round they were on
   //   ending  Chapter 1 finished, but they left before the map
   //   map     Chapter 1 finished, and the map seen
@@ -253,7 +269,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   if (chapterOne && !replay && chapterDoneBefore) resume = reached > 0 ? "ending" : "map";
   else if (chapterOne && !replay && reached > 0) resume = "round";
   const [round, setRound] = useState(() =>
-    setUp(resume === "round" ? reached : resume === "ending" ? roundCount - 1 : 0)
+    setUp(!chapterOne ? Math.max(tutorialAt - 1, 0) : resume === "round" ? reached : resume === "ending" ? roundCount - 1 : 0)
   );
   const [crates, setCrates] = useState(() => round.crateIds ?? []); // the full crates on the table (Chapter 1)
   const [packed, setPacked] = useState(false); // this round's full basket is now one of them
@@ -288,10 +304,14 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const [entry, setEntry] = useState(null); // { tens, ones, active }
   const [inBasket, setInBasket] = useState(() => round.prefilled);
   const [chosen, setChosen] = useState([]); // oranges tapped, in order: what a drag carries
-  const [phase, setPhase] = useState(
-    newcomer ? "award" : ({ round: "play", ending: "back", map: "map" }[resume] ?? "ask")
-  );
-  const [cleared, setCleared] = useState(clearedBefore);
+  const [phase, setPhase] = useState(() => {
+    if (chapterOne) return { round: "play", ending: "back", map: "map" }[resume] ?? "ask";
+    // The tutorial: its opening, or the round they were on (as startRound
+    // begins one).
+    if (tutorialAt === 0) return "award";
+    return round.index === 0 ? "ask" : round.ask ? "question" : "play";
+  });
+  const [cleared, setCleared] = useState(chapterOne);
   const [beat, setBeat] = useState(0);
   const [hintStep, setHintStep] = useState(0);
   const [hintTaps, setHintTaps] = useState(0);
@@ -370,6 +390,15 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const handedOver = delivered.crates.length * BASKET_HOLDS + delivered.loose.length;
   const stillWanted = stageB ? round.want - handedOver : 0;
   const loose = stageB ? looseHere : onTable;
+  // The first customer's order a child plays: Blob finds out that several
+  // can be carried at once (lib/carryTogether.js), once, ever.
+  const carry = useCarryTogether({
+    player,
+    ready: stageB && phase === "play" ? round.index : null,
+    loose: round.oranges.filter((id) => !inBasket.includes(id) && !delivered.loose.includes(id)),
+    chosen,
+    setChosen,
+  });
   const values = {
     name: player.game_name,
     n: round.target,
@@ -416,7 +445,48 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     tally.current = { hints: 0, wrong: 0 };
   };
 
-  // After the tutorial: the same round 1, from an empty basket.
+  // The tutorial: where they are in it (players.tutorial_round, above),
+  // saved the moment they get there, and kept on the player for the rest
+  // of this visit.
+  const saveTutorialAt = (at) => {
+    remember({ tutorial_round: at });
+    saveTutorialRound(player.id, at)
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save where they got to in the tutorial.", error);
+      })
+      .catch((error) => console.warn("Couldn't save where they got to in the tutorial.", error));
+  };
+
+  // A tutorial round answered (the order filled, the basket full, or, in
+  // round 5, every orange in): the next round is where they are now,
+  // saved at once, not after Blob has said what is there. After the last,
+  // the tutorial is done: that is saved, and the Fruit Stall's row with
+  // it, for their profile, so a child who closes the game now goes on to
+  // Chapter 1 next time.
+  const answeredRound = useRef(null);
+  const tutorialAnswered = () => {
+    if (answeredRound.current === round.seed) return;
+    answeredRound.current = round.seed;
+    if (round.index < ROUND_COUNT - 1) {
+      saveTutorialAt(round.number + 1);
+      return;
+    }
+    remember({ tutorial_done: true });
+    finishTutorial(player.id)
+      .then(({ error }) => {
+        // If this didn't save, the child plays the tutorial's last round
+        // again next time.
+        if (error) console.warn("Couldn't save that the tutorial was finished.", error);
+      })
+      .catch((error) => console.warn("Couldn't save that the tutorial was finished.", error));
+    clearStall(player.id, STALL_ID)
+      .then(({ error }) => {
+        if (error) console.warn("Couldn't save that the Fruit Stall was cleared.", error);
+      })
+      .catch((error) => console.warn("Couldn't save that the Fruit Stall was cleared.", error));
+  };
+
+  // After the tutorial's opening: the same round 1, from an empty basket.
   const toTheSeller = () => {
     setInBasket([]);
     clearRoundState();
@@ -451,7 +521,6 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   // back with her lantern, and then the end.
   const afterRound = () => {
     if (round.index + 1 < roundCount) {
-      if (chapterOne && !chapterDoneBefore) saveWhereTheyAre(round.index + 1);
       startRound(round.index + 1);
     } else {
       primeSound(); // from this tap, so the sounds may play
@@ -478,7 +547,11 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
       }
     }
     if (beat < beats.length - 1) setBeat((b) => b + 1);
-    else toTheSeller();
+    else {
+      // The opening is done: round 1 is where they are now.
+      saveTutorialAt(1);
+      toTheSeller();
+    }
   };
 
   // --- what the child does ----------------------------------------------------------
@@ -500,9 +573,11 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     setInBasket((list) => [...list, ...ids]);
     setChosen((list) => list.filter((x) => !ids.includes(x)));
     setHintShown(false);
+    carry.carried(ids.length);
     if (phase === "tutorial") {
-      // They tried it. The tutorial ends, that orange hops back out, and
-      // round 1 starts properly.
+      // They tried it. The opening ends (round 1 is where they are now),
+      // that orange hops back out, and round 1 starts properly.
+      saveTutorialAt(1);
       setPhase("practised");
       later(() => gameRef.current?.flyBack(ids[0]), 900);
       later(toTheSeller, 1350);
@@ -549,6 +624,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
       playCorrect();
       setWrongTaps(0);
       setSaid(value);
+      roundAnswered();
     } else {
       tally.current.wrong += 1;
       setWrongTaps((n) => n + 1);
@@ -596,6 +672,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     setDelivered((now) => ({ crates: [...now.crates, ...crateIds], loose: [...now.loose, ...looseIds] }));
     setChosen((list) => list.filter((x) => !looseIds.includes(x)));
     primeSound(); // from this drop, for the "yes" when the order is complete
+    carry.carried(items.length);
     return true;
   };
 
@@ -617,11 +694,21 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   // they have seen the map (OpeningCard). A replay saves nothing: coming
   // back from one, they go to the map.
   const saveWhereTheyAre = (index) => {
+    remember({ round_reached: index });
     saveRoundReached(player.id, index)
       .then(({ error }) => {
         if (error) console.warn("Couldn't save where they got to.", error);
       })
       .catch((error) => console.warn("Couldn't save where they got to.", error));
+  };
+
+  // A Chapter 1 round answered (the right number tapped, or a test handed
+  // over right): the next round is where they are now, saved at once, not
+  // when Next is pressed after. (After the last, the chapter is cleared:
+  // below.)
+  const roundAnswered = () => {
+    if (chapterDoneBefore || round.index + 1 >= roundCount) return;
+    saveWhereTheyAre(round.index + 1);
   };
 
   // Chapter 1 cleared: saved the moment it happens, so a child who closes
@@ -685,6 +772,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     });
     setPhase("done");
     fillMeter(null, gameRef.current?.order());
+    roundAnswered();
     if (round.index === roundCount - 1) {
       clearChapter();
       earnChapterLantern("teaching");
@@ -810,6 +898,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
     } else if (inBasket.length >= BASKET_HOLDS) next = "closing";
     else if (onTable === 0) next = "puzzled";
     if (!next) return undefined;
+    if (!chapterOne) tutorialAnswered();
 
     const id = after(
       () => {
@@ -830,18 +919,9 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
         else if (next !== "puzzled") fillMeter();
         // Chapter 1's last round: the chapter is cleared, and saved now.
         if (stageB && round.index === roundCount - 1) clearChapter();
-        // Round 5 done: the stall is cleared. Saved the moment it happens,
-        // so a child who closes the game now goes on to Chapter 1 next time.
-        if (!chapterOne && round.index === ROUND_COUNT - 1 && !cleared) {
-          setCleared(true);
-          clearStall(player.id, STALL_ID)
-            .then(({ error }) => {
-              // If this didn't save, the child plays the tutorial again
-              // next time.
-              if (error) console.warn("Couldn't save that the Fruit Stall was cleared.", error);
-            })
-            .catch((error) => console.warn("Couldn't save that the Fruit Stall was cleared.", error));
-        }
+        // Round 5 done: the stall is cleared (saved already, the moment
+        // the last orange went in: tutorialAnswered).
+        if (!chapterOne && round.index === ROUND_COUNT - 1 && !cleared) setCleared(true);
       },
       next === "puzzled" ? 900 : 500
     );
@@ -940,19 +1020,22 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   const steppedLine =
     stepped && lineStep > 0 ? { speaker: "blob", text: stepped[Math.min(lineStep, stepped.length) - 1].show } : null;
   // Stage B: Blob's question at the wall stays up, with no button, until a
-  // crate is opened.
+  // crate is opened. His finding out that several can be carried at once
+  // has no button either.
   const wallLine = phase === "play" && wall && !cracked;
   const blobSays = wallLine
     ? CHAPTER_ONE.wall
-    : phase === "question"
-      ? FRUIT_STALL.howManyMore
-      : phase === "won"
-        ? FRUIT_STALL.practiceWon
-        : said != null
-          ? CHAPTER_ONE.cratesSaid
-          : stepped
-            ? steppedLine
-            : null;
+    : carry.line
+      ? carry.line
+      : phase === "question"
+        ? FRUIT_STALL.howManyMore
+        : phase === "won"
+          ? FRUIT_STALL.practiceWon
+          : said != null
+            ? CHAPTER_ONE.cratesSaid
+            : stepped
+              ? steppedLine
+              : null;
   const spotlight =
     phase === "summary"
       ? (chapterOne ? [null, "crates", "loose", "both"] : [null, "crate", "tray", "both"])[Math.min(lineStep, 3)]
@@ -976,6 +1059,10 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
   return (
     <div
       className="pm-stall"
+      // Where the child is, for the reload tests to read (tests/reload).
+      data-part={chapterOne ? "chapter-1" : "tutorial"}
+      data-round={round.number}
+      data-phase={phase}
       onClick={(event) => {
         // In the "try it" beat, a tap anywhere but an orange moves on too.
         if (trying && !event.target.closest(".pm-orange, .pm-hud, .pm-coach__bubble")) advanceTutorial(null);
@@ -1162,7 +1249,7 @@ function FruitStall({ player, newcomer, replay, onAgain, onShop }) {
               noteKey={wrongTaps}
               silent={Boolean(stepped) && said == null}
               buttonLabel={FRUIT_STALL.next}
-              onNext={wallLine ? null : nextStep}
+              onNext={wallLine || carry.line ? null : nextStep}
             />
           )}
         </div>
