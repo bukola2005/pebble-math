@@ -107,10 +107,12 @@ const STAGE_START = Object.fromEntries(
               on here" on a place they have finished plays it again.
     end       as they leave the map, Blob's errand
 
-  Coming back, a child starts at the furthest point they reached here,
-  as at the Fruit Stall: the round they were on (players.round_reached,
-  which is this chapter's once they have stepped in: the
-  "provision-store" row), Baba already gone; with Chapter 2 finished, the
+  Coming back, or the page reloading, a child starts at the furthest
+  point they reached here, as at the Fruit Stall: the round they were on
+  (players.round_reached, which is this chapter's once they have stepped
+  in: the "provision-store" row; a round is reached the moment the one
+  before it is answered, not when Next is pressed after), Baba already
+  gone; with Chapter 2 finished, the
   map; if they left before they saw it, Baba's return and the cards
   first. Playing it again is only ever their choice, from the map.
 
@@ -154,6 +156,7 @@ export default function PlayShop() {
 }
 
 function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
+  const { remember } = useOutletContext();
   const roundCount = CHAPTER_TWO_ROUNDS.length;
   const enteredBefore = (player.cleared_stalls ?? []).includes(SHOP_ID);
   const chapterDoneBefore = (player.cleared_stalls ?? []).includes(CHAPTER_TWO_ID);
@@ -207,6 +210,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   useEffect(() => {
     if (enteredBefore) return;
     const warn = (error) => console.warn("Couldn't save that they have been to the Provision Store.", error);
+    remember({ round_reached: 0 });
     saveRoundReached(player.id, 0)
       .then(({ error }) => (error ? { error } : clearStall(player.id, SHOP_ID)))
       .then(({ error }) => {
@@ -343,6 +347,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   // they reach it, so a child who leaves comes back to it. Back to 0 once
   // they have seen the map. A replay saves nothing.
   const saveWhereTheyAre = (index) => {
+    remember({ round_reached: index });
     saveRoundReached(player.id, index)
       .then(({ error }) => {
         if (error) console.warn("Couldn't save where they got to.", error);
@@ -350,11 +355,18 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
       .catch((error) => console.warn("Couldn't save where they got to.", error));
   };
 
+  // A round answered (the right number tapped, or a test handed over
+  // right): the next round is where they are now, saved at once, not when
+  // Next is pressed after, so a right answer is never asked for twice.
+  const roundAnswered = () => {
+    if (!entered || chapterDoneBefore || round.index + 1 >= roundCount) return;
+    saveWhereTheyAre(round.index + 1);
+  };
+
   // After a round: on to the next. After the last: the meter glows, and
   // Baba comes back with his lantern.
   const afterRound = () => {
     if (round.index + 1 < roundCount) {
-      if (entered && !chapterDoneBefore) saveWhereTheyAre(round.index + 1);
       startRound(round.index + 1);
     } else {
       primeSound(); // from this tap, so the sounds may play
@@ -474,6 +486,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
       playCorrect();
       setWrongTaps(0);
       setSaid(value);
+      roundAnswered();
     } else tryAgain();
   };
 
@@ -519,6 +532,7 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
     recordRound({ playerId: player.id, stallId: CHAPTER_TWO_ID, round: round.number, hintsUsed: tally.current.hints, wrongAnswers: tally.current.wrong });
     setPhase("done");
     fillMeter(null, shelfRound ? gameRef.current?.shelf() : gameRef.current?.place());
+    roundAnswered();
     if (round.index === roundCount - 1) {
       clearChapter();
       earnChapterLantern("teaching");
@@ -724,6 +738,10 @@ function ProvisionStore({ player, replay, onAgain, onFruitStall }) {
   return (
     <div
       className="pm-stall pm-shop-screen"
+      // Where the child is, for the reload tests to read (tests/reload).
+      data-part="chapter-2"
+      data-round={round.number}
+      data-phase={phase}
       onClick={(event) => {
         // While Blob says what is there, a tap anywhere moves to the next
         // step: that's how a child with the sound off goes through it.

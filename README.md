@@ -20,11 +20,41 @@ a Supabase project: without the two values in `.env.local` those pages say
 accounts aren't available and the rest of the site works as normal. Setup
 is under [Accounts](#accounts).
 
+## Tests
+
+```bash
+npm run test:reload
+```
+
+Where a child lands when the page is reloaded (`tests/reload/`). It starts
+the game against a stand-in for Supabase that keeps its tables in memory,
+opens a headless Chrome, and for each case plays as a child would, with
+real presses and drags, reloads the page as the browser's own button does,
+and checks where the child is: at the film, the look, the name and
+Scene 1; at the tutorial's opening and in its rounds; in Chapter 1's
+rounds, orders and tests, at its ending and on the map; and the same at
+the Provision Store. What is saved at the moment of each reload was saved
+by the game itself, never set up by the test. Nothing touches the real
+database and no `.env.local` is needed. It needs Chrome, Chromium or Edge
+on the machine (`CHROME_PATH` says where, if it isn't found) and takes
+about five minutes at one size.
+
+`npm run test:reload -- --list` names the cases, `-- tutorial-round-3`
+runs the ones named, and `-- --size=portrait` (or `landscape`, or `all`)
+runs at a phone's size. A case that fails leaves a picture in
+`tests/reload/failures/`.
+
+The stalls put where the child is on their outermost element
+(`data-part`, `data-round`, `data-phase`) for these tests to read. A new
+place to come back to needs a case here that reloads there: a way back
+with no such test is how a child was once sent past the tutorial.
+
 ## What's here
 
 ```
 index.html                  font links + mount point
 supabase/schema.sql         tables, RLS and the sign-up trigger — paste into Supabase
+tests/reload/               where a child lands when the page is reloaded (npm run test:reload)
 .env.local.example          the two variables the app needs (copy to .env.local)
 src/
   main.jsx                  BrowserRouter around the app
@@ -593,13 +623,23 @@ to count out ten of anything at home, and see what's left over. You try
 it too?"): his own idea, not homework. Its button goes back to "Who's
 playing?".
 
-*Coming back.* Opening the game takes a child to the furthest point they
-reached, never back to a start they have passed. Never played: the film,
-then Scene 1 (above). Part way through the tutorial: its round 1. The
-tutorial done but not Chapter 1: Chapter 1, at the round they were on,
-with Grandma already gone along the row (`players.round_reached`, saved as
-each round is reached; the meter has a segment for each round still to
-play). Chapter 1 finished: the map, with their pin on the Fruit Stall, the
+*Coming back.* Opening the game, or reloading the page, takes a child to
+the furthest point they reached, never back to a start they have passed.
+Where that is comes from what is saved and nothing else: nothing remembers
+whether this is their first visit. Never played: the film, then Scene 1
+(above). In the tutorial: where they were in it (`players.tutorial_round`:
+0, its opening, the basket and Blob's beats, until the last beat is done;
+then the round they are on, 1 to 5). Whether the tutorial is finished is
+`players.tutorial_done` and only that: `scene1_done` says that Scene 1 was
+played, and the `fruit-stall` row in `stall_progress` is what the child's
+profile shows as earned. The tutorial done but not Chapter 1: Chapter 1,
+at the round they were on, with Grandma already gone along the row
+(`players.round_reached`; the meter has a segment for each round still to
+play). A round is reached the moment the one before it is answered (in the
+tutorial, the order filled or the basket full; after it, the right number
+tapped, or a test handed over right), not when Next is pressed after: a
+child who reloads never has to give a right answer twice, even if it costs
+them a line of Blob's. Chapter 1 finished: the map, with their pin on the Fruit Stall, the
 Provision Store clear and nothing opening; if they left before they had
 seen it, Grandma's return and the cards first, then the map opening, as it
 would have. From the map the child chooses: "Carry on here" plays Chapter
@@ -608,7 +648,11 @@ something again is always their choice, never where the game puts them,
 so a replay saves no rounds: leaving one, they come back to the map. On a
 phone held upright the map starts with the pin and the furthest open
 place both in view. If `round_reached` can't be read (the column not
-added yet), Chapter 1 starts at its beginning. Once a child has stepped
+added yet), Chapter 1 starts at its beginning; if the tutorial's two
+columns can't be, the tutorial starts at its opening and counts as
+finished if the `fruit-stall` row is there, as it did before they existed.
+`npm run test:reload` reloads the page at each of these places
+([Tests](#tests)). Once a child has stepped
 into the Provision Store, the same holds there instead (below).
 
 **The Provision Store** (`routes/PlayShop.jsx`, `components/ShelfGame.jsx`,
@@ -827,7 +871,8 @@ auth.users ─ profiles ─ players ─ stall_progress
                                                       cleared, or place reached
                           character (Zizi's look),
                           game_name, first_play_done,
-                          scene1_done, round_reached,
+                          scene1_done, tutorial_round,
+                          tutorial_done, round_reached,
                           group_drag_known
 ```
 
@@ -979,6 +1024,43 @@ message with a reload button instead of a white screen.
 6. "Confirm email" is on by default, and should stay on in production. While
    developing you can switch it off to skip the email step. The sign-up page
    handles both.
+
+### Putting a test child back to the start
+
+Where a child has got to is kept in two places: their `players` row, and
+their rows in `stall_progress` (with `lanterns` and `attempts` beside it).
+Reset both together. Rows left behind are read as things the child has
+done, and a "new" child with an old `fruit-stall-chapter-1` row is put on
+the map, or with an old `provision-store` row in the Provision Store.
+
+Find the child's id with `select id, display_name from public.players;`,
+put it in the third line, and run this in the SQL Editor:
+
+```sql
+do $$
+declare
+  child uuid := '00000000-0000-0000-0000-000000000000';
+begin
+  delete from public.stall_progress where player_id = child;
+  delete from public.lanterns where player_id = child;
+  delete from public.attempts where player_id = child;
+  update public.players
+     set first_play_done = false,
+         character = null,
+         game_name = null,
+         scene1_done = false,
+         tutorial_round = 0,
+         tutorial_done = false,
+         round_reached = 0,
+         group_drag_known = false
+   where id = child;
+end $$;
+```
+
+That is the very start: the film, choosing a look and a name, Scene 1,
+then the tutorial. To start at the tutorial instead, keeping the look and
+the name, leave out the four lines from `first_play_done` to
+`scene1_done`.
 
 ## Next
 

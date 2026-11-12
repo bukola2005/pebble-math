@@ -13,10 +13,14 @@ import { pickPlayableSource, preloadFile, preloadImage } from "./preload";
 
     film (first play) → avatar (choose a Zizi look) → name (build a game
     name) → story (Scene 1) → the Fruit Stall, where every later visit
-    starts: at the round they got to, or, once Chapter 1 is done, on the
-    market map (routes/PlayStall.jsx) → the Provision Store, once they
-    have stepped into it from the map, where every visit starts from then
-    on (routes/PlayShop.jsx)
+    starts: in the tutorial, where they got to in it; then at the round
+    they got to, or, once Chapter 1 is done, on the market map
+    (routes/PlayStall.jsx) → the Provision Store, once they have stepped
+    into it from the map, where every visit starts from then on
+    (routes/PlayShop.jsx)
+
+  Each flag means one thing: scene1_done, that Scene 1 was played;
+  tutorial_done, that the tutorial was finished.
 
   Every step is its own route under /play/:playerId, and its own chunk of
   code. The loading screen fetches only what the next step needs; each step
@@ -30,6 +34,8 @@ export function nextStep(player) {
   if (!ZIZI_LOOKS.some((look) => look.id === player.character)) return "avatar";
   if (!player.game_name) return "name";
   if (!player.scene1_done) return "story";
+  // The tutorial is at the Fruit Stall, whatever else is on record.
+  if (!player.tutorial_done) return "stall/fruit";
   if ((player.cleared_stalls ?? []).includes(SHOP_ID)) return "stall/provision";
   return "stall/fruit";
 }

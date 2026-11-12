@@ -16,7 +16,12 @@ import { supabase } from "./supabase";
     character        the Zizi look the child picked (null until they have)
     game_name        the in-game name the child built from two word lists
     first_play_done  whether they have seen the opening film
-    scene1_done      whether they have played Scene 1
+    scene1_done      whether they have played Scene 1, and only that
+    tutorial_round   where they are in the tutorial, so they come back to
+                     it: 0, its opening (the basket, and Blob's beats);
+                     then the round they are on, 1 to 5
+    tutorial_done    whether they have finished the tutorial: the one
+                     thing that says so
     round_reached    the round they are on in Chapter 1, the first time
                      through, so they come back to it (0: its start)
     group_drag_known whether they know several can be carried at once:
@@ -84,6 +89,17 @@ export const chooseGameName = (id, gameName) =>
 
 export const finishScene1 = (id) =>
   changeOne(supabase.from("players").update({ scene1_done: true }).eq("id", id), "not_saved");
+
+// Read on their own, so that if they can't be (the columns not added
+// yet), the game still starts (routes/PlaySessionShell.jsx says how).
+export const getTutorialProgress = (id) =>
+  supabase.from("players").select("tutorial_round, tutorial_done").eq("id", id).maybeSingle();
+
+export const saveTutorialRound = (id, round) =>
+  changeOne(supabase.from("players").update({ tutorial_round: round }).eq("id", id), "not_saved");
+
+export const finishTutorial = (id) =>
+  changeOne(supabase.from("players").update({ tutorial_done: true }).eq("id", id), "not_saved");
 
 // Read on its own, so that if it can't be (the column not added yet), the
 // game still starts: at the beginning of the chapter.
